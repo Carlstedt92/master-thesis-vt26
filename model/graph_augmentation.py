@@ -13,7 +13,8 @@ class GraphAugmentation:
             x=data.x.clone(),
             edge_index=data.edge_index.clone(),
             edge_attr=data.edge_attr.clone() if data.edge_attr is not None else None,
-            y=data.y.clone() if data.y is not None else None
+            y=data.y.clone() if data.y is not None else None,
+            graph_idx=data.graph_idx.clone() if hasattr(data, 'graph_idx') else None,
         )
 
     def local_augmentation(self, data):
@@ -73,7 +74,8 @@ class GraphAugmentation:
             x=new_x,
             edge_index=new_edge_index,
             edge_attr=new_edge_attr,
-            y=data.y.clone() if data.y is not None else None
+            y=data.y.clone() if data.y is not None else None,
+            graph_idx=data.graph_idx.clone() if hasattr(data, 'graph_idx') else None,
         )
 
     def __call__(self, data):
@@ -104,3 +106,18 @@ class DINOMoleculeDataset(torch.utils.data.Dataset):
         data = self.base_dataset[idx]
         aug_data_list = self.transform(data)
         return aug_data_list
+    
+
+# Example usage:
+if __name__ == "__main__":
+    from rdkit import Chem
+    from graph_creation import smiles_to_pygdata
+
+    smiles = "CCO"
+    data = smiles_to_pygdata(smiles)
+    augmenter = GraphAugmentation(local_views=2)
+    augmented_views = augmenter(data)
+    print(augmented_views)
+    for i, aug_data in enumerate(augmented_views):
+        print(f"Augmented View {i}:")
+        print(aug_data)
