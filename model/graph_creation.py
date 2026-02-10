@@ -99,4 +99,11 @@ def smiles_to_pygdata(smiles: str):
     edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
     edge_features = torch.tensor(edge_features, dtype=torch.float)
 
-    return Data(x= node_features, edge_index=edge_index, edge_attr=edge_features, smiles=smiles)
+    return Data(x= node_features, edge_index=edge_index, edge_attr=edge_features)
+
+
+# Example usage:
+if __name__ == "__main__":
+    smiles = "CCO"
+    data = smiles_to_pygdata(smiles)
+    print(data)
