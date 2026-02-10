@@ -1,46 +1,98 @@
 
 import random
 import torch
-from chemprop import data
-from rdkit import Chem
+from torch_geometric.data import Data
 
 class GraphAugmentation:
     def __init__(self, local_views=4):
         self.local_views = local_views
 
-    def global_augmentation(self, mol):
-        mol = Chem.Mol(mol)  # Create a copy of the molecule
-        return mol  # No augmentation for global view yet, discuss what/if any should be implemented
+    def global_augmentation(self, data):
+        """Create a global augmented view by copying the graph structure."""
+        return Data(
+            x=data.x.clone(),
+            edge_index=data.edge_index.clone(),
+            edge_attr=data.edge_attr.clone() if data.edge_attr is not None else None,
+            y=data.y.clone() if data.y is not None else None
+        )
 
-    def local_augmentation(self, mol):
-        mol = Chem.Mol(mol)  # Create a copy of the molecule
-        # Create augmentated molecule from RDKit molecule by selecting a random atom and its 2hop-neighbors
-        atom_indices = [atom.GetIdx() for atom in mol.GetAtoms()]
-        if not atom_indices:
-            return mol  # Return original molecule if no atoms are present
+    def local_augmentation(self, data):
+        """Create local augmented view by selecting random atom and its 2-hop neighbors."""
+        num_atoms = data.x.size(0)
+        if num_atoms == 0:
+            return data
         
-        center_atom_idx = random.choice(atom_indices)
-        aug_indices = set([center_atom_idx])
-        for nbr in mol.GetAtomWithIdx(center_atom_idx).GetNeighbors():
-            aug_indices.add(nbr.GetIdx())
-            for nbr2 in nbr.GetNeighbors():
-                aug_indices.add(nbr2.GetIdx())
-        aug_indices = list(aug_indices)
-        aug_mol = data.MoleculeDatapoint._get_submol(mol, aug_indices)
-        return aug_mol
+        # Select random center atom
+        center_atom_idx = random.randint(0, num_atoms - 1)
+        
+        # Find 1-hop neighbors
+        neighbors = set([center_atom_idx])
+        edge_index = data.edge_index
+        
+        for i in range(edge_index.size(1)):
+            if edge_index[0, i].item() == center_atom_idx:
+                neighbors.add(edge_index[1, i].item())
+            elif edge_index[1, i].item() == center_atom_idx:
+                neighbors.add(edge_index[0, i].item())
+        
+        # Find 2-hop neighbors
+        neighbors_2hop = set(neighbors)
+        for neighbor in list(neighbors):
+            for i in range(edge_index.size(1)):
+                if edge_index[0, i].item() == neighbor:
+                    neighbors_2hop.add(edge_index[1, i].item())
+                elif edge_index[1, i].item() == neighbor:
+                    neighbors_2hop.add(edge_index[0, i].item())
+        
+        neighbors_list = sorted(list(neighbors_2hop))
+        
+        # Create node index mapping
+        node_map = {old_idx: new_idx for new_idx, old_idx in enumerate(neighbors_list)}
+        
+        # Extract node features
+        mask = torch.zeros(num_atoms, dtype=torch.bool)
+        for idx in neighbors_list:
+            mask[idx] = True
+        new_x = data.x[mask]
+        
+        # Extract edges within the subgraph
+        edge_mask = mask[edge_index[0]] & mask[edge_index[1]]
+        new_edge_index = edge_index[:, edge_mask].clone()
+        
+        # Remap edge indices to match subgraph node ordering
+        for i in range(new_edge_index.size(1)):
+            new_edge_index[0, i] = node_map[new_edge_index[0, i].item()]
+            new_edge_index[1, i] = node_map[new_edge_index[1, i].item()]
+        
+        # Extract edge attributes if they exist
+        new_edge_attr = None
+        if data.edge_attr is not None:
+            new_edge_attr = data.edge_attr[edge_mask]
+        
+        return Data(
+            x=new_x,
+            edge_index=new_edge_index,
+            edge_attr=new_edge_attr,
+            y=data.y.clone() if data.y is not None else None
+        )
 
-    def __call__(self, mol):
-        aug_mol = []
-
+    def __call__(self, data):
+        """Generate multiple augmented views of the input graph."""
+        aug_data_list = []
+        
         # Create two global views
-        aug_mol.append(self.global_augmentation(mol))
-        aug_mol.append(self.global_augmentation(mol))
+        aug_data_list.append(self.global_augmentation(data))
+        aug_data_list.append(self.global_augmentation(data))
+        
         # Create local views
         for _ in range(self.local_views):
-            aug_mol.append(self.local_augmentation(mol))
-        return aug_mol
+            aug_data_list.append(self.local_augmentation(data))
+        
+        return aug_data_list
     
 class DINOMoleculeDataset(torch.utils.data.Dataset):
+    """Dataset wrapper for DINO-style contrastive learning with graph augmentations."""
+    
     def __init__(self, base_dataset, transform):
         self.base_dataset = base_dataset
         self.transform = transform
@@ -49,6 +101,6 @@ class DINOMoleculeDataset(torch.utils.data.Dataset):
         return len(self.base_dataset)
     
     def __getitem__(self, idx):
-        mol, _ = self.base_dataset[idx]
-        aug_mol = self.transform(mol)
-        return aug_mol
+        data = self.base_dataset[idx]
+        aug_data_list = self.transform(data)
+        return aug_data_list
