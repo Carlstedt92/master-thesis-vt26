@@ -11,7 +11,7 @@ def smiles_to_pygdata(smiles: str):
         smiles (str): The SMILES string representing the molecule.
 
     Returns:
-        Data: A PyTorch Geometric Data object containing node features, edge indices, and edge attributes,
+        Data: A PyTorch Geometric Data object containing 21 node features, edge indices, and 6 edge attributes,
                 along with the original SMILES string as metadata.
     """
     mol = Chem.MolFromSmiles(smiles)
@@ -106,4 +106,7 @@ def smiles_to_pygdata(smiles: str):
 if __name__ == "__main__":
     smiles = "CCO"
     data = smiles_to_pygdata(smiles)
+    print(data.x.shape)  # Node features shape
+    print(data.edge_index.shape)  # Edge indices shape
+    print(data.edge_attr.shape)  # Edge attributes shape
     print(data)
