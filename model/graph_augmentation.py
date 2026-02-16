@@ -15,6 +15,7 @@ class GraphAugmentation:
             edge_attr=data.edge_attr.clone() if data.edge_attr is not None else None,
             y=data.y.clone() if data.y is not None else None,
             graph_idx=data.graph_idx.clone() if hasattr(data, 'graph_idx') else None,
+            view=torch.tensor([1], dtype=torch.long)  # 1 = global
         )
 
     def local_augmentation(self, data):
@@ -76,6 +77,7 @@ class GraphAugmentation:
             edge_attr=new_edge_attr,
             y=data.y.clone() if data.y is not None else None,
             graph_idx=data.graph_idx.clone() if hasattr(data, 'graph_idx') else None,
+            view=torch.tensor([0], dtype=torch.long)  # 0 = local
         )
 
     def __call__(self, data):
@@ -91,27 +93,10 @@ class GraphAugmentation:
             aug_data_list.append(self.local_augmentation(data))
         
         return aug_data_list
-    
-class DINOMoleculeDataset(torch.utils.data.Dataset):
-    """Dataset wrapper for DINO-style contrastive learning with graph augmentations."""
-    
-    def __init__(self, base_dataset, transform):
-        self.base_dataset = base_dataset
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.base_dataset)
-    
-    def __getitem__(self, idx):
-        data = self.base_dataset[idx]
-        aug_data_list = self.transform(data)
-        return aug_data_list
-    
 
 # Example usage:
 if __name__ == "__main__":
-    from rdkit import Chem
-    from graph_creation import smiles_to_pygdata
+    from .graph_creation import smiles_to_pygdata
 
     smiles = "CCO"
     data = smiles_to_pygdata(smiles)

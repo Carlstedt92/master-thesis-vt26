@@ -3,7 +3,7 @@ from torch_geometric.data import Data
 from torch.utils.data import Dataset
 import csv
 import torch
-from graph_creation import smiles_to_pygdata
+from .graph_creation import smiles_to_pygdata
 from typing import List
 
 class SmilesCsvDataset(Dataset):

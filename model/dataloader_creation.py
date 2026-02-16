@@ -1,9 +1,8 @@
 """Create DataLoader for PyG Dataset with graph augmentations."""
 
 from torch_geometric.data import Data, Batch
-from graph_creation import smiles_to_pygdata
-from graph_augmentation import GraphAugmentation
-from dataset_creation import SmilesCsvDataset
+from .graph_augmentation import GraphAugmentation
+from .dataset_creation import SmilesCsvDataset
 from torch.utils.data import DataLoader
 from typing import List
 
