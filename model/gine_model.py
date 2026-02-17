@@ -1,7 +1,6 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import GINEConv, global_add_pool, global_mean_pool
+from torch_geometric.nn import GINEConv, global_mean_pool
 
 
 class GINEEncoder(nn.Module):
@@ -83,17 +82,33 @@ class ProjectionHead(nn.Module):
         x = self.mlp(x)
         # L2 normalize for DINO stability
         return F.normalize(x, dim=-1, p=2)
+    
+class RegressionHead(nn.Module):
+    """Regression head for downstream tasks."""
+    
+    def __init__(self, input_dim: int, hidden_dim: int = 128, output_dim: int = 1):
+        super(RegressionHead, self).__init__()
+        
+        self.mlp = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, output_dim)
+        )
+    
+    def forward(self, x):
+        return self.mlp(x)
 
 
-class SSL_GINEModel(nn.Module):
-    """Graph Isomorphism Network (GINE) for self-supervised learning.
-    This model is designed for self-supervised learning using the DINO framework."""
+class GINEModel(nn.Module):
+    """Graph Isomorphism Network (GINE) for different tasks.
+    The model is designed to be flexible and can be used for both SSL training (with projection head) and downstream tasks (without projection head).
+    """
 
     def __init__(self, num_features: int, edge_features: int, hidden_dim: int = 64, 
                  num_layers: int = 3, dropout: float = 0.5, epsilon: float = 0,
                  projection_hidden_dim: int = 2048, projection_output_dim: int = 256,
                  projection_layers: int = 3, head_type: str = "dino"):
-        super(SSL_GINEModel, self).__init__()
+        super(GINEModel, self).__init__()
         
         # GINE encoder backbone
         self.encoder = GINEEncoder(
@@ -106,11 +121,18 @@ class SSL_GINEModel(nn.Module):
         )
         if head_type == "dino":
             # Projection head for DINO
-            self.projection_head = ProjectionHead(
+            self.head = ProjectionHead(
                 input_dim=hidden_dim,
                 hidden_dim=projection_hidden_dim,
                 output_dim=projection_output_dim,
                 num_layers=projection_layers
+            )
+        elif head_type == "regression":
+            # Regression head for downstream tasks
+            self.head = RegressionHead(
+                input_dim=hidden_dim,
+                hidden_dim=hidden_dim // 2,
+                output_dim=1
             )
         else:
             raise ValueError(f"Unsupported head type: {head_type}")
@@ -120,10 +142,7 @@ class SSL_GINEModel(nn.Module):
         # Get graph embeddings
         embeddings = self.encoder(x, edge_index, edge_attr, batch)
         
-        # Project to DINO space
-        projections = self.projection_head(embeddings)
-        
-        return projections
+        return self.head(embeddings)
     
     def get_embeddings(self, x, edge_index, edge_attr, batch):
         """Get graph embeddings without projection (for downstream tasks)."""

@@ -5,14 +5,18 @@ Supports modular training with configurable models saved to models/{model_name}/
 
 import torch
 import torch.optim as optim
-from model.gin_model import SSL_GINEModel
+from model.gine_model import GINEModel
 from model.dino_ssl import DINOGraphSSL, cosine_scheduler
-from model.dataloader_creation import create_dataloader
+from datahandling.dataloader_creation import create_dataloader
 from model.config import ModelConfig
-from train_manager import TrainingManager
+from training.train_manager import TrainingManager
+from typing import Union
+from utils.seed import set_seed
 
 
-def train_with_config(config: ModelConfig, csv_path: str, device: str = 'cuda'):
+def dino_train(config: ModelConfig, csv_path: str,
+               device: Union[str, torch.device] = 'cuda',
+               seed: int | None = 42):
     """
     Train GINE with DINO using ModelConfig for modular training.
     
@@ -39,6 +43,9 @@ def train_with_config(config: ModelConfig, csv_path: str, device: str = 'cuda'):
     print(f"  Effective batch size: {config.batch_size * 6} views")
     print()
     
+    if seed is not None:
+        set_seed(seed)
+
     # Initialize training manager
     manager = TrainingManager(config)
     
@@ -46,12 +53,13 @@ def train_with_config(config: ModelConfig, csv_path: str, device: str = 'cuda'):
     train_loader = create_dataloader(
         csv_path=csv_path,
         batch_size=config.batch_size,
-        shuffle=True
+        shuffle=True,
+        seed=seed
     )
     print(f"✓ DataLoader created with {len(train_loader)} batches\n")
     
     # Initialize GINE student model
-    student_model = SSL_GINEModel(
+    student_model = GINEModel(
         num_features=config.num_features,
         edge_features=config.edge_features,
         hidden_dim=config.hidden_dim,
@@ -145,10 +153,12 @@ def train_with_config(config: ModelConfig, csv_path: str, device: str = 'cuda'):
                       f"Loss: {loss:.4f} | "
                       f"Graphs: {num_unique_graphs} "
                       f"(Global: {num_global}, Local: {num_local}) | "
-                      f"LR: {current_lr:.6f}")
+                      f"LR: {current_lr:.6f}",
+                      f"Teacher Momentum: {current_momentum:.4f}")
         
         # Epoch summary
         avg_loss = epoch_loss / num_batches
+        is_best = avg_loss < manager.best_loss
         manager.record_loss(epoch, avg_loss)
         
         print(f"\n{'='*70}")
@@ -156,7 +166,6 @@ def train_with_config(config: ModelConfig, csv_path: str, device: str = 'cuda'):
         print(f"{'='*70}\n")
         
         # Save checkpoints
-        is_best = avg_loss < manager.best_loss
         manager.save_checkpoint(epoch, dino_ssl.student, optimizer, avg_loss, is_best=is_best)
     
     # Save final results
@@ -195,7 +204,7 @@ if __name__ == "__main__":
         config.name = sys.argv[4]  # Allow custom model name
     
     # Train model
-    dino_ssl, manager = train_with_config(
+    dino_ssl, manager = dino_train(
         config=config,
         csv_path=csv_path,
         device=device

@@ -3,6 +3,7 @@
 from torch_geometric.data import Data, Batch
 from .graph_augmentation import GraphAugmentation
 from .dataset_creation import SmilesCsvDataset
+import torch
 from torch.utils.data import DataLoader
 from typing import List
 
@@ -14,13 +15,20 @@ def collate_fn(batch: List[Data]):
     flat: List[Data] = [view for views in augmented for view in views]
     return Batch.from_data_list(flat)
 
-def create_dataloader(csv_path: str, batch_size: int = 32, shuffle: bool = True) -> DataLoader:
+def create_dataloader(csv_path: str, batch_size: int = 32,
+                      shuffle: bool = True, seed: int | None = None) -> DataLoader:
     dataset = SmilesCsvDataset(csv_path, smiles_col="smiles")
+    generator = None
+    if seed is not None:
+        generator = torch.Generator()
+        generator.manual_seed(seed)
     loader = DataLoader(
         dataset,
         batch_size=batch_size,
         shuffle=shuffle,
-        collate_fn=collate_fn
+        collate_fn=collate_fn,
+        generator=generator,
+        num_workers=0  # Ensure deterministic behavior
     )
     return loader
 

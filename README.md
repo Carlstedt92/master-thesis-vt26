@@ -1,1 +1,2 @@
-# master-thesis-vt26
+# Master Thesis VT-26
+
