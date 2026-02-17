@@ -4,14 +4,18 @@ from torch.utils.data import Dataset
 import csv
 import torch
 from .graph_creation import smiles_to_pygdata
-from typing import List
+from typing import List, Sequence, Union
 
 class SmilesCsvDataset(Dataset):
     """Lazy dataset: keep SMILES on disk, build graphs on demand."""
 
-    def __init__(self, csv_path: str, smiles_col: str = "smiles") -> None:
+    def __init__(self, csv_path: str, smiles_col: str = "smiles",
+                 target: Union[str, Sequence[str], None] = None,
+                 task: str = "regression") -> None:
         self.csv_path = csv_path
         self.smiles_col = smiles_col
+        self.target = target
+        self.task = task
         self._index = self._build_index()
         self._fieldnames = self._get_fieldnames()
 
@@ -44,5 +48,21 @@ class SmilesCsvDataset(Dataset):
             reader = csv.DictReader(handle, fieldnames=self._fieldnames)
             row = next(reader)
         data = smiles_to_pygdata(row[self.smiles_col])
+        if self.target:
+            is_regression = self.task == "regression"
+            dtype = torch.float if is_regression else torch.long
+            if isinstance(self.target, (list, tuple)):
+                target_values = [float(row[name]) for name in self.target]
+                if dtype is torch.long:
+                    target_values = [int(value) for value in target_values]
+                data.y = torch.tensor([target_values], dtype=dtype)
+            else:
+                target_value = float(row[self.target])
+                if dtype is torch.long:
+                    target_value = int(target_value)
+                if is_regression:
+                    data.y = torch.tensor([[target_value]], dtype=dtype)
+                else:
+                    data.y = torch.tensor([target_value], dtype=dtype)
         data.graph_idx = torch.tensor([idx])  # Tensor for proper PyG batching
         return data

@@ -21,7 +21,7 @@ class TrainingManager:
         self.config = config
         self.model_dir = self._setup_directories()
         self.checkpoint_dir = os.path.join(self.model_dir, "checkpoints")
-        self.loss_history: List[float] = []
+        self.loss_history: List[Dict[str, float | None]] = []
         self.best_loss = float('inf')
         self.start_time = datetime.now()
         
@@ -50,17 +50,26 @@ class TrainingManager:
             json.dump(self.config.to_dict(), f, indent=2)
         print(f"✓ Config saved: {config_path}")
     
-    def record_loss(self, epoch: int, loss: float):
-        """Record loss for an epoch.
+    def record_loss(self, epoch: int, train_loss: float,
+                    val_loss: float | None = None,
+                    test_loss: float | None = None):
+        """Record losses for an epoch.
         
         Args:
             epoch: Current epoch number (0-indexed)
-            loss: Average loss for the epoch
+            train_loss: Average training loss for the epoch
+            val_loss: Optional validation loss for the epoch
+            test_loss: Optional test loss for the epoch
         """
-        self.loss_history.append(loss)
+        self.loss_history.append({
+            "epoch": epoch + 1,
+            "train_loss": float(train_loss),
+            "val_loss": None if val_loss is None else float(val_loss),
+            "test_loss": None if test_loss is None else float(test_loss),
+        })
         
-        if loss < self.best_loss:
-            self.best_loss = loss
+        if train_loss < self.best_loss:
+            self.best_loss = train_loss
     
     def save_checkpoint(self, epoch: int, model, optimizer, loss: float, 
                        is_best: bool = False):
@@ -99,24 +108,51 @@ class TrainingManager:
     def save_loss_history(self):
         """Save loss history to JSON."""
         history_path = os.path.join(self.model_dir, "loss_history.json")
+        history_records = self.loss_history
         with open(history_path, 'w') as f:
-            json.dump(self.loss_history, f, indent=2)
+            json.dump(history_records, f, indent=2)
         print(f"✓ Loss history saved: {history_path}")
     
     def save_metadata(self):
         """Save training metadata and summary."""
         elapsed_time = datetime.now() - self.start_time
         
+        train_losses = [entry["train_loss"] for entry in self.loss_history]
+        val_losses = [entry["val_loss"] for entry in self.loss_history if entry["val_loss"] is not None]
+        test_losses = [entry["test_loss"] for entry in self.loss_history if entry["test_loss"] is not None]
+
         metadata = {
             'model_name': self.config.name,
             'best_loss': float(self.best_loss),
-            'best_epoch': self.loss_history.index(self.best_loss) + 1 if self.loss_history else 0,
-            'final_loss': float(self.loss_history[-1]) if self.loss_history else None,
+            'best_epoch': train_losses.index(self.best_loss) + 1 if train_losses else 0,
+            'final_loss': float(train_losses[-1]) if train_losses else None,
             'total_epochs': len(self.loss_history),
             'training_time_seconds': elapsed_time.total_seconds(),
             'training_time_hours': elapsed_time.total_seconds() / 3600,
             'timestamp': self.start_time.isoformat(),
         }
+
+        if val_losses:
+            best_val_loss = min(val_losses)
+            metadata.update({
+                'best_val_loss': float(best_val_loss),
+                'best_val_epoch': next(
+                    entry["epoch"] for entry in self.loss_history
+                    if entry["val_loss"] is not None and entry["val_loss"] == best_val_loss
+                ),
+                'final_val_loss': float(val_losses[-1]),
+            })
+
+        if test_losses:
+            best_test_loss = min(test_losses)
+            metadata.update({
+                'best_test_loss': float(best_test_loss),
+                'best_test_epoch': next(
+                    entry["epoch"] for entry in self.loss_history
+                    if entry["test_loss"] is not None and entry["test_loss"] == best_test_loss
+                ),
+                'final_test_loss': float(test_losses[-1]),
+            })
         
         metadata_path = os.path.join(self.model_dir, "metadata.json")
         with open(metadata_path, 'w') as f:
@@ -126,6 +162,12 @@ class TrainingManager:
         print(f"\nTraining Summary:")
         print(f"  Best loss: {metadata['best_loss']:.6f} (epoch {metadata['best_epoch']})")
         print(f"  Final loss: {metadata['final_loss']:.6f}")
+        if 'best_val_loss' in metadata:
+            print(f"  Best val loss: {metadata['best_val_loss']:.6f} (epoch {metadata['best_val_epoch']})")
+            print(f"  Final val loss: {metadata['final_val_loss']:.6f}")
+        if 'best_test_loss' in metadata:
+            print(f"  Best test loss: {metadata['best_test_loss']:.6f} (epoch {metadata['best_test_epoch']})")
+            print(f"  Final test loss: {metadata['final_test_loss']:.6f}")
         print(f"  Total time: {metadata['training_time_hours']:.2f} hours")
     
     def load_checkpoint(self, checkpoint_path: str, model, optimizer=None):
@@ -159,9 +201,10 @@ class TrainingManager:
         if not self.loss_history:
             return {}
         
+        train_losses = [entry["train_loss"] for entry in self.loss_history]
         return {
             'current_epoch': len(self.loss_history),
-            'current_loss': self.loss_history[-1],
-            'best_loss': min(self.loss_history),
-            'best_epoch': self.loss_history.index(min(self.loss_history)) + 1,
+            'current_loss': train_losses[-1],
+            'best_loss': min(train_losses),
+            'best_epoch': train_losses.index(min(train_losses)) + 1,
         }

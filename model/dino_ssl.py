@@ -73,7 +73,7 @@ class DINOGraphSSL:
         self.teacher_momentum = teacher_momentum
         
         # DINO loss
-        output_dim = student_model.projection_head.mlp[-1].out_features
+        output_dim = student_model.head.mlp[-1].out_features
         self.loss_fn = DINOLoss(
             out_dim=output_dim,
             teacher_temp=teacher_temp,
