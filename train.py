@@ -3,12 +3,15 @@
 from training.dino_training import dino_train
 from model.config import ModelConfig
 import torch
-from plotting.loss_plot import load_loss_data, plot_training_loss_curves
+from plotting.loss_plot import load_loss_data, plot_train_val_loss_curves
 from utils.seed import set_seed
 
 config = ModelConfig(
     name="GINE_DINO", # Model identifier (used for saving checkpoints and metadata)
     head_type="dino", # Options: "dino", "regression"
+    data_path="data/delaney-processed.csv", # Path to dataset CSV file
+    seed = 42, # Random seed for reproducibility
+    device="cuda" if torch.cuda.is_available() else "cpu", # Device to train on (cuda or cpu)
     num_features=21, # Dont change this, its determined by the dataset and dataloader
     edge_features=6, # Dont change this, its determined by the dataset and dataloader
     hidden_dim=128, # GINE hidden dimension
@@ -30,13 +33,10 @@ config = ModelConfig(
     final_learning_rate=1e-5 # Final learning rate after cosine decay   
 )
 
-SEED = 42
-csv_path = "data/delaney-processed.csv"
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if __name__ == "__main__":
-    set_seed(SEED)
+    set_seed(config.seed)
     if config.head_type == "dino":
-        dino_train(config, csv_path, device, seed=SEED)
+        dino_train(config)
         loss_data = load_loss_data(f"models/{config.name}/loss_history.json")
-        plot_training_loss_curves(loss_data, f"models/{config.name}/loss_curves.png", model_name=config.name)
+        plot_train_val_loss_curves(loss_data, f"models/{config.name}/loss_curves.png", model_name=config.name)

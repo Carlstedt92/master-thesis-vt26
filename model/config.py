@@ -1,6 +1,7 @@
 """Configuration for model training."""
 
 from dataclasses import dataclass, asdict
+import torch
 
 
 @dataclass
@@ -10,6 +11,9 @@ class ModelConfig:
     # Model identifier
     name: str                           # e.g., "dino_gine_5layer", "dino_gine_3layer"
     head_type: str = "dino"             # Head type: "dino", "classification", etc.
+    data_path: str = "data/delaney-processed.csv"  # Path to dataset CSV file
+    seed: int = 42                            # Random seed for reproducibility
+    device: str = "cuda" if torch.cuda.is_available() else "cpu"                        # Device to train on (cuda or cpu)
     
     # Data dimensions
     num_features: int = 21              # Node feature dimension

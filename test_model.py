@@ -162,7 +162,7 @@ if __name__ == "__main__":
     print(f"✓ Model loaded successfully from {model_path}")
 
     # Set up training manager for finetuning
-    freeze_epochs = 10
+    freeze_epochs = 101  # Number of epochs to keep encoder frozen during finetuning
     finetune_lr = 1e-4
     for p in model.encoder.parameters():
         p.requires_grad = False  # Freeze encoder parameters for warmup
@@ -191,9 +191,8 @@ if __name__ == "__main__":
         head_type="regression"
     ).to(device)
     random_optimizer = torch.optim.Adam(random_model.parameters(), lr=1e-3)
-
-    random_manager = TrainingManager(ModelConfig(
-        name=f"{model_name}_random_regression",
+    random_config = ModelConfig(
+        name="GINE_random_regression",
         head_type="regression",
         num_features=checkpoint['config']['num_features'],
         edge_features=checkpoint['config']['edge_features'],
@@ -207,9 +206,9 @@ if __name__ == "__main__":
         num_epochs=40,
         batch_size=64,
         learning_rate=1e-3
-    ))
-
-
+    )
+    random_manager = TrainingManager(random_config)
+ 
     # Train the regression head on the training set and track loss history
     train_val_loop(model, train_loader, val_loader, optimizer, device, freeze_epochs, manager)
     train_val_loop(random_model, train_loader, val_loader, random_optimizer, device, 0, random_manager)
@@ -222,8 +221,8 @@ if __name__ == "__main__":
     plot_train_val_loss_curves(loss_data, output_path, model_name=finetune_name)
 
     random_loss_data = pd.DataFrame(random_manager.loss_history)
-    random_output_path = f"models/{model_name}_random_regression/loss_curves.png"
-    plot_train_val_loss_curves(random_loss_data, random_output_path, model_name=f"{model_name}_random_regression")
+    random_output_path = f"models/{random_config.name}/loss_curves.png"
+    plot_train_val_loss_curves(random_loss_data, random_output_path, model_name=random_config.name)
 
     print(f"✓ Training loss curves saved to {output_path}")
     # Plot loss curves for both models in the same figure for comparison
@@ -234,16 +233,18 @@ if __name__ == "__main__":
     ax[0].set_xlabel('Epoch')
     ax[0].set_ylabel('Loss')
     ax[0].legend()
-    ax[1].plot(random_loss_data['epoch'], random_loss_data['train_loss'], label=f'{model_name}_random_regression Train Loss', marker='o')
-    ax[1].plot(random_loss_data['epoch'], random_loss_data['val_loss'], label=f'{model_name}_random_regression Val Loss', marker='o')
-    ax[1].set_title(f'Training and Validation Loss Curves for {model_name}_random_regression')
+    ax[1].plot(random_loss_data['epoch'], random_loss_data['train_loss'], label=f'{random_config.name} Train Loss', marker='o')
+    ax[1].plot(random_loss_data['epoch'], random_loss_data['val_loss'], label=f'{random_config.name} Val Loss', marker='o')
+    ax[1].set_title(f'Training and Validation Loss Curves for {random_config.name}')
     ax[1].set_xlabel('Epoch')
     ax[1].set_ylabel('Loss')
     ax[1].legend()
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
+    plt.tight_layout()
+
     plt.legend()
-    comparison_output_path = f"models/{finetune_name}_vs_{model_name}_random_comparison_loss_curves.png"
+    comparison_output_path = f"models/{finetune_name}_vs_{random_config.name}_comparison_loss_curves.png"
     plt.savefig(comparison_output_path)
     plt.close()
     print(f"✓ Comparison loss curves saved to {comparison_output_path}")

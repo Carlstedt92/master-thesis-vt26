@@ -104,7 +104,7 @@ class TrainingManager:
             best_path = os.path.join(self.checkpoint_dir, "best_model.pth")
             torch.save(checkpoint, best_path)
             print(f"  ✓ Best model saved (loss: {loss:.6f})")
-    
+
     def save_loss_history(self):
         """Save loss history to JSON."""
         history_path = os.path.join(self.model_dir, "loss_history.json")
@@ -123,6 +123,9 @@ class TrainingManager:
 
         metadata = {
             'model_name': self.config.name,
+            'data_path': self.config.data_path,
+            'head_type': self.config.head_type,
+            'seed': self.config.seed,
             'best_loss': float(self.best_loss),
             'best_epoch': train_losses.index(self.best_loss) + 1 if train_losses else 0,
             'final_loss': float(train_losses[-1]) if train_losses else None,
