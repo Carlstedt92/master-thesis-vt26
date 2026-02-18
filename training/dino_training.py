@@ -10,20 +10,14 @@ from model.dino_ssl import DINOGraphSSL, cosine_scheduler
 from datahandling.dataloader_creation import create_dataloader
 from model.config import ModelConfig
 from training.train_manager import TrainingManager
-from typing import Union
-from utils.seed import set_seed
 
 
-def dino_train(config: ModelConfig, csv_path: str,
-               device: Union[str, torch.device] = 'cuda',
-               seed: int | None = 42):
+def dino_train(config: ModelConfig):
     """
     Train GINE with DINO using ModelConfig for modular training.
     
     Args:
         config: ModelConfig object with all model and training parameters
-        csv_path: Path to CSV file with SMILES
-        device: Device to train on (cuda or cpu)
         
     Returns:
         Tuple: (dino_ssl, manager)
@@ -33,7 +27,7 @@ def dino_train(config: ModelConfig, csv_path: str,
     print("="*70)
     print(f"\nModel: {config.name}")
     print(f"Configuration:")
-    print(f"  Device: {device}")
+    print(f"  Device: {config.device}")
     print(f"  Head type: {config.head_type}")
     print(f"  Epochs: {config.num_epochs}")
     print(f"  Batch size: {config.batch_size} graphs")
@@ -42,19 +36,16 @@ def dino_train(config: ModelConfig, csv_path: str,
     print(f"  Views per graph: 2 global + 4 local = 6 total")
     print(f"  Effective batch size: {config.batch_size * 6} views")
     print()
-    
-    if seed is not None:
-        set_seed(seed)
 
     # Initialize training manager
     manager = TrainingManager(config)
     
     # Create dataloader
     train_loader = create_dataloader(
-        csv_path=csv_path,
+        csv_path=config.data_path,
         batch_size=config.batch_size,
         shuffle=True,
-        seed=seed
+        seed=config.seed
     )
     print(f"✓ DataLoader created with {len(train_loader)} batches\n")
     
@@ -79,7 +70,7 @@ def dino_train(config: ModelConfig, csv_path: str,
     dino_ssl = DINOGraphSSL(
         student_model=student_model,
         teacher_model=None,  # Will be created as copy
-        device=device,
+        device=config.device,
         teacher_temp=config.teacher_temp,
         student_temp=config.student_temp,
         center_momentum=config.center_momentum,
@@ -173,73 +164,3 @@ def dino_train(config: ModelConfig, csv_path: str,
     manager.save_metadata()
     
     return dino_ssl, manager
-
-
-if __name__ == "__main__":
-    import sys
-    
-    # Check if CUDA is available
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    print(f"Using device: {device}\n")
-    
-    # Default CSV path
-    csv_path = "data/delaney-processed.csv"
-    if len(sys.argv) > 1:
-        csv_path = sys.argv[1]
-    
-    # Create config (can be customized)
-    config = ModelConfig(
-        name="dino_gine_5layer",  # Model identifier
-        num_epochs=100,
-        batch_size=32,
-        # ... other parameters use defaults from ModelConfig
-    )
-    
-    # Override with command line args if provided
-    if len(sys.argv) > 2:
-        config.num_epochs = int(sys.argv[2])
-    if len(sys.argv) > 3:
-        config.batch_size = int(sys.argv[3])
-    if len(sys.argv) > 4:
-        config.name = sys.argv[4]  # Allow custom model name
-    
-    # Train model
-    dino_ssl, manager = dino_train(
-        config=config,
-        csv_path=csv_path,
-        device=device
-    )
-    
-    print("\n" + "="*70)
-    print("To use the trained embeddings:")
-    print("="*70)
-    print(f"""
-# Load the trained model from models/{config.name}/checkpoints/best_model.pth
-checkpoint = torch.load('models/{config.name}/checkpoints/best_model.pth', weights_only=False)
-student_model = SSL_GINEModel(
-    num_features={config.num_features},
-    edge_features={config.edge_features},
-    hidden_dim={config.hidden_dim},
-    num_layers={config.num_layers},
-)
-student_model.load_state_dict(checkpoint['model_state_dict'])
-
-# Extract embeddings
-from torch_geometric.loader import DataLoader
-from model.dataset_creation import SmilesCsvDataset
-
-dataset = SmilesCsvDataset('{csv_path}')
-loader = DataLoader(dataset, batch_size=64, shuffle=False)
-
-student_model.eval()
-embeddings = []
-for batch in loader:
-    with torch.no_grad():
-        emb = student_model.get_embeddings(
-            batch.x, batch.edge_index, batch.edge_attr, batch.batch
-        )
-        embeddings.append(emb.cpu())
-        
-embeddings = torch.cat(embeddings, dim=0)
-print(f"Extracted embeddings: {{embeddings.shape}}")
-    """)

@@ -1,0 +1,19 @@
+{
+  "model_name": "GINE_random_regression",
+  "data_path": "data/delaney-processed.csv",
+  "head_type": "regression",
+  "seed": 42,
+  "best_loss": 0.9411752502123515,
+  "best_epoch": 32,
+  "final_loss": 1.2218517104784647,
+  "total_epochs": 40,
+  "training_time_seconds": 75.187997,
+  "training_time_hours": 0.02088555472222222,
+  "timestamp": "2026-02-18T13:59:38.361207",
+  "best_val_loss": 0.7792699933052063,
+  "best_val_epoch": 29,
+  "final_val_loss": 1.1463475227355957,
+  "best_test_loss": 0.918882429599762,
+  "best_test_epoch": 40,
+  "final_test_loss": 0.918882429599762
+}

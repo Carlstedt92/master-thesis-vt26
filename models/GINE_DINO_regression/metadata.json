@@ -1,0 +1,19 @@
+{
+  "model_name": "GINE_DINO_regression",
+  "data_path": "data/delaney-processed.csv",
+  "head_type": "regression",
+  "seed": 42,
+  "best_loss": 2.9308634281158445,
+  "best_epoch": 40,
+  "final_loss": 2.9308634281158445,
+  "total_epochs": 40,
+  "training_time_seconds": 75.096497,
+  "training_time_hours": 0.020860138055555557,
+  "timestamp": "2026-02-18T13:59:38.351128",
+  "best_val_loss": 3.3801459074020386,
+  "best_val_epoch": 36,
+  "final_val_loss": 3.4539278745651245,
+  "best_test_loss": 2.478456497192383,
+  "best_test_epoch": 40,
+  "final_test_loss": 2.478456497192383
+}
