@@ -4,7 +4,10 @@ from training.dino_training import dino_train
 from model.config import ModelConfig
 import torch
 from plotting.loss_plot import load_loss_data, plot_train_val_loss_curves
+from plotting.t_sne_embeddings import plot_tsne_embeddings
 from utils.seed import set_seed
+from datahandling.dataset_creation import SmilesCsvDataset
+from torch.utils.data import DataLoader
 
 config = ModelConfig(
     name="GINE_DINO", # Model identifier (used for saving checkpoints and metadata)
@@ -40,3 +43,10 @@ if __name__ == "__main__":
         dino_train(config)
         loss_data = load_loss_data(f"models/{config.name}/loss_history.json")
         plot_train_val_loss_curves(loss_data, f"models/{config.name}/loss_curves.png", model_name=config.name)
+        plot_tsne_embeddings(
+            checkpoint_path=f"models/{config.name}/checkpoints/best_model.pth",
+            output_path=f"models/{config.name}/tsne_embeddings.png",
+            target = "measured log solubility in mols per litre",
+            task = "regression",
+            smiles_col = "smiles"
+        )
