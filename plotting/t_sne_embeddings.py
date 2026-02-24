@@ -1,5 +1,12 @@
 """Generate t-SNE visualization of GINE model embeddings."""
 
+import sys
+from pathlib import Path
+
+# Add project root to Python path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
 import torch
 import numpy as np
 from sklearn.manifold import TSNE
@@ -13,16 +20,32 @@ from datahandling.dataset_creation import SmilesCsvDataset
 
 def plot_tsne_embeddings(checkpoint_path: str, output_path: str = "tsne_embeddings.png", 
                         num_samples: int = 500, batch_size: int = 32, 
-                        random_state: int = 42, target=None, task=None, smiles_col = "smiles"):
+                        random_state: int = 42, target: str = None, task: str = "regression", 
+                        smiles_col: str = "smiles", color_label: str = None):
     """
     Generate and plot t-SNE visualization of GINE embeddings from a trained model.
     
     Parameters:
-    checkpoint_path (str): Path to the model checkpoint (.pth file)
-    output_path (str): Path to save the generated t-SNE plot
-    num_samples (int): Number of samples to use for t-SNE (limits computation time)
-    batch_size (int): Batch size for data loading
-    random_state (int): Random seed for reproducibility
+    -----------
+    checkpoint_path : str
+        Path to the model checkpoint (.pth file)
+    output_path : str, default="tsne_embeddings.png"
+        Path to save the generated t-SNE plot
+    num_samples : int, default=500
+        Number of samples to use for t-SNE (limits computation time)
+    batch_size : int, default=32
+        Batch size for data loading
+    random_state : int, default=42
+        Random seed for reproducibility
+    target : str, optional
+        Column name in CSV to use as target values for coloring points.
+        If None, all points will be colored uniformly.
+    task : str, default="regression"
+        Task type ('regression' or 'classification') - affects target data type loading
+    smiles_col : str, default="smiles"
+        Column name containing SMILES strings
+    color_label : str, optional
+        Label for the colorbar. If None and target is provided, uses target column name
     """
     # Load checkpoint
     checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
@@ -71,6 +94,7 @@ def plot_tsne_embeddings(checkpoint_path: str, output_path: str = "tsne_embeddin
     embeddings = []
     targets = []
     num_embeddings = 0
+    has_targets = target is not None
     
     with torch.no_grad():
         for batch_idx, batch in enumerate(loader):
@@ -79,7 +103,8 @@ def plot_tsne_embeddings(checkpoint_path: str, output_path: str = "tsne_embeddin
                 batch.x, batch.edge_index, batch.edge_attr, batch.batch
             )
             embeddings.append(batch_embeddings.cpu().numpy())
-            targets.append(batch.y.cpu().numpy().flatten())
+            if has_targets and batch.y is not None:
+                targets.append(batch.y.cpu().numpy().flatten())
             num_embeddings += batch_embeddings.shape[0]
             
             if num_embeddings >= num_samples:
@@ -87,7 +112,10 @@ def plot_tsne_embeddings(checkpoint_path: str, output_path: str = "tsne_embeddin
     
     # Concatenate and trim to specified number of samples
     embeddings = np.concatenate(embeddings)[:num_samples]
-    targets = np.concatenate(targets)[:num_samples]
+    if has_targets and targets:
+        targets = np.concatenate(targets)[:num_samples]
+    else:
+        targets = None
     
     print(f"✓ Extracted {embeddings.shape[0]} embeddings with dimension {embeddings.shape[1]}")
     
@@ -98,16 +126,29 @@ def plot_tsne_embeddings(checkpoint_path: str, output_path: str = "tsne_embeddin
     
     # Plot with targets as colors
     plt.figure(figsize=(12, 8))
-    scatter = plt.scatter(
-        embeddings_2d[:, 0], 
-        embeddings_2d[:, 1], 
-        c=targets, 
-        cmap='viridis', 
-        alpha=0.6, 
-        s=20
-    )
-    plt.colorbar(scatter, label='Log Solubility (mol/L)')
-    plt.title("t-SNE of GINE Embeddings (colored by solubility)")
+    
+    if targets is not None:
+        scatter = plt.scatter(
+            embeddings_2d[:, 0], 
+            embeddings_2d[:, 1], 
+            c=targets, 
+            cmap='viridis', 
+            alpha=0.6, 
+            s=20
+        )
+        label = color_label if color_label else target
+        plt.colorbar(scatter, label=label)
+        plt.title(f"t-SNE of GINE Embeddings (colored by {label})")
+    else:
+        plt.scatter(
+            embeddings_2d[:, 0], 
+            embeddings_2d[:, 1], 
+            alpha=0.6, 
+            s=20,
+            color='blue'
+        )
+        plt.title("t-SNE of GINE Embeddings")
+    
     plt.xlabel("t-SNE Dimension 1")
     plt.ylabel("t-SNE Dimension 2")
     plt.tight_layout()
@@ -118,8 +159,22 @@ def plot_tsne_embeddings(checkpoint_path: str, output_path: str = "tsne_embeddin
 
 
 if __name__ == "__main__":
-    # Example usage
+    # Example usage with target coloring
     model_name = "GINE_DINO"
     checkpoint_path = f"models/{model_name}/checkpoints/best_model.pth"
     output_path = f"models/{model_name}/tsne_embeddings.png"
-    plot_tsne_embeddings(checkpoint_path, output_path)
+    
+    # Generate t-SNE colored by solubility
+    plot_tsne_embeddings(
+        checkpoint_path, 
+        output_path,
+        target="measured log solubility in mols per litre",
+        color_label="Log Solubility (mol/L)",
+        task="regression"
+    )
+    
+    # Example: Generate t-SNE without coloring (just uncomment)
+    # plot_tsne_embeddings(
+    #     checkpoint_path,
+    #     f"models/{model_name}/tsne_embeddings_plain.png"
+    # )
