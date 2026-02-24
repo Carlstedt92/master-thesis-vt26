@@ -673,7 +673,10 @@ dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "rdkit" },
+    { name = "scikit-learn" },
     { name = "seaborn" },
+    { name = "torch" },
     { name = "torch-geometric" },
     { name = "utils" },
 ]
@@ -684,7 +687,10 @@ requires-dist = [
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "numpy", specifier = ">=2.4.2" },
     { name = "pandas", specifier = ">=3.0.0" },
+    { name = "rdkit", specifier = ">=2025.9.4" },
+    { name = "scikit-learn", specifier = ">=1.8.0" },
     { name = "seaborn", specifier = ">=0.13.2" },
+    { name = "torch", specifier = ">=2.10.0" },
     { name = "torch-geometric", specifier = ">=2.7.0" },
     { name = "utils", specifier = ">=1.0.2" },
 ]
