@@ -3,11 +3,11 @@
   "data_path": "data/delaney-processed.csv",
   "head_type": "dino",
   "seed": 42,
-  "best_loss": 0.011291513322956033,
-  "best_epoch": 38,
-  "final_loss": 0.011291528431077799,
+  "best_loss": 0.011334826316063603,
+  "best_epoch": 40,
+  "final_loss": 0.011334826316063603,
   "total_epochs": 40,
-  "training_time_seconds": 942.117874,
-  "training_time_hours": 0.2616994094444445,
-  "timestamp": "2026-02-23T13:17:45.437758"
+  "training_time_seconds": 727.521281,
+  "training_time_hours": 0.20208924472222223,
+  "timestamp": "2026-02-26T10:09:58.885050"
 }

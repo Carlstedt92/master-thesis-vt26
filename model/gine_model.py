@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import GINEConv, global_mean_pool
+from torch_geometric.nn import GINEConv, global_add_pool
 
 
 class GINEEncoder(nn.Module):
@@ -48,7 +48,7 @@ class GINEEncoder(nn.Module):
             x = F.dropout(x, p=self.dropout, training=self.training)
         
         # Global pooling
-        graph_embedding = global_mean_pool(x, batch)
+        graph_embedding = global_add_pool(x, batch)
         
         return graph_embedding
 

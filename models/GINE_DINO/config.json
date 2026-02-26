@@ -3,7 +3,7 @@
   "head_type": "dino",
   "data_path": "data/delaney-processed.csv",
   "seed": 42,
-  "device": "cpu",
+  "device": "cuda",
   "num_features": 21,
   "edge_features": 6,
   "hidden_dim": 128,
