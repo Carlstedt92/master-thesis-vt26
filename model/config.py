@@ -16,7 +16,7 @@ class ModelConfig:
     device: str = "cuda" if torch.cuda.is_available() else "cpu"                        # Device to train on (cuda or cpu)
     
     # Data dimensions
-    num_features: int = 21              # Node feature dimension
+    num_features: int = 20              # Node feature dimension
     edge_features: int = 6              # Edge attribute dimension
     
     # Encoder architecture

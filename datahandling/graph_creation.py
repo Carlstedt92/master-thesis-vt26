@@ -33,7 +33,6 @@ def smiles_to_pygdata(smiles: str):
         features = [
             atom.GetDegree(),
             atom.GetFormalCharge(),
-            atom.GetHybridization().real,
             atom.GetIsAromatic(),
             atom.GetTotalNumHs(),
             atom.GetNumRadicalElectrons()
