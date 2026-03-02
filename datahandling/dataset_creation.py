@@ -4,7 +4,9 @@ from torch.utils.data import Dataset
 import csv
 import torch
 from .graph_creation import smiles_to_pygdata
-from typing import List, Sequence, Union
+from typing import List, Sequence, Union, Tuple
+import os
+import glob
 
 class SmilesCsvDataset(Dataset):
     """Lazy dataset: keep SMILES on disk, build graphs on demand."""
@@ -65,4 +67,82 @@ class SmilesCsvDataset(Dataset):
                 else:
                     data.y = torch.tensor([target_value], dtype=dtype)
         data.graph_idx = torch.tensor([idx])  # Tensor for proper PyG batching
+        return data
+
+
+class MultiFileSmilesDataset(Dataset):
+    """Lazy dataset for multiple .smi files: keeps SMILES on disk, builds graphs on demand.
+    
+    Designed for large-scale datasets split across multiple files (e.g., ZINC database).
+    Each file is assumed to have a header line and whitespace-separated columns.
+    """
+
+    def __init__(self, data_dir: str, smiles_col: str = "smiles",
+                 pattern: str = "*.smi") -> None:
+        """
+        Args:
+            data_dir: Directory containing .smi files
+            smiles_col: Name of the column containing SMILES strings
+            pattern: Glob pattern to match files (default: *.smi)
+        """
+        self.data_dir = data_dir
+        self.smiles_col = smiles_col
+        self.pattern = pattern
+        
+        # Discover all matching files
+        self.file_paths = sorted(glob.glob(os.path.join(data_dir, pattern)))
+        if not self.file_paths:
+            raise ValueError(f"No files found matching pattern {pattern} in {data_dir}")
+        
+        # Build index: list of (file_path, offset, fieldnames)
+        self._index: List[Tuple[str, int, List[str]]] = []
+        self._build_index()
+        
+        print(f"Initialized MultiFileSmilesDataset with {len(self.file_paths)} files, "
+              f"{len(self._index)} total samples")
+
+    def _build_index(self) -> None:
+        """Build index mapping global indices to (file_path, offset, fieldnames)."""
+        for file_path in self.file_paths:
+            with open(file_path, "r") as handle:
+                # Read header
+                header = handle.readline().strip()
+                if not header:
+                    continue
+                
+                # Parse fieldnames (whitespace-delimited)
+                fieldnames = header.split()
+                
+                # Store offset of each data row
+                while True:
+                    offset = handle.tell()
+                    line = handle.readline()
+                    if not line:
+                        break
+                    # Only add if line is not empty
+                    if line.strip():
+                        self._index.append((file_path, offset, fieldnames))
+
+    def __len__(self) -> int:
+        return len(self._index)
+
+    def __getitem__(self, idx: int) -> Data:
+        """Load a single graph by reading the appropriate line from the appropriate file."""
+        file_path, offset, fieldnames = self._index[idx]
+        
+        with open(file_path, "r") as handle:
+            handle.seek(offset)
+            line = handle.readline().strip()
+            
+            # Parse whitespace-delimited data
+            values = line.split()
+            row = dict(zip(fieldnames, values))
+        
+        # Convert SMILES to graph
+        smiles = row[self.smiles_col]
+        data = smiles_to_pygdata(smiles)
+        
+        # Add global index for tracking
+        data.graph_idx = torch.tensor([idx])
+        
         return data

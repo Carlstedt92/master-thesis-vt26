@@ -12,8 +12,9 @@ class ModelConfig:
     name: str                           # e.g., "dino_gine_5layer", "dino_gine_3layer"
     head_type: str = "dino"             # Head type: "dino", "classification", etc.
     data_path: str = "data/delaney-processed.csv"  # Path to dataset CSV file
-    seed: int = 42                            # Random seed for reproducibility
-    device: str = "cuda" if torch.cuda.is_available() else "cpu"                        # Device to train on (cuda or cpu)
+    seed: int = 42                      # Random seed for reproducibility
+    device: str = "cuda" if torch.cuda.is_available() else "cpu" # Device to train on (cuda or cpu)
+    num_workers: int = 0                # Number of worker processes for data loading (0 = main process)
     
     # Data dimensions
     num_features: int = 20              # Node feature dimension

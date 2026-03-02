@@ -7,7 +7,7 @@ import torch
 import torch.optim as optim
 from model.gine_model import GINEModel
 from model.dino_ssl import DINOGraphSSL, cosine_scheduler
-from datahandling.dataloader_creation import create_dataloader
+from datahandling.dataloader_creation import create_dataloader_auto
 from model.config import ModelConfig
 from training.train_manager import TrainingManager
 
@@ -40,12 +40,13 @@ def dino_train(config: ModelConfig):
     # Initialize training manager
     manager = TrainingManager(config)
     
-    # Create dataloader
-    train_loader = create_dataloader(
-        csv_path=config.data_path,
+    # Create dataloader (auto-detects single file vs multi-file)
+    train_loader = create_dataloader_auto(
+        data_path=config.data_path,
         batch_size=config.batch_size,
         shuffle=True,
-        seed=config.seed
+        seed=config.seed,
+        num_workers=config.num_workers  # Can be increased for multi-file mode
     )
     print(f"✓ DataLoader created with {len(train_loader)} batches\n")
     

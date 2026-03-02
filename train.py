@@ -12,9 +12,13 @@ from torch.utils.data import DataLoader
 config = ModelConfig(
     name="GINE_DINO", # Model identifier (used for saving checkpoints and metadata)
     head_type="dino", # Options: "dino", "regression"
+    # Single file mode: provide path to CSV file
     data_path="data/delaney-processed.csv", # Path to dataset CSV file
+    # Multi-file mode: provide path to directory containing .smi files
+    # data_path="data/zinc/zinc_data",  # Uncomment for ZINC dataset (156 files, 1.35M molecules)
     seed = 42, # Random seed for reproducibility
     device="cuda" if torch.cuda.is_available() else "cpu", # Device to train on (cuda or cpu)
+    num_workers=0, # Number of worker processes for data loading (0 = main process)
     num_features=20, # Dont change this, its determined by the dataset and dataloader
     edge_features=6, # Dont change this, its determined by the dataset and dataloader
     hidden_dim=128, # GINE hidden dimension
