@@ -52,21 +52,10 @@ def plot_tsne_embeddings(checkpoint_path: str, output_path: str = "tsne_embeddin
     
     # Load config from checkpoint
     config_dict = checkpoint["config"]
-    config = ModelConfig(**config_dict)
+    config = ModelConfig.from_dict(config_dict)
     
     # Initialize model from config
-    model = GINEModel(
-        num_features=config.num_features,
-        edge_features=config.edge_features,
-        hidden_dim=config.hidden_dim,
-        num_layers=config.num_layers,
-        dropout=config.dropout,
-        epsilon=config.epsilon,
-        projection_hidden_dim=config.projection_hidden_dim,
-        projection_output_dim=config.projection_output_dim,
-        projection_layers=config.projection_layers,
-        head_type=config.head_type
-    )
+    model = GINEModel.from_config(config)
     
     # Load trained weights
     model.load_state_dict(checkpoint["model_state_dict"])

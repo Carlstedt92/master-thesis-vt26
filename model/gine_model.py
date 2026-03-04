@@ -27,7 +27,7 @@ class GINEEncoder(nn.Module):
                 nn.ReLU(),
                 nn.Linear(hidden_dim * 2, hidden_dim)
             )
-            conv = GINEConv(mlp, eps=epsilon, edge_dim=edge_features, train_eps=True)
+            conv = GINEConv(mlp, eps=epsilon, edge_dim=edge_features, train_eps=False)
             self.convs.append(conv)
             self.batch_norms.append(nn.BatchNorm1d(hidden_dim))
     
@@ -136,6 +136,23 @@ class GINEModel(nn.Module):
             )
         else:
             raise ValueError(f"Unsupported head type: {head_type}")
+
+    @classmethod
+    def from_config(cls, config, head_type: str | None = None):
+        """Build model from config, with optional head_type override."""
+        resolved_head_type = config.head_type if head_type is None else head_type
+        return cls(
+            num_features=config.num_features,
+            edge_features=config.edge_features,
+            hidden_dim=config.hidden_dim,
+            num_layers=config.num_layers,
+            dropout=config.dropout,
+            epsilon=config.epsilon,
+            projection_hidden_dim=config.projection_hidden_dim,
+            projection_output_dim=config.projection_output_dim,
+            projection_layers=config.projection_layers,
+            head_type=resolved_head_type,
+        )
     
     def forward(self, x, edge_index, edge_attr, batch):
         """Forward pass through encoder and projection head."""

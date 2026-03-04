@@ -80,6 +80,19 @@ class DINOGraphSSL:
             student_temp=student_temp,
             center_momentum=center_momentum
         ).to(device)
+
+    @classmethod
+    def from_config(cls, student_model, config, teacher_model=None):
+        """Build DINO SSL wrapper from config."""
+        return cls(
+            student_model=student_model,
+            teacher_model=teacher_model,
+            device=config.device,
+            teacher_temp=config.teacher_temp,
+            student_temp=config.student_temp,
+            center_momentum=config.center_momentum,
+            teacher_momentum=config.teacher_momentum,
+        )
     
     @torch.no_grad()
     def update_teacher(self):

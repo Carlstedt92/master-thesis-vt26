@@ -23,13 +23,13 @@ class ModelConfig:
     # Encoder architecture
     hidden_dim: int = 128               # Hidden dimension for GINE layers
     num_layers: int = 5                 # Number of GINE convolutional layers
-    dropout: float = 0.5                # Dropout rate
+    dropout: float = 0.0                # Dropout rate (0 for GIN paper - no dropout for molecule graphs)
     epsilon: float = 0.0                # GINE epsilon parameter
     
     # Projection head
-    projection_hidden_dim: int = 2048   # MLP hidden dimension
-    projection_output_dim: int = 256    # Output embedding dimension
-    projection_layers: int = 3          # Number of projection head layers
+    projection_hidden_dim: int = 256    # MLP hidden dimension (reduced for molecular graphs)
+    projection_output_dim: int = 128    # Output embedding dimension
+    projection_layers: int = 2          # Number of projection head layers
     
     # Training parameters
     num_epochs: int = 100               # Number of training epochs

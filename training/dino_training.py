@@ -7,7 +7,7 @@ import torch
 import torch.optim as optim
 from model.gine_model import GINEModel
 from model.dino_ssl import DINOGraphSSL, cosine_scheduler
-from datahandling.dataloader_creation import create_dataloader_auto
+from datahandling.dataloader_creation import DataLoaderCreator
 from model.config import ModelConfig
 from training.train_manager import TrainingManager
 
@@ -40,42 +40,22 @@ def dino_train(config: ModelConfig):
     # Initialize training manager
     manager = TrainingManager(config)
     
-    # Create dataloader (auto-detects single file vs multi-file)
-    train_loader = create_dataloader_auto(
-        data_path=config.data_path,
-        batch_size=config.batch_size,
-        shuffle=True,
-        seed=config.seed,
-        num_workers=config.num_workers  # Can be increased for multi-file mode
-    )
+    # Create dataloader - everything comes from config
+    creator = DataLoaderCreator(config)
+    train_loader = creator.create_dataloader_auto()
     print(f"✓ DataLoader created with {len(train_loader)} batches\n")
     
     # Initialize GINE student model
-    student_model = GINEModel(
-        num_features=config.num_features,
-        edge_features=config.edge_features,
-        hidden_dim=config.hidden_dim,
-        num_layers=config.num_layers,
-        dropout=config.dropout,
-        epsilon=config.epsilon,
-        projection_hidden_dim=config.projection_hidden_dim,
-        projection_output_dim=config.projection_output_dim,
-        projection_layers=config.projection_layers,
-        head_type=config.head_type  # ← Pass head_type from config
-    )
+    student_model = GINEModel.from_config(config)
     
     num_params = sum(p.numel() for p in student_model.parameters())
     print(f"✓ Model parameters: {num_params:,}\n")
     
     # Initialize DINO SSL framework
-    dino_ssl = DINOGraphSSL(
+    dino_ssl = DINOGraphSSL.from_config(
         student_model=student_model,
+        config=config,
         teacher_model=None,  # Will be created as copy
-        device=config.device,
-        teacher_temp=config.teacher_temp,
-        student_temp=config.student_temp,
-        center_momentum=config.center_momentum,
-        teacher_momentum=config.teacher_momentum
     )
     
     # Optimizer

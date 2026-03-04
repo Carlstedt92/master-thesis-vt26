@@ -9,111 +9,93 @@ from typing import List
 import os
 
 
-def collate_fn(batch: List[Data]):
-    """Apply augmentation to each graph and flatten into a single batch."""
-    augmenter = GraphAugmentation(local_views=4)
-    augmented = [augmenter(data) for data in batch]
-    flat: List[Data] = [view for views in augmented for view in views]
-    return Batch.from_data_list(flat)
+class DataLoaderCreator:
+    """Create DataLoaders using values from a stored config object."""
+    
+    def __init__(self, config):
+        """Initialize with configuration object.
+        
+        Args:
+            config: Configuration object with augmentation parameters (e.g., num_layers for k_hops)
+        """
+        self.config = config
+    
+    def _get_collate_fn(self):
+        """Build collate function using augmentation settings from config."""
+        def collate_fn(batch: List[Data]):
+            """Apply augmentation to each graph and flatten into a single batch."""
+            k_hops = getattr(self.config, 'num_layers', 2)
+            local_views = getattr(self.config, 'local_views', 4)
+            augmenter = GraphAugmentation(local_views=local_views, k_hops=k_hops)
+            augmented = [augmenter(data) for data in batch]
+            flat: List[Data] = [view for views in augmented for view in views]
+            return Batch.from_data_list(flat)
+        return collate_fn
 
-def create_dataloader(csv_path: str, batch_size: int = 32,
-                      shuffle: bool = True, seed: int | None = None) -> DataLoader:
-    dataset = SmilesCsvDataset(csv_path, smiles_col="smiles")
-    generator = None
-    if seed is not None:
+    def _build_generator(self):
+        if self.config.seed is None:
+            return None
         generator = torch.Generator()
-        generator.manual_seed(seed)
-    loader = DataLoader(
-        dataset,
-        batch_size=batch_size,
-        shuffle=shuffle,
-        collate_fn=collate_fn,
-        generator=generator,
-        num_workers=0  # Ensure deterministic behavior
-    )
-    return loader
-
-
-def create_dataloader_auto(data_path: str, batch_size: int = 32,
-                           shuffle: bool = True, seed: int | None = None,
-                           num_workers: int = 0) -> DataLoader:
-    """Auto-detect whether data_path is a file or directory and create appropriate dataloader.
+        generator.manual_seed(self.config.seed)
+        return generator
     
-    Args:
-        data_path: Path to either a CSV file or directory containing .smi files
-        batch_size: Batch size
-        shuffle: Whether to shuffle the data
-        seed: Random seed for reproducibility
-        num_workers: Number of worker processes for data loading
-    
-    Returns:
-        DataLoader that works with either single file or multi-file datasets
-    """
-    if os.path.isdir(data_path):
-        # Multi-file mode: directory containing .smi files
-        print(f"✓ Detected directory mode: loading from {data_path}")
-        return create_multifile_dataloader(
-            data_dir=data_path,
-            batch_size=batch_size,
-            shuffle=shuffle,
-            seed=seed,
-            num_workers=num_workers
+    def create_dataloader(self) -> DataLoader:
+        """Create DataLoader for a single CSV file using stored config.
+        
+        Reads csv_path, batch_size, and seed from config.
+        
+        Returns:
+            DataLoader instance
+        """
+        dataset = SmilesCsvDataset(self.config.data_path, smiles_col="smiles")
+        return DataLoader(
+            dataset,
+            batch_size=self.config.batch_size,
+            shuffle=True,
+            collate_fn=self._get_collate_fn(),
+            generator=self._build_generator(),
+            num_workers=self.config.num_workers,
+            persistent_workers=self.config.num_workers > 0
         )
-    elif os.path.isfile(data_path):
-        # Single file mode: CSV file
-        print(f"✓ Detected single file mode: loading from {data_path}")
-        return create_dataloader(
-            csv_path=data_path,
-            batch_size=batch_size,
-            shuffle=shuffle,
-            seed=seed
+
+    def create_dataloader_auto(self) -> DataLoader:
+        """Auto-detect whether data_path is a file or directory and create appropriate dataloader.
+        
+        Reads data_path, batch_size, seed, and num_workers from stored config.
+
+        Returns:
+            DataLoader that works with either single file or multi-file datasets
+        """
+        data_path = self.config.data_path
+        if os.path.isdir(data_path):
+            # Multi-file mode: directory containing .smi files
+            print(f"✓ Detected directory mode: loading from {data_path}")
+            return self.create_multifile_dataloader()
+        elif os.path.isfile(data_path):
+            # Single file mode: CSV file
+            print(f"✓ Detected single file mode: loading from {data_path}")
+            return self.create_dataloader()
+        else:
+            raise ValueError(f"data_path must be either a file or directory, got: {data_path}")
+
+    def create_multifile_dataloader(self, pattern: str = "*.smi") -> DataLoader:
+        """Create a DataLoader for multiple SMILES files in a directory.
+        
+        Reads data_path, batch_size, seed, and num_workers from stored config.
+        
+        Args:
+            pattern: Glob pattern to match files (default: *.smi)
+        
+        Returns:
+            DataLoader that lazily loads from multiple files
+        """
+        dataset = MultiFileSmilesDataset(self.config.data_path, smiles_col="smiles", pattern=pattern)
+        return DataLoader(
+            dataset,
+            batch_size=self.config.batch_size,
+            shuffle=True,
+            collate_fn=self._get_collate_fn(),
+            generator=self._build_generator(),
+            num_workers=self.config.num_workers,
+            persistent_workers=self.config.num_workers > 0  # Keep workers alive between epochs
         )
-    else:
-        raise ValueError(f"data_path must be either a file or directory, got: {data_path}")
-
-
-def create_multifile_dataloader(data_dir: str, batch_size: int = 32,
-                                 shuffle: bool = True, seed: int | None = None,
-                                 pattern: str = "*.smi", num_workers: int = 0) -> DataLoader:
-    """Create a DataLoader for multiple SMILES files in a directory.
-    
-    Args:
-        data_dir: Directory containing .smi files
-        batch_size: Batch size
-        shuffle: Whether to shuffle the data
-        seed: Random seed for reproducibility
-        pattern: Glob pattern to match files (default: *.smi)
-        num_workers: Number of worker processes for data loading (default: 0)
-    
-    Returns:
-        DataLoader that lazily loads from multiple files
-    """
-    dataset = MultiFileSmilesDataset(data_dir, smiles_col="smiles", pattern=pattern)
-    generator = None
-    if seed is not None:
-        generator = torch.Generator()
-        generator.manual_seed(seed)
-    loader = DataLoader(
-        dataset,
-        batch_size=batch_size,
-        shuffle=shuffle,
-        collate_fn=collate_fn,
-        generator=generator,
-        num_workers=num_workers,
-        persistent_workers=num_workers > 0  # Keep workers alive between epochs
-    )
-    return loader
-
-# Example usage:
-if __name__ == "__main__":
-    # Single file example
-    loader = create_dataloader("data/delaney-processed.csv", batch_size=16)
-    for batch in loader:
-        print("Single file batch:", batch)
-        break
-    
-    # Multi-file example
-    multi_loader = create_multifile_dataloader("data/zinc/zinc_data", batch_size=16)
-    for batch in multi_loader:
-        print("Multi-file batch:", batch)
-        break

@@ -23,11 +23,11 @@ config = ModelConfig(
     edge_features=6, # Dont change this, its determined by the dataset and dataloader
     hidden_dim=128, # GINE hidden dimension
     num_layers=3, # Number of GINE layers
-    dropout=0.5, # Dropout rate for GINE
-    epsilon=0, # Epsilon for GINE
-    projection_hidden_dim=2048, # Hidden dimension for DINO projection head
-    projection_output_dim=256, # Output dimension for DINO projection head
-    projection_layers=3, # Number of layers in DINO projection head
+    dropout=0.0, # Dropout rate for GINE
+    epsilon=0.0, # Epsilon for GINE
+    projection_hidden_dim=256, # Hidden dimension for DINO projection head
+    projection_output_dim=128, # Output dimension for DINO projection head
+    projection_layers=2, # Number of layers in DINO projection head
     num_epochs=40, # Number of training epochs
     batch_size=32, # Number of graphs per batch (before augmentation) Total views per batch = batch_size * (2 global + 4 local) = batch_size * 6
     learning_rate=1e-3, # Learning rate for optimizer

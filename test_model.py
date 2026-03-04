@@ -22,16 +22,9 @@ def load_model(model_path, device):
     model_state_dict = checkpoint['model_state_dict']
     
     # Initialize the model architecture (must match the training config)
-    model = GINEModel(
-        num_features=checkpoint['config']['num_features'],
-        edge_features=checkpoint['config']['edge_features'],
-        hidden_dim=checkpoint['config']['hidden_dim'],
-        num_layers=checkpoint['config']['num_layers'],
-        dropout=checkpoint['config']['dropout'],
-        epsilon=checkpoint['config']['epsilon'],
-        projection_hidden_dim=checkpoint['config']['projection_hidden_dim'],
-        projection_output_dim=checkpoint['config']['projection_output_dim'],
-        projection_layers=checkpoint['config']['projection_layers'],
+    checkpoint_config = ModelConfig.from_dict(checkpoint["config"])
+    model = GINEModel.from_config(
+        checkpoint_config,
         head_type="regression"  # Load with regression head for downstream evaluation
     ).to(device)
     
@@ -139,6 +132,7 @@ def evaluate(model, test_loader, device, manager):
     print(f"Test R^2: {r2:.6f}")
     if manager.loss_history:
         manager.loss_history[-1]["test_loss"] = float(mse)
+        manager.loss_history[-1]["test_r2"] = float(r2)
         manager.save_loss_history()
         manager.save_metadata()
 
@@ -178,19 +172,6 @@ if __name__ == "__main__":
     manager = TrainingManager(finetune_config)
 
     # Create randomly initialized GINE model for comparison
-    random_model = GINEModel(
-        num_features=checkpoint['config']['num_features'],
-        edge_features=checkpoint['config']['edge_features'],
-        hidden_dim=checkpoint['config']['hidden_dim'],
-        num_layers=checkpoint['config']['num_layers'],
-        dropout=checkpoint['config']['dropout'],
-        epsilon=checkpoint['config']['epsilon'],
-        projection_hidden_dim=checkpoint['config']['projection_hidden_dim'],
-        projection_output_dim=checkpoint['config']['projection_output_dim'],
-        projection_layers=checkpoint['config']['projection_layers'],
-        head_type="regression"
-    ).to(device)
-    random_optimizer = torch.optim.Adam(random_model.parameters(), lr=1e-3)
     random_config = ModelConfig(
         name="GINE_random_regression",
         head_type="regression",
@@ -208,6 +189,8 @@ if __name__ == "__main__":
         learning_rate=1e-3
     )
     random_manager = TrainingManager(random_config)
+    random_model = GINEModel.from_config(random_config).to(device)
+    random_optimizer = torch.optim.Adam(random_model.parameters(), lr=1e-3)
  
     # Train the regression head on the training set and track loss history
     train_val_loop(model, train_loader, val_loader, optimizer, device, freeze_epochs, manager)
