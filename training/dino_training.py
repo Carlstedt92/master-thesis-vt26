@@ -142,6 +142,7 @@ def dino_train(config: ModelConfig):
     
     # Save final results
     manager.save_loss_history()
-    manager.save_metadata()
+    manager.save_model_metadata()
+    manager.save_dino_metadata()
     
     return dino_ssl, manager

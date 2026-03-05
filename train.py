@@ -3,6 +3,7 @@
 from training.dino_training import dino_train
 from model.config import ModelConfig
 import torch
+import pandas as pd
 from plotting.loss_plot import load_loss_data, plot_train_val_loss_curves
 from plotting.t_sne_embeddings import plot_tsne_embeddings
 from utils.seed import set_seed
@@ -45,7 +46,15 @@ if __name__ == "__main__":
     set_seed(config.seed)
     if config.head_type == "dino":
         dino_train(config)
-        loss_data = load_loss_data(f"models/{config.name}/loss_history.json")
+        # Load loss history and extract DINO loss data
+        loss_history = load_loss_data(f"models/{config.name}/loss_history.json")
+        # Handle both old (list) and new (dict with DINO_Loss key) formats
+        if isinstance(loss_history, dict) and "DINO_Loss" in loss_history:
+            loss_data = pd.DataFrame(loss_history["DINO_Loss"])
+        else:
+            # Fallback for old format
+            loss_data = loss_history if isinstance(loss_history, pd.DataFrame) else pd.DataFrame(loss_history)
+        
         plot_train_val_loss_curves(loss_data, f"models/{config.name}/loss_curves.png", model_name=config.name)
         plot_tsne_embeddings(
             checkpoint_path=f"models/{config.name}/checkpoints/best_model.pth",

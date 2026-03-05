@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+import json
 
 def load_loss_data(file_path):
     """
@@ -10,9 +11,11 @@ def load_loss_data(file_path):
     file_path (str): The path to the JSON file containing loss data.
 
     Returns:
-    pd.DataFrame: A DataFrame containing the loss data.
+    dict or pd.DataFrame: The loaded loss data structure.
     """
-    return pd.read_json(file_path)
+    with open(file_path, 'r') as f:
+        data = json.load(f)
+    return data
 
 def plot_train_val_loss_curves(loss_data, output_path, model_name="Model"):
     """

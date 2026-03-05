@@ -16,7 +16,7 @@ def smiles_to_pygdata(smiles: str):
     """
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
-        raise ValueError(f"Invalid SMILES string: {smiles}")
+        mol = Chem.MolFromSmiles('')  # Create an empty molecule for invalid SMILES
     mol = Chem.AddHs(mol)
 
     # Define mapping for bond types to incides for one-hot encoding

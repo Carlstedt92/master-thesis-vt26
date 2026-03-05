@@ -96,6 +96,8 @@ def train_val_loop(model, train_loader, val_loader, optimizer, device, freeze_ep
         model.eval()
         val_loss = 0.0
         val_batches = 0
+        val_preds = []
+        val_targets = []
         with torch.no_grad():
             for batch in val_loader:
                 batch = batch.to(device)
@@ -103,18 +105,36 @@ def train_val_loop(model, train_loader, val_loader, optimizer, device, freeze_ep
                 batch_loss = torch.nn.functional.mse_loss(outputs, batch.y.float())
                 val_loss += batch_loss.item()
                 val_batches += 1
+                val_preds.append(outputs.cpu().numpy())
+                val_targets.append(batch.y.cpu().numpy())
 
         avg_val_loss = val_loss / val_batches if val_batches else 0.0
-        manager.record_loss(epoch, avg_loss, val_loss=avg_val_loss)
+        
+        # Calculate regression metrics for validation
+        val_preds = np.concatenate(val_preds)
+        val_targets = np.concatenate(val_targets)
+        val_mse = mean_squared_error(val_targets, val_preds)
+        val_rmse = np.sqrt(val_mse)
+        val_r2 = r2_score(val_targets, val_preds)
+        
+        manager.record_eval_metrics(
+            "regression",
+            epoch,
+            train_mse=avg_loss,
+            val_mse=val_mse,
+            val_rmse=val_rmse,
+            val_r2=val_r2
+        )
         print(
-            f"Epoch {epoch+1}/{num_epochs}, Train Loss: {avg_loss:.6f}, "
-            f"Val Loss: {avg_val_loss:.6f}"
+            f"Epoch {epoch+1}/{num_epochs}, Train MSE: {avg_loss:.6f}, "
+            f"Val MSE: {val_mse:.6f}, Val RMSE: {val_rmse:.6f}, Val R²: {val_r2:.4f}"
         )
     manager.save_loss_history()
-    manager.save_metadata()
+    manager.save_model_metadata()
+    manager.save_regression_metadata()
 
-def evaluate(model, test_loader, device, manager):
-    """Evaluate the model on the test set."""
+def evaluate(model, test_loader, device):
+    """Evaluate the model on the test set and return metrics."""
     model.eval()
     all_preds = []
     all_targets = []
@@ -127,14 +147,12 @@ def evaluate(model, test_loader, device, manager):
     all_preds = np.concatenate(all_preds)
     all_targets = np.concatenate(all_targets)
     mse = mean_squared_error(all_targets, all_preds)
+    rmse = np.sqrt(mse)
     r2 = r2_score(all_targets, all_preds)
     print(f"\nTest MSE: {mse:.6f}")
-    print(f"Test R^2: {r2:.6f}")
-    if manager.loss_history:
-        manager.loss_history[-1]["test_loss"] = float(mse)
-        manager.loss_history[-1]["test_r2"] = float(r2)
-        manager.save_loss_history()
-        manager.save_metadata()
+    print(f"Test RMSE: {rmse:.6f}")
+    print(f"Test R²: {r2:.6f}")
+    return {"mse": mse, "rmse": rmse, "r2": r2}
 
 if __name__ == "__main__":
     SEED = 42
@@ -195,39 +213,74 @@ if __name__ == "__main__":
     # Train the regression head on the training set and track loss history
     train_val_loop(model, train_loader, val_loader, optimizer, device, freeze_epochs, manager)
     train_val_loop(random_model, train_loader, val_loader, random_optimizer, device, 0, random_manager)
+    
     # Evaluate the model on the test set
-    evaluate(model, test_loader, device, manager)
-    evaluate(random_model, test_loader, device, random_manager)
-    # Plot training loss curves
-    loss_data = pd.DataFrame(manager.loss_history)
-    output_path = f"models/{finetune_name}/loss_curves.png"
-    plot_train_val_loss_curves(loss_data, output_path, model_name=finetune_name)
+    test_metrics = evaluate(model, test_loader, device)
+    random_test_metrics = evaluate(random_model, test_loader, device)
+    
+    # Record final test metrics
+    final_epoch = len(manager.eval_loss_history.get("regression", [])) - 1
+    if final_epoch >= 0:
+        manager.record_eval_metrics(
+            "regression",
+            final_epoch,
+            test_mse=test_metrics["mse"],
+            test_rmse=test_metrics["rmse"],
+            test_r2=test_metrics["r2"]
+        )
+    
+    random_final_epoch = len(random_manager.eval_loss_history.get("regression", [])) - 1
+    if random_final_epoch >= 0:
+        random_manager.record_eval_metrics(
+            "regression",
+            random_final_epoch,
+            test_mse=random_test_metrics["mse"],
+            test_rmse=random_test_metrics["rmse"],
+            test_r2=random_test_metrics["r2"]
+        )
+    
+    manager.save_loss_history()
+    manager.save_model_metadata()
+    manager.save_regression_metadata()
+    random_manager.save_loss_history()
+    random_manager.save_model_metadata()
+    random_manager.save_regression_metadata()
+    
+    # Plot regression metrics curves
+    if "regression" in manager.eval_loss_history:
+        loss_data = pd.DataFrame(manager.eval_loss_history["regression"])
+        # Rename columns for plotting (train_mse -> train_loss, val_mse -> val_loss for compatibility)
+        plot_data = loss_data[['epoch', 'train_mse', 'val_mse']].copy()
+        plot_data.columns = ['epoch', 'train_loss', 'val_loss']
+        output_path = f"models/{finetune_name}/loss_curves.png"
+        plot_train_val_loss_curves(plot_data, output_path, model_name=finetune_name)
 
-    random_loss_data = pd.DataFrame(random_manager.loss_history)
-    random_output_path = f"models/{random_config.name}/loss_curves.png"
-    plot_train_val_loss_curves(random_loss_data, random_output_path, model_name=random_config.name)
+    if "regression" in random_manager.eval_loss_history:
+        random_loss_data = pd.DataFrame(random_manager.eval_loss_history["regression"])
+        random_plot_data = random_loss_data[['epoch', 'train_mse', 'val_mse']].copy()
+        random_plot_data.columns = ['epoch', 'train_loss', 'val_loss']
+        random_output_path = f"models/{random_config.name}/loss_curves.png"
+        plot_train_val_loss_curves(random_plot_data, random_output_path, model_name=random_config.name)
 
     print(f"✓ Training loss curves saved to {output_path}")
     # Plot loss curves for both models in the same figure for comparison
-    fig, ax = plt.subplots(2,1,figsize=(10, 6))
-    ax[0].plot(loss_data['epoch'], loss_data['train_loss'], label=f'{finetune_name} Train Loss', marker='o')
-    ax[0].plot(loss_data['epoch'], loss_data['val_loss'], label=f'{finetune_name} Val Loss', marker='o')
-    ax[0].set_title(f'Training and Validation Loss Curves for {finetune_name}')
-    ax[0].set_xlabel('Epoch')
-    ax[0].set_ylabel('Loss')
-    ax[0].legend()
-    ax[1].plot(random_loss_data['epoch'], random_loss_data['train_loss'], label=f'{random_config.name} Train Loss', marker='o')
-    ax[1].plot(random_loss_data['epoch'], random_loss_data['val_loss'], label=f'{random_config.name} Val Loss', marker='o')
-    ax[1].set_title(f'Training and Validation Loss Curves for {random_config.name}')
-    ax[1].set_xlabel('Epoch')
-    ax[1].set_ylabel('Loss')
-    ax[1].legend()
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.tight_layout()
+    if "regression" in manager.eval_loss_history and "regression" in random_manager.eval_loss_history:
+        fig, ax = plt.subplots(2,1,figsize=(10, 6))
+        ax[0].plot(plot_data['epoch'], plot_data['train_loss'], label=f'{finetune_name} Train MSE', marker='o')
+        ax[0].plot(plot_data['epoch'], plot_data['val_loss'], label=f'{finetune_name} Val MSE', marker='o')
+        ax[0].set_title(f'Training and Validation MSE Curves for {finetune_name}')
+        ax[0].set_xlabel('Epoch')
+        ax[0].set_ylabel('MSE')
+        ax[0].legend()
+        ax[1].plot(random_plot_data['epoch'], random_plot_data['train_loss'], label=f'{random_config.name} Train MSE', marker='o')
+        ax[1].plot(random_plot_data['epoch'], random_plot_data['val_loss'], label=f'{random_config.name} Val MSE', marker='o')
+        ax[1].set_title(f'Training and Validation MSE Curves for {random_config.name}')
+        ax[1].set_xlabel('Epoch')
+        ax[1].set_ylabel('MSE')
+        ax[1].legend()
+        plt.tight_layout()
 
-    plt.legend()
-    comparison_output_path = f"models/{finetune_name}_vs_{random_config.name}_comparison_loss_curves.png"
-    plt.savefig(comparison_output_path)
-    plt.close()
-    print(f"✓ Comparison loss curves saved to {comparison_output_path}")
+        comparison_output_path = f"models/{finetune_name}_vs_{random_config.name}_comparison_loss_curves.png"
+        plt.savefig(comparison_output_path)
+        plt.close()
+        print(f"✓ Comparison loss curves saved to {comparison_output_path}")

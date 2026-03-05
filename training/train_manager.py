@@ -21,12 +21,15 @@ class TrainingManager:
         self.config = config
         self.model_dir = self._setup_directories()
         self.checkpoint_dir = os.path.join(self.model_dir, "checkpoints")
-        self.loss_history: List[Dict[str, float | None]] = []
+        # Separate loss histories for DINO SSL and downstream evaluation
+        self.dino_loss_history: List[Dict[str, float | None]] = []
+        self.eval_loss_history: Dict[str, List[Dict[str, Any]]] = {}
         self.best_loss = float('inf')
         self.start_time = datetime.now()
         
         # Save config
         self._save_config()
+        self._initialize_metadata_file()
     
     def _setup_directories(self) -> str:
         """Create model directory structure.
@@ -49,27 +52,70 @@ class TrainingManager:
         with open(config_path, 'w') as f:
             json.dump(self.config.to_dict(), f, indent=2)
         print(f"✓ Config saved: {config_path}")
+
+    def _initialize_metadata_file(self):
+        """Ensure metadata.json exists and contains a valid object."""
+        metadata_path = os.path.join(self.model_dir, "metadata.json")
+        if not os.path.exists(metadata_path):
+            with open(metadata_path, 'w') as f:
+                json.dump({}, f, indent=2)
+            print(f"✓ Metadata initialized: {metadata_path}")
+
+    def _read_metadata(self) -> Dict[str, Any]:
+        """Read metadata.json safely."""
+        metadata_path = os.path.join(self.model_dir, "metadata.json")
+        if not os.path.exists(metadata_path):
+            return {}
+
+        try:
+            with open(metadata_path, 'r') as f:
+                data = json.load(f)
+            return data if isinstance(data, dict) else {}
+        except (json.JSONDecodeError, FileNotFoundError):
+            return {}
+
+    def _write_metadata(self, metadata: Dict[str, Any]):
+        """Write metadata.json."""
+        metadata_path = os.path.join(self.model_dir, "metadata.json")
+        with open(metadata_path, 'w') as f:
+            json.dump(metadata, f, indent=2)
+
+    def _update_metadata_section(self, section_name: str, section_data: Dict[str, Any]):
+        """Merge a metadata section into metadata.json."""
+        metadata = self._read_metadata()
+        metadata[section_name] = section_data
+        self._write_metadata(metadata)
     
-    def record_loss(self, epoch: int, train_loss: float,
-                    val_loss: float | None = None,
-                    test_loss: float | None = None):
-        """Record losses for an epoch.
+    def record_loss(self, epoch: int, train_loss: float):
+        """Record DINO SSL training loss for an epoch.
         
         Args:
             epoch: Current epoch number (0-indexed)
             train_loss: Average training loss for the epoch
-            val_loss: Optional validation loss for the epoch
-            test_loss: Optional test loss for the epoch
         """
-        self.loss_history.append({
+        self.dino_loss_history.append({
             "epoch": epoch + 1,
             "train_loss": float(train_loss),
-            "val_loss": None if val_loss is None else float(val_loss),
-            "test_loss": None if test_loss is None else float(test_loss),
         })
         
         if train_loss < self.best_loss:
             self.best_loss = train_loss
+    
+    def record_eval_metrics(self, method_name: str, epoch: int, **metrics):
+        """Record evaluation metrics for downstream tasks.
+        
+        Args:
+            method_name: Name of evaluation method (e.g., 'regression', 'classification')
+            epoch: Current epoch number (0-indexed)
+            **metrics: Variable metrics (e.g., mse, rmse, r2 for regression)
+        """
+        if method_name not in self.eval_loss_history:
+            self.eval_loss_history[method_name] = []
+        
+        record = {"epoch": epoch + 1}
+        record.update({k: float(v) if isinstance(v, (int, float)) else v 
+                      for k, v in metrics.items()})
+        self.eval_loss_history[method_name].append(record)
     
     def save_checkpoint(self, epoch: int, model, optimizer, loss: float, 
                        is_best: bool = False):
@@ -106,72 +152,114 @@ class TrainingManager:
             print(f"  ✓ Best model saved (loss: {loss:.6f})")
 
     def save_loss_history(self):
-        """Save loss history to JSON."""
+        """Save structured loss history to JSON."""
         history_path = os.path.join(self.model_dir, "loss_history.json")
-        history_records = self.loss_history
+        
+        history_records = {
+            "DINO_Loss": self.dino_loss_history,
+            "Evaluation_Loss": self.eval_loss_history
+        }
+        
         with open(history_path, 'w') as f:
             json.dump(history_records, f, indent=2)
         print(f"✓ Loss history saved: {history_path}")
     
-    def save_metadata(self):
-        """Save training metadata and summary."""
+    def save_model_metadata(self):
+        """Save model-level metadata under 'Model data'."""
         elapsed_time = datetime.now() - self.start_time
-        
-        train_losses = [entry["train_loss"] for entry in self.loss_history]
-        val_losses = [entry["val_loss"] for entry in self.loss_history if entry["val_loss"] is not None]
-        test_losses = [entry["test_loss"] for entry in self.loss_history if entry["test_loss"] is not None]
 
-        metadata = {
-            'model_name': self.config.name,
-            'data_path': self.config.data_path,
-            'head_type': self.config.head_type,
+        model_data = {
+            'name': self.config.name,
             'seed': self.config.seed,
-            'best_loss': float(self.best_loss),
-            'best_epoch': train_losses.index(self.best_loss) + 1 if train_losses else 0,
-            'final_loss': float(train_losses[-1]) if train_losses else None,
-            'total_epochs': len(self.loss_history),
+            'head_type': self.config.head_type,
             'training_time_seconds': elapsed_time.total_seconds(),
             'training_time_hours': elapsed_time.total_seconds() / 3600,
             'timestamp': self.start_time.isoformat(),
         }
 
-        if val_losses:
-            best_val_loss = min(val_losses)
-            metadata.update({
-                'best_val_loss': float(best_val_loss),
-                'best_val_epoch': next(
-                    entry["epoch"] for entry in self.loss_history
-                    if entry["val_loss"] is not None and entry["val_loss"] == best_val_loss
-                ),
-                'final_val_loss': float(val_losses[-1]),
+        self._update_metadata_section('Model data', model_data)
+        print(f"✓ Model metadata saved: {os.path.join(self.model_dir, 'metadata.json')}")
+
+    def save_dino_metadata(self):
+        """Save DINO training metadata under 'DINO_data'."""
+        train_losses = [entry["train_loss"] for entry in self.dino_loss_history]
+        if not train_losses:
+            print("✓ DINO metadata skipped: no DINO training history")
+            return
+
+        dino_data = {
+            'data_path': self.config.data_path,
+            'best_loss': float(self.best_loss),
+            'best_epoch': train_losses.index(self.best_loss) + 1,
+            'final_loss': float(train_losses[-1]),
+            'total_epochs': len(self.dino_loss_history),
+        }
+
+        self._update_metadata_section('DINO_data', dino_data)
+        print(f"✓ DINO metadata saved: {os.path.join(self.model_dir, 'metadata.json')}")
+        print(f"  Best loss: {dino_data['best_loss']:.6f} (epoch {dino_data['best_epoch']})")
+        print(f"  Final loss: {dino_data['final_loss']:.6f}")
+
+    def save_regression_metadata(self):
+        """Save regression evaluation metadata under 'Regression_data'."""
+        regression_history = self.eval_loss_history.get('regression', [])
+        if not regression_history:
+            print("✓ Regression metadata skipped: no regression history")
+            return
+
+        final_regression = regression_history[-1]
+        regression_data = {
+            'total_epochs': len(regression_history),
+            'final_metrics': final_regression,
+        }
+
+        val_mse_entries = [
+            entry for entry in regression_history
+            if entry.get('val_mse') is not None
+        ]
+        if val_mse_entries:
+            best_val_entry = min(val_mse_entries, key=lambda entry: entry['val_mse'])
+            regression_data.update({
+                'best_val_mse': float(best_val_entry['val_mse']),
+                'best_val_epoch': int(best_val_entry['epoch']),
             })
 
-        if test_losses:
-            best_test_loss = min(test_losses)
-            metadata.update({
-                'best_test_loss': float(best_test_loss),
-                'best_test_epoch': next(
-                    entry["epoch"] for entry in self.loss_history
-                    if entry["test_loss"] is not None and entry["test_loss"] == best_test_loss
-                ),
-                'final_test_loss': float(test_losses[-1]),
+        self._update_metadata_section('Regression_data', regression_data)
+        print(f"✓ Regression metadata saved: {os.path.join(self.model_dir, 'metadata.json')}")
+
+    def save_classification_metadata(self):
+        """Save classification evaluation metadata under 'Classification_data'."""
+        classification_history = self.eval_loss_history.get('classification', [])
+        if not classification_history:
+            print("✓ Classification metadata skipped: no classification history")
+            return
+
+        final_classification = classification_history[-1]
+        classification_data = {
+            'total_epochs': len(classification_history),
+            'final_metrics': final_classification,
+        }
+
+        val_entries = [
+            entry for entry in classification_history
+            if entry.get('val_roc_auc') is not None
+        ]
+        if val_entries:
+            best_val_entry = max(val_entries, key=lambda entry: entry['val_roc_auc'])
+            classification_data.update({
+                'best_val_roc_auc': float(best_val_entry['val_roc_auc']),
+                'best_val_epoch': int(best_val_entry['epoch']),
             })
-        
-        metadata_path = os.path.join(self.model_dir, "metadata.json")
-        with open(metadata_path, 'w') as f:
-            json.dump(metadata, f, indent=2)
-        
-        print(f"\n✓ Training metadata saved: {metadata_path}")
-        print(f"\nTraining Summary:")
-        print(f"  Best loss: {metadata['best_loss']:.6f} (epoch {metadata['best_epoch']})")
-        print(f"  Final loss: {metadata['final_loss']:.6f}")
-        if 'best_val_loss' in metadata:
-            print(f"  Best val loss: {metadata['best_val_loss']:.6f} (epoch {metadata['best_val_epoch']})")
-            print(f"  Final val loss: {metadata['final_val_loss']:.6f}")
-        if 'best_test_loss' in metadata:
-            print(f"  Best test loss: {metadata['best_test_loss']:.6f} (epoch {metadata['best_test_epoch']})")
-            print(f"  Final test loss: {metadata['final_test_loss']:.6f}")
-        print(f"  Total time: {metadata['training_time_hours']:.2f} hours")
+
+        self._update_metadata_section('Classification_data', classification_data)
+        print(f"✓ Classification metadata saved: {os.path.join(self.model_dir, 'metadata.json')}")
+
+    def save_metadata(self):
+        """Backward-compatible metadata save wrapper."""
+        self.save_model_metadata()
+        self.save_dino_metadata()
+        self.save_regression_metadata()
+        self.save_classification_metadata()
     
     def load_checkpoint(self, checkpoint_path: str, model, optimizer=None):
         """Load a checkpoint.
@@ -201,12 +289,12 @@ class TrainingManager:
         Returns:
             Dictionary with training metrics
         """
-        if not self.loss_history:
+        if not self.dino_loss_history:
             return {}
         
-        train_losses = [entry["train_loss"] for entry in self.loss_history]
+        train_losses = [entry["train_loss"] for entry in self.dino_loss_history]
         return {
-            'current_epoch': len(self.loss_history),
+            'current_epoch': len(self.dino_loss_history),
             'current_loss': train_losses[-1],
             'best_loss': min(train_losses),
             'best_epoch': train_losses.index(min(train_losses)) + 1,

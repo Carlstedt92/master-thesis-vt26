@@ -127,7 +127,7 @@ def plot_tsne_embeddings(checkpoint_path: str, output_path: str = "tsne_embeddin
         )
         label = color_label if color_label else target
         plt.colorbar(scatter, label=label)
-        plt.title(f"t-SNE of GINE Embeddings (colored by {label})")
+        plt.title(f"t-SNE of GINE Embeddings (colored by {label}) - {config.name}")
     else:
         plt.scatter(
             embeddings_2d[:, 0], 
@@ -136,7 +136,7 @@ def plot_tsne_embeddings(checkpoint_path: str, output_path: str = "tsne_embeddin
             s=20,
             color='blue'
         )
-        plt.title("t-SNE of GINE Embeddings")
+        plt.title(f"t-SNE of GINE Embeddings - {config.name}")
     
     plt.xlabel("t-SNE Dimension 1")
     plt.ylabel("t-SNE Dimension 2")
