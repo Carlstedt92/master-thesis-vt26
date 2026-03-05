@@ -11,12 +11,12 @@ from datahandling.dataset_creation import SmilesCsvDataset
 from torch.utils.data import DataLoader
 
 config = ModelConfig(
-    name="GINE_DINO", # Model identifier (used for saving checkpoints and metadata)
+    name="GINE_DINO_ZINC", # Model identifier (used for saving checkpoints and metadata)
     head_type="dino", # Options: "dino", "regression"
     # Single file mode: provide path to CSV file
-    data_path="data/delaney-processed.csv", # Path to dataset CSV file
+    #data_path="data/delaney-processed.csv", # Path to dataset CSV file
     # Multi-file mode: provide path to directory containing .smi files
-    # data_path="data/zinc/zinc_data",  # Uncomment for ZINC dataset (156 files, 1.35M molecules)
+    data_path="data/zinc/zinc_data",  # Uncomment for ZINC dataset (156 files, 1.35M molecules)
     seed = 42, # Random seed for reproducibility
     device="cuda" if torch.cuda.is_available() else "cpu", # Device to train on (cuda or cpu)
     num_workers=0, # Number of worker processes for data loading (0 = main process)
@@ -59,7 +59,7 @@ if __name__ == "__main__":
         plot_tsne_embeddings(
             checkpoint_path=f"models/{config.name}/checkpoints/best_model.pth",
             output_path=f"models/{config.name}/tsne_embeddings.png",
-            target = "measured log solubility in mols per litre",
-            task = "regression",
+            #target = "measured log solubility in mols per litre",
+            #task = "regression",
             smiles_col = "smiles"
         )
