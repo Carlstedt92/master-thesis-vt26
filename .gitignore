@@ -1,6 +1,9 @@
 # Ignore files in data folder
 data/*
 
+# Ignore model checkpoints
+models/*/checkpoints/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

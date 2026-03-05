@@ -1,0 +1,33 @@
+{
+  "model": "RandomForestRegressor",
+  "seed": 42,
+  "data_path": "data/delaney-processed.csv",
+  "target": "measured log solubility in mols per litre",
+  "feature_columns": [
+    "Minimum Degree",
+    "Molecular Weight",
+    "Number of H-Bond Donors",
+    "Number of Rings",
+    "Number of Rotatable Bonds",
+    "Polar Surface Area"
+  ],
+  "splits": {
+    "train": 902,
+    "val": 112,
+    "test": 114
+  },
+  "metrics": {
+    "train": {
+      "mse": 0.12106289212211739,
+      "r2": 0.971928265770956
+    },
+    "val": {
+      "mse": 0.6830782721155456,
+      "r2": 0.8681876994933604
+    },
+    "test": {
+      "mse": 0.7157480020616354,
+      "r2": 0.8294802533447552
+    }
+  }
+}

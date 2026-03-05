@@ -1,0 +1,36 @@
+{
+  "Model data": {
+    "name": "GINE_DINO",
+    "seed": 42,
+    "head_type": "dino",
+    "training_time_seconds": 1096.689808,
+    "training_time_hours": 0.3046360577777778,
+    "timestamp": "2026-03-05T15:38:07.516585"
+  },
+  "DINO_data": {
+    "data_path": "data/delaney-processed.csv",
+    "best_loss": 0.005705546109109289,
+    "best_epoch": 38,
+    "final_loss": 0.005707260505813692,
+    "total_epochs": 40
+  },
+  "KNN_eval": {
+    "dataset": "HIV",
+    "evaluation_method": "KNN (k-Nearest Neighbors) with distance weights",
+    "cv_folds": 5,
+    "best_k": 11,
+    "cv_metrics": {
+      "roc_auc": 0.7745,
+      "pr_auc": 0.3547,
+      "f1": 0.3452
+    },
+    "test_metrics": {
+      "roc_auc": 0.7569,
+      "pr_auc": 0.3225,
+      "f1": 0.3385,
+      "balanced_accuracy": 0.612
+    },
+    "n_samples": 41120,
+    "timestamp": "2026-03-05T16:05:38.558804"
+  }
+}

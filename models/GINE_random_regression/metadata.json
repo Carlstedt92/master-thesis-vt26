@@ -1,0 +1,21 @@
+{
+  "Model data": {
+    "name": "GINE_random_regression",
+    "seed": 42,
+    "head_type": "regression",
+    "training_time_seconds": 126.340482,
+    "training_time_hours": 0.035094578333333334,
+    "timestamp": "2026-03-05T15:58:24.949000"
+  },
+  "Regression_data": {
+    "total_epochs": 41,
+    "final_metrics": {
+      "epoch": 40,
+      "test_mse": 0.43067729473114014,
+      "test_rmse": 0.656260081622477,
+      "test_r2": 0.8973954916000366
+    },
+    "best_val_mse": 0.4999564588069916,
+    "best_val_epoch": 22
+  }
+}
