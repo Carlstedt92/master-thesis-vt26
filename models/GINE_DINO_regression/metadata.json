@@ -3,9 +3,9 @@
     "name": "GINE_DINO_regression",
     "seed": 42,
     "head_type": "regression",
-    "training_time_seconds": 126.345368,
-    "training_time_hours": 0.035095935555555555,
-    "timestamp": "2026-03-05T15:58:24.942698"
+    "training_time_seconds": 177.603817,
+    "training_time_hours": 0.04933439361111111,
+    "timestamp": "2026-03-06T10:45:10.287616"
   },
   "Regression_data": {
     "total_epochs": 41,

@@ -1,0 +1,21 @@
+{
+  "Model data": {
+    "name": "GINE_DINO_0f_regression",
+    "seed": 42,
+    "head_type": "regression",
+    "training_time_seconds": 163.181804,
+    "training_time_hours": 0.045328278888888886,
+    "timestamp": "2026-03-06T10:50:40.664619"
+  },
+  "Regression_data": {
+    "total_epochs": 41,
+    "final_metrics": {
+      "epoch": 40,
+      "test_mse": 0.4370057284832001,
+      "test_rmse": 0.6610640880302,
+      "test_r2": 0.8958877921104431
+    },
+    "best_val_mse": 0.43765920400619507,
+    "best_val_epoch": 39
+  }
+}

@@ -3,9 +3,9 @@
     "name": "GINE_random_regression",
     "seed": 42,
     "head_type": "regression",
-    "training_time_seconds": 126.340482,
-    "training_time_hours": 0.035094578333333334,
-    "timestamp": "2026-03-05T15:58:24.949000"
+    "training_time_seconds": 163.181504,
+    "training_time_hours": 0.045328195555555555,
+    "timestamp": "2026-03-06T10:50:40.666190"
   },
   "Regression_data": {
     "total_epochs": 41,

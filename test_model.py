@@ -69,7 +69,7 @@ def create_dataloaders(dataset, batch_size, seed):
     )
     return train_loader, val_loader, test_loader
 
-def train_val_loop(model, train_loader, val_loader, optimizer, device, freeze_epochs, manager):
+def train_val_loop(model, train_loader, val_loader, optimizer, device, freeze_epochs, manager, save_checkpoint = False):
     """Train the model and validate after each epoch."""
     num_epochs = manager.config.num_epochs
     for epoch in range(num_epochs):
@@ -94,21 +94,14 @@ def train_val_loop(model, train_loader, val_loader, optimizer, device, freeze_ep
         
         avg_loss = epoch_loss / num_batches
         model.eval()
-        val_loss = 0.0
-        val_batches = 0
         val_preds = []
         val_targets = []
         with torch.no_grad():
             for batch in val_loader:
                 batch = batch.to(device)
                 outputs = model(batch.x, batch.edge_index, batch.edge_attr, batch.batch)
-                batch_loss = torch.nn.functional.mse_loss(outputs, batch.y.float())
-                val_loss += batch_loss.item()
-                val_batches += 1
                 val_preds.append(outputs.cpu().numpy())
                 val_targets.append(batch.y.cpu().numpy())
-
-        avg_val_loss = val_loss / val_batches if val_batches else 0.0
         
         # Calculate regression metrics for validation
         val_preds = np.concatenate(val_preds)
@@ -129,6 +122,12 @@ def train_val_loop(model, train_loader, val_loader, optimizer, device, freeze_ep
             f"Epoch {epoch+1}/{num_epochs}, Train MSE: {avg_loss:.6f}, "
             f"Val MSE: {val_mse:.6f}, Val RMSE: {val_rmse:.6f}, Val R²: {val_r2:.4f}"
         )
+
+        # Check if this is the best model based on validation MSE
+        is_best = manager.is_best_eval_metric("regression", val_mse)
+
+        if save_checkpoint:
+            manager.save_checkpoint(epoch, model, optimizer, metric_value = val_mse, is_best=is_best)
     manager.save_loss_history()
     manager.save_model_metadata()
     manager.save_regression_metadata()
@@ -167,14 +166,14 @@ if __name__ == "__main__":
 
     # Load the trained model
     model_name = "GINE_DINO" # Change this to the name of your trained model
-    finetune_name = f"{model_name}_regression"
+    finetune_name = f"{model_name}_0f_regression"
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model_path = f"models/{model_name}/checkpoints/best_model.pth"  # Path to the best checkpoint
     model, checkpoint = load_model(model_path, device)
     print(f"✓ Model loaded successfully from {model_path}")
 
     # Set up training manager for finetuning
-    freeze_epochs = 101  # Number of epochs to keep encoder frozen during finetuning
+    freeze_epochs = 0  # Number of epochs to keep encoder frozen during finetuning
     finetune_lr = 1e-4
     for p in model.encoder.parameters():
         p.requires_grad = False  # Freeze encoder parameters for warmup
@@ -212,7 +211,7 @@ if __name__ == "__main__":
  
     # Train the regression head on the training set and track loss history
     train_val_loop(model, train_loader, val_loader, optimizer, device, freeze_epochs, manager)
-    train_val_loop(random_model, train_loader, val_loader, random_optimizer, device, 0, random_manager)
+    train_val_loop(random_model, train_loader, val_loader, random_optimizer, device, 0, random_manager, save_checkpoint=True)
     
     # Evaluate the model on the test set
     test_metrics = evaluate(model, test_loader, device)

@@ -24,7 +24,9 @@ class TrainingManager:
         # Separate loss histories for DINO SSL and downstream evaluation
         self.dino_loss_history: List[Dict[str, float | None]] = []
         self.eval_loss_history: Dict[str, List[Dict[str, Any]]] = {}
-        self.best_loss = float('inf')
+        self.best_loss = float('inf')  # For DINO training
+        self.best_eval_metric = None  # For validation metrics (MSE for regression, ROC-AUC for classification)
+        self.best_eval_epoch = None
         self.start_time = datetime.now()
         
         # Save config
@@ -102,7 +104,7 @@ class TrainingManager:
             self.best_loss = train_loss
     
     def record_eval_metrics(self, method_name: str, epoch: int, **metrics):
-        """Record evaluation metrics for downstream tasks.
+        """Record evaluation metrics for downstream tasks and track best metric.
         
         Args:
             method_name: Name of evaluation method (e.g., 'regression', 'classification')
@@ -116,23 +118,39 @@ class TrainingManager:
         record.update({k: float(v) if isinstance(v, (int, float)) else v 
                       for k, v in metrics.items()})
         self.eval_loss_history[method_name].append(record)
+        
+        # Track best validation metric
+        if method_name == 'regression' and 'val_mse' in metrics:
+            current_metric = float(metrics['val_mse'])
+            # Lower is better for MSE
+            if self.best_eval_metric is None or current_metric < self.best_eval_metric:
+                self.best_eval_metric = current_metric
+                self.best_eval_epoch = epoch + 1
+        elif method_name == 'classification' and 'val_roc_auc' in metrics:
+            current_metric = float(metrics['val_roc_auc'])
+            # Higher is better for ROC-AUC
+            if self.best_eval_metric is None or current_metric > self.best_eval_metric:
+                self.best_eval_metric = current_metric
+                self.best_eval_epoch = epoch + 1
     
-    def save_checkpoint(self, epoch: int, model, optimizer, loss: float, 
-                       is_best: bool = False):
+    def save_checkpoint(self, epoch: int, model, optimizer, loss: float = None, 
+                       is_best: bool = False, metric_value: float = None):
         """Save model checkpoint.
         
         Args:
             epoch: Current epoch number (0-indexed)
             model: Model to save
             optimizer: Optimizer state
-            loss: Loss value for this checkpoint
+            loss: Loss value for this checkpoint (optional, for DINO training)
             is_best: Whether this is the best model so far
+            metric_value: Evaluation metric value for this checkpoint (optional)
         """
         checkpoint = {
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
-            'loss': loss,
+            'loss': loss if loss is not None else 0.0,
+            'eval_metric': metric_value,
             'config': self.config.to_dict(),
         }
         
@@ -149,7 +167,12 @@ class TrainingManager:
         if is_best:
             best_path = os.path.join(self.checkpoint_dir, "best_model.pth")
             torch.save(checkpoint, best_path)
-            print(f"  ✓ Best model saved (loss: {loss:.6f})")
+            if metric_value is not None:
+                print(f"  ✓ Best model saved (eval metric: {metric_value:.6f})")
+            elif loss is not None:
+                print(f"  ✓ Best model saved (loss: {loss:.6f})")
+            else:
+                print(f"  ✓ Best model saved")
 
     def save_loss_history(self):
         """Save structured loss history to JSON."""
@@ -299,3 +322,25 @@ class TrainingManager:
             'best_loss': min(train_losses),
             'best_epoch': train_losses.index(min(train_losses)) + 1,
         }
+    
+    def is_best_eval_metric(self, method_name: str, metric_value: float) -> bool:
+        """Check if the current metric is the best so far.
+        
+        Args:
+            method_name: Task name ('regression' or 'classification')
+            metric_value: Current metric value (val_mse or val_roc_auc)
+            
+        Returns:
+            True if this is the best metric so far
+        """
+        if self.best_eval_metric is None:
+            return True
+        
+        if method_name == 'regression':
+            # Lower is better for MSE
+            return metric_value < self.best_eval_metric
+        elif method_name == 'classification':
+            # Higher is better for ROC-AUC
+            return metric_value > self.best_eval_metric
+        
+        return False
