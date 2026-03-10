@@ -18,7 +18,9 @@ config = ModelConfig(
     data_path="data/zinc/zinc_data",  # Uncomment for ZINC dataset (156 files, 1.35M molecules)
     seed = 42, # Random seed for reproducibility
     device="cuda" if torch.cuda.is_available() else "cpu", # Device to train on (cuda or cpu)
-    num_workers=0, # Number of worker processes for data loading (0 = main process)
+    num_workers=16, # Number of worker processes for data loading (0 = main process)
+    local_views=2, # Number of local augmented views per graph (default: 4)
+    k_hops=2, # Number of hops for local subgraph extraction (default: num_layers)
     num_features=20, # Dont change this, its determined by the dataset and dataloader
     edge_features=6, # Dont change this, its determined by the dataset and dataloader
     hidden_dim=128, # GINE hidden dimension
@@ -28,8 +30,8 @@ config = ModelConfig(
     projection_hidden_dim=256, # Hidden dimension for DINO projection head
     projection_output_dim=128, # Output dimension for DINO projection head
     projection_layers=2, # Number of layers in DINO projection head
-    num_epochs=40, # Number of training epochs
-    batch_size=32, # Number of graphs per batch (before augmentation) Total views per batch = batch_size * (2 global + 4 local) = batch_size * 6
+    num_epochs=100, # Number of training epochs
+    batch_size=1024, # Number of graphs per batch (before augmentation) Total views per batch = batch_size * (2 global + 4 local) = batch_size * 6
     learning_rate=1e-3, # Learning rate for optimizer
     weight_decay=1e-5, # Weight decay for optimizer
     teacher_temp=0.04, # Temperature for teacher in DINO

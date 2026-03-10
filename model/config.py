@@ -15,7 +15,9 @@ class ModelConfig:
     seed: int = 42                      # Random seed for reproducibility
     device: str = "cuda" if torch.cuda.is_available() else "cpu" # Device to train on (cuda or cpu)
     num_workers: int = 0                # Number of worker processes for data loading (0 = main process)
-    
+    local_views: int = 4                # Number of local augmented views per graph (default: 4)
+    k_hops: int = 2                     # Number of hops for local subgraph extraction
+
     # Data dimensions
     num_features: int = 20              # Node feature dimension
     edge_features: int = 6              # Edge attribute dimension

@@ -10,6 +10,7 @@ from model.dino_ssl import DINOGraphSSL, cosine_scheduler
 from datahandling.dataloader_creation import DataLoaderCreator
 from model.config import ModelConfig
 from training.train_manager import TrainingManager
+import time
 
 
 def dino_train(config: ModelConfig):
@@ -33,8 +34,9 @@ def dino_train(config: ModelConfig):
     print(f"  Batch size: {config.batch_size} graphs")
     print(f"  Learning rate: {config.learning_rate}")
     print(f"  Layers: {config.num_layers}, Hidden dim: {config.hidden_dim}")
-    print(f"  Views per graph: 2 global + 4 local = 6 total")
-    print(f"  Effective batch size: {config.batch_size * 6} views")
+    local_views = getattr(config, 'local_views', 4)
+    print(f"  Views per graph: 2 global + {local_views} local = {2 + local_views} total")
+    print(f"  Effective batch size: {config.batch_size * (2 + local_views)} views")
     print()
 
     # Initialize training manager
@@ -88,11 +90,18 @@ def dino_train(config: ModelConfig):
     # Training loop
     iteration = 0
     
+    # Training time tracking
+    start_time = time.time()
+
     for epoch in range(config.num_epochs):
         epoch_loss = 0
         num_batches = 0
         
+        batch_load_start = time.time()
         for batch_idx, batch in enumerate(train_loader):
+            batch_load_time = time.time() - batch_load_start
+            batch_start_time = time.time()
+            
             # Update learning rate
             for param_group in optimizer.param_groups:
                 param_group['lr'] = lr_schedule[iteration]
@@ -104,11 +113,15 @@ def dino_train(config: ModelConfig):
             # Teacher will automatically filter for global views (view==1)
             # Student sees all views
             # Loss computed between matching graph_idx
+            train_step_start = time.time()
             loss = dino_ssl.train_step(batch, optimizer)
+            train_step_time = time.time() - train_step_start
             
             epoch_loss += loss
             num_batches += 1
             iteration += 1
+            
+            total_batch_time = time.time() - batch_start_time
             
             # Print progress
             if batch_idx % 10 == 0:
@@ -120,13 +133,25 @@ def dino_train(config: ModelConfig):
                 num_local = (batch['view'] == 0).sum().item()
                 num_unique_graphs = len(torch.unique(batch['graph_idx']))
                 
+                # GPU memory usage
+                gpu_mem_allocated = torch.cuda.memory_allocated() / 1e9  # GB
+                gpu_mem_reserved = torch.cuda.memory_reserved() / 1e9  # GB
+                
                 print(f"Epoch [{epoch+1}/{config.num_epochs}] "
                       f"Batch [{batch_idx}/{len(train_loader)}] "
                       f"Loss: {loss:.4f} | "
+                      f"Load: {batch_load_time:.3f}s | "
+                      f"Train: {train_step_time:.3f}s | "
+                      f"Total: {total_batch_time:.3f}s | "
+                      f"GPU Mem: {gpu_mem_allocated:.2f}/{gpu_mem_reserved:.2f}GB | "
+                      f"Elapsed Time: {(time.time() - start_time)/60:.2f} min | "
                       f"Graphs: {num_unique_graphs} "
                       f"(Global: {num_global}, Local: {num_local}) | "
                       f"LR: {current_lr:.6f}",
                       f"Teacher Momentum: {current_momentum:.4f}")
+            
+            # Start timing for next batch load (at end of every iteration)
+            batch_load_start = time.time()
         
         # Epoch summary
         avg_loss = epoch_loss / num_batches

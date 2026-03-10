@@ -61,7 +61,11 @@ def smiles_to_pygdata(smiles: str):
         features = atom_type_onehot + features + hybridization_onehot
         node_features.append(features)
 
-    node_features = torch.tensor(node_features)
+    # Keep node features as float for stable collation across all molecules.
+    if node_features:
+        node_features = torch.tensor(node_features, dtype=torch.float)
+    else:
+        node_features = torch.empty((0, 20), dtype=torch.float)
 
     # Extract bond information
     edge_index = []
@@ -95,7 +99,10 @@ def smiles_to_pygdata(smiles: str):
     else:
         edge_features = np.empty((0, len(bond_type_mapping) + 2))
 
-    edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
+    if edge_index:
+        edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
+    else:
+        edge_index = torch.empty((2, 0), dtype=torch.long)
     edge_features = torch.tensor(edge_features, dtype=torch.float)
 
     return Data(x= node_features, edge_index=edge_index, edge_attr=edge_features)

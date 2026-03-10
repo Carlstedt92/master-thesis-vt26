@@ -7,6 +7,7 @@ import torch
 from torch.utils.data import DataLoader
 from typing import List
 import os
+import time
 
 
 class DataLoaderCreator:
@@ -22,14 +23,32 @@ class DataLoaderCreator:
     
     def _get_collate_fn(self):
         """Build collate function using augmentation settings from config."""
+        def _normalize_dtypes(data: Data) -> Data:
+            """Enforce stable tensor dtypes expected by PyG batching and model code."""
+            if hasattr(data, 'x') and data.x is not None:
+                data.x = data.x.float()
+            if hasattr(data, 'edge_attr') and data.edge_attr is not None:
+                data.edge_attr = data.edge_attr.float()
+            if hasattr(data, 'edge_index') and data.edge_index is not None:
+                data.edge_index = data.edge_index.long()
+            if hasattr(data, 'graph_idx') and data.graph_idx is not None:
+                data.graph_idx = data.graph_idx.long()
+            if 'view' in data and data['view'] is not None:
+                data['view'] = data['view'].long()
+            return data
+
         def collate_fn(batch: List[Data]):
             """Apply augmentation to each graph and flatten into a single batch."""
-            k_hops = getattr(self.config, 'num_layers', 2)
+            k_hops = getattr(self.config, 'k_hops', 2)
             local_views = getattr(self.config, 'local_views', 4)
             augmenter = GraphAugmentation(local_views=local_views, k_hops=k_hops)
+            aug_start = time.time()
             augmented = [augmenter(data) for data in batch]
-            flat: List[Data] = [view for views in augmented for view in views]
-            return Batch.from_data_list(flat)
+            aug_end = time.time()
+            print(f"✓ Augmentation time: {aug_end - aug_start:.2f} seconds")
+            flat: List[Data] = [_normalize_dtypes(view_data) for views in augmented for view_data in views]
+            result = Batch.from_data_list(flat)
+            return result
         return collate_fn
 
     def _build_generator(self):

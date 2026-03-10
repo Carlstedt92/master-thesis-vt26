@@ -2,6 +2,7 @@
 import random
 import torch
 from torch_geometric.data import Data
+from torch_geometric.utils import k_hop_subgraph
 
 class GraphAugmentation:
     def __init__(self, local_views=4, k_hops=2):
@@ -28,27 +29,18 @@ class GraphAugmentation:
         # Select random center atom
         center_atom_idx = random.randint(0, num_atoms - 1)
         
-        # Find k-hop neighbors
-        edge_index = data.edge_index
-        neighbors_list = self.k_hop_subgraph(center_atom_idx, num_hops, edge_index)
+        # Use PyG's efficient k_hop_subgraph function
+        # Returns: subset (node indices), edge_index (remapped), mapping, edge_mask
+        subset, new_edge_index, mapping, edge_mask = k_hop_subgraph(
+            node_idx=center_atom_idx,
+            num_hops=num_hops,
+            edge_index=data.edge_index,
+            relabel_nodes=True,
+            num_nodes=num_atoms
+        )
         
-        # Create node index mapping
-        node_map = {old_idx: new_idx for new_idx, old_idx in enumerate(neighbors_list)}
-        
-        # Extract node features
-        mask = torch.zeros(num_atoms, dtype=torch.bool)
-        for idx in neighbors_list:
-            mask[idx] = True
-        new_x = data.x[mask]
-        
-        # Extract edges within the subgraph
-        edge_mask = mask[edge_index[0]] & mask[edge_index[1]]
-        new_edge_index = edge_index[:, edge_mask].clone()
-        
-        # Remap edge indices to match subgraph node ordering
-        for i in range(new_edge_index.size(1)):
-            new_edge_index[0, i] = node_map[new_edge_index[0, i].item()]
-            new_edge_index[1, i] = node_map[new_edge_index[1, i].item()]
+        # Extract node features for the subset
+        new_x = data.x[subset]
         
         # Extract edge attributes if they exist
         new_edge_attr = None
@@ -63,20 +55,6 @@ class GraphAugmentation:
             graph_idx=data.graph_idx.clone() if hasattr(data, 'graph_idx') else None,
             view=torch.tensor([0], dtype=torch.long)  # 0 = local
         )
-
-    # Function for creating K-hop neighbor subgraph
-    def k_hop_subgraph(self, node_idx, num_hops, edge_index):
-        neighbors = set([node_idx])
-        for _ in range(num_hops):
-            new_neighbors = set()
-            for neighbor in neighbors:
-                for i in range(edge_index.size(1)):
-                    if edge_index[0, i].item() == neighbor:
-                        new_neighbors.add(edge_index[1, i].item())
-                    elif edge_index[1, i].item() == neighbor:
-                        new_neighbors.add(edge_index[0, i].item())
-            neighbors.update(new_neighbors)
-        return sorted(list(neighbors))
 
     def __call__(self, data):
         """Generate multiple augmented views of the input graph."""
