@@ -3,8 +3,9 @@ from rdkit import Chem
 from torch_geometric.data import Data
 import torch
 import numpy as np
+from typing import Optional
 
-def smiles_to_pygdata(smiles: str):
+def smiles_to_pygdata(smiles: str) -> Optional[Data]:
     """ Convert a SMILES string to a graph representation suitable for GNNs.
 
     Args:
@@ -16,7 +17,7 @@ def smiles_to_pygdata(smiles: str):
     """
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
-        mol = Chem.MolFromSmiles('')  # Create an empty molecule for invalid SMILES
+        return None
     mol = Chem.AddHs(mol)
 
     # Define mapping for bond types to incides for one-hot encoding
@@ -112,7 +113,8 @@ def smiles_to_pygdata(smiles: str):
 if __name__ == "__main__":
     smiles = "CCO"
     data = smiles_to_pygdata(smiles)
-    print(data.x.shape)  # Node features shape
-    print(data.edge_index.shape)  # Edge indices shape
-    print(data.edge_attr.shape)  # Edge attributes shape
-    print(data)
+    if data is not None:
+        print(data.x.shape)  # Node features shape
+        print(data.edge_index.shape)  # Edge indices shape
+        print(data.edge_attr.shape)  # Edge attributes shape
+        print(data)

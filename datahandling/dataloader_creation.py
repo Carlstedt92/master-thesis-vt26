@@ -5,7 +5,7 @@ from .graph_augmentation import GraphAugmentation
 from .dataset_creation import SmilesCsvDataset, MultiFileSmilesDataset
 import torch
 from torch.utils.data import DataLoader
-from typing import List
+from typing import List, Optional
 import os
 import time
 
@@ -37,15 +37,16 @@ class DataLoaderCreator:
                 data['view'] = data['view'].long()
             return data
 
-        def collate_fn(batch: List[Data]):
+        def collate_fn(batch: List[Optional[Data]]):
             """Apply augmentation to each graph and flatten into a single batch."""
+            valid_batch = [data for data in batch if data is not None]
+            if not valid_batch:
+                return None
+
             k_hops = getattr(self.config, 'k_hops', 2)
             local_views = getattr(self.config, 'local_views', 4)
             augmenter = GraphAugmentation(local_views=local_views, k_hops=k_hops)
-            aug_start = time.time()
-            augmented = [augmenter(data) for data in batch]
-            aug_end = time.time()
-            print(f"✓ Augmentation time: {aug_end - aug_start:.2f} seconds")
+            augmented = [augmenter(data) for data in valid_batch]
             flat: List[Data] = [_normalize_dtypes(view_data) for views in augmented for view_data in views]
             result = Batch.from_data_list(flat)
             return result

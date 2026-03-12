@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 import csv
 import torch
 from .graph_creation import smiles_to_pygdata
-from typing import List, Sequence, Union, Tuple
+from typing import List, Sequence, Union, Tuple, Optional
 import os
 import glob
 
@@ -44,12 +44,15 @@ class SmilesCsvDataset(Dataset):
     def __len__(self) -> int:
         return len(self._index)
 
-    def __getitem__(self, idx: int) -> Data:
+    def __getitem__(self, idx: int) -> Optional[Data]:
         with open(self.csv_path, "r", newline="") as handle:
             handle.seek(self._index[idx])
             reader = csv.DictReader(handle, fieldnames=self._fieldnames)
             row = next(reader)
         data = smiles_to_pygdata(row[self.smiles_col])
+        if data is None:
+            return None
+
         if self.target:
             is_regression = self.task == "regression"
             dtype = torch.float if is_regression else torch.long
@@ -126,23 +129,22 @@ class MultiFileSmilesDataset(Dataset):
     def __len__(self) -> int:
         return len(self._index)
 
-    def __getitem__(self, idx: int) -> Data:
+    def __getitem__(self, idx: int) -> Optional[Data]:
         """Load a single graph by reading the appropriate line from the appropriate file."""
         file_path, offset, fieldnames = self._index[idx]
-        
+
         with open(file_path, "r") as handle:
             handle.seek(offset)
             line = handle.readline().strip()
-            
-            # Parse whitespace-delimited data
-            values = line.split()
-            row = dict(zip(fieldnames, values))
-        
-        # Convert SMILES to graph
+
+        values = line.split()
+        row = dict(zip(fieldnames, values))
         smiles = row[self.smiles_col]
         data = smiles_to_pygdata(smiles)
-        
+        if data is None:
+            return None
+
         # Add global index for tracking
         data.graph_idx = torch.tensor([idx])
-        
+
         return data

@@ -96,11 +96,20 @@ def dino_train(config: ModelConfig):
     for epoch in range(config.num_epochs):
         epoch_loss = 0
         num_batches = 0
+        epoch_trained_graphs = 0
         
         batch_load_start = time.time()
         for batch_idx, batch in enumerate(train_loader):
             batch_load_time = time.time() - batch_load_start
             batch_start_time = time.time()
+
+            if batch is None:
+                # All samples in this worker batch were invalid SMILES.
+                batch_load_start = time.time()
+                continue
+
+            num_unique_graphs = len(torch.unique(batch['graph_idx']))
+            epoch_trained_graphs += num_unique_graphs
             
             # Update learning rate
             for param_group in optimizer.param_groups:
@@ -131,8 +140,6 @@ def dino_train(config: ModelConfig):
                 # Count views in batch for reporting
                 num_global = (batch['view'] == 1).sum().item()
                 num_local = (batch['view'] == 0).sum().item()
-                num_unique_graphs = len(torch.unique(batch['graph_idx']))
-                
                 # GPU memory usage
                 gpu_mem_allocated = torch.cuda.memory_allocated() / 1e9  # GB
                 gpu_mem_reserved = torch.cuda.memory_reserved() / 1e9  # GB
@@ -154,12 +161,21 @@ def dino_train(config: ModelConfig):
             batch_load_start = time.time()
         
         # Epoch summary
+        if num_batches == 0:
+            raise RuntimeError("No valid batches produced. Check dataset for invalid SMILES.")
+
+        total_graphs_in_epoch = len(train_loader.dataset)
+        epoch_invalid_graphs = total_graphs_in_epoch - epoch_trained_graphs
+        valid_pct = (epoch_trained_graphs / total_graphs_in_epoch) * 100 if total_graphs_in_epoch > 0 else 0.0
+
         avg_loss = epoch_loss / num_batches
         is_best = avg_loss < manager.best_loss
         manager.record_loss(epoch, avg_loss)
         
         print(f"\n{'='*70}")
         print(f"Epoch {epoch+1}/{config.num_epochs} Summary: Avg Loss = {avg_loss:.6f}")
+        print(f"Graphs trained this epoch: {epoch_trained_graphs}/{total_graphs_in_epoch} ({valid_pct:.2f}% valid)")
+        print(f"Invalid SMILES skipped this epoch: {epoch_invalid_graphs}")
         print(f"{'='*70}\n")
         
         # Save checkpoints
