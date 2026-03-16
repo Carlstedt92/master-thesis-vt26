@@ -32,12 +32,22 @@ def dino_train(config: ModelConfig):
     print(f"  Head type: {config.head_type}")
     print(f"  Epochs: {config.num_epochs}")
     print(f"  Batch size: {config.batch_size} graphs")
-    print(f"  Learning rate: {config.learning_rate}")
+    print(f"  Learning rate (configured): {config.learning_rate}")
     print(f"  Layers: {config.num_layers}, Hidden dim: {config.hidden_dim}")
     local_views = getattr(config, 'local_views', 4)
     print(f"  Views per graph: 2 global + {local_views} local = {2 + local_views} total")
-    print(f"  Effective batch size: {config.batch_size * (2 + local_views)} views")
+    effective_batch_size = config.batch_size * (2 + local_views)
+    print(f"  Effective batch size: {effective_batch_size} views")
     print()
+
+    # Optional DINO-style linear LR scaling rule: lr = base * (batch_size / reference_batch_size)
+    if getattr(config, "auto_scale_lr", False):
+        scaled_learning_rate = config.lr_scale_base * (
+            config.batch_size / config.lr_scale_reference_batch_size
+        )
+    else:
+        scaled_learning_rate = config.learning_rate
+    print(f"  Learning rate (used): {scaled_learning_rate}")
 
     # Initialize training manager
     manager = TrainingManager(config)
@@ -63,18 +73,28 @@ def dino_train(config: ModelConfig):
     # Optimizer
     optimizer = optim.AdamW(
         dino_ssl.student.parameters(),
-        lr=config.learning_rate,
-        weight_decay=config.weight_decay
+        lr=scaled_learning_rate,
+        weight_decay=config.weight_decay_start
     )
     
     # Learning rate scheduler
     lr_schedule = cosine_scheduler(
-        base_value=config.learning_rate,
+        base_value=scaled_learning_rate,
         final_value=config.final_learning_rate,
         epochs=config.num_epochs,
         niter_per_ep=len(train_loader),
         warmup_epochs=config.warmup_epochs,
         start_warmup_value=0.0
+    )
+
+    # Weight decay cosine schedule (paper-style: 0.04 -> 0.4)
+    wd_schedule = cosine_scheduler(
+        base_value=config.weight_decay_start,
+        final_value=config.weight_decay_end,
+        epochs=config.num_epochs,
+        niter_per_ep=len(train_loader),
+        warmup_epochs=0,
+        start_warmup_value=config.weight_decay_start,
     )
     
     # Teacher momentum scheduler
@@ -84,6 +104,17 @@ def dino_train(config: ModelConfig):
         epochs=config.num_epochs,
         niter_per_ep=len(train_loader)
     )
+
+    # Teacher temperature schedule: linear warmup then hold final value.
+    warmup_iters = int(config.teacher_temp_warmup_epochs * len(train_loader))
+    total_iters = int(config.num_epochs * len(train_loader))
+    if warmup_iters > 0:
+        warmup_temp = torch.linspace(config.teacher_temp, config.teacher_temp_final, warmup_iters)
+    else:
+        warmup_temp = torch.tensor([], dtype=torch.float32)
+    remain_iters = max(total_iters - warmup_iters, 0)
+    hold_temp = torch.full((remain_iters,), float(config.teacher_temp_final), dtype=torch.float32)
+    teacher_temp_schedule = torch.cat((warmup_temp, hold_temp)).numpy()
     
     print("Starting training...\n")
     
@@ -114,9 +145,13 @@ def dino_train(config: ModelConfig):
             # Update learning rate
             for param_group in optimizer.param_groups:
                 param_group['lr'] = lr_schedule[iteration]
+                param_group['weight_decay'] = wd_schedule[iteration]
             
             # Update teacher momentum
             dino_ssl.teacher_momentum = momentum_schedule[iteration]
+
+            # Update teacher temperature (loss-side teacher softmax temperature)
+            dino_ssl.loss_fn.teacher_temp = float(teacher_temp_schedule[iteration])
             
             # Training step - batch contains all augmented views
             # Teacher will automatically filter for global views (view==1)
@@ -136,6 +171,8 @@ def dino_train(config: ModelConfig):
             if batch_idx % 10 == 0:
                 current_lr = lr_schedule[iteration-1]
                 current_momentum = momentum_schedule[iteration-1]
+                current_wd = wd_schedule[iteration-1]
+                current_teacher_temp = teacher_temp_schedule[iteration-1]
                 
                 # Count views in batch for reporting
                 num_global = (batch['view'] == 1).sum().item()
@@ -155,7 +192,9 @@ def dino_train(config: ModelConfig):
                       f"Graphs: {num_unique_graphs} "
                       f"(Global: {num_global}, Local: {num_local}) | "
                       f"LR: {current_lr:.6f}",
-                      f"Teacher Momentum: {current_momentum:.4f}")
+                      f"Teacher Momentum: {current_momentum:.4f}",
+                      f"WD: {current_wd:.4f}",
+                      f"Teacher Temp: {current_teacher_temp:.4f}")
             
             # Start timing for next batch load (at end of every iteration)
             batch_load_start = time.time()

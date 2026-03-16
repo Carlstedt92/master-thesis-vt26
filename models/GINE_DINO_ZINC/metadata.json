@@ -1,1 +1,46 @@
-{}
+{
+  "Model data": {
+    "name": "GINE_DINO_ZINC",
+    "seed": 42,
+    "head_type": "dino",
+    "training_time_seconds": 381981.128554,
+    "training_time_hours": 106.10586904277778,
+    "timestamp": "2026-03-10T07:54:59.805516"
+  },
+  "DINO_data": {
+    "data_path": "data/zinc/zinc_data",
+    "best_loss": 0.005528271611450232,
+    "best_epoch": 35,
+    "final_loss": 0.00552829637357038,
+    "total_epochs": 100
+  },
+  "KNN_eval_PDBbind": {
+    "dataset": "PDBbind",
+    "data_source": "deepchem.molnet.load_pdbbind",
+    "pdbbind_set": "core",
+    "pdbbind_task": "-logKd/Ki",
+    "pdbbind_data_dir": "data/deepchem_pdbbind",
+    "pocket": true,
+    "evaluation_method": "KNN (k-Nearest Neighbors) with distance weights",
+    "cv_folds": 5,
+    "best_k": 21,
+    "cv_metrics": {
+      "r2": 0.0737,
+      "rmse": 2.057,
+      "mae": 1.7367
+    },
+    "test_metrics": {
+      "r2": 0.3865,
+      "mse": 2.9127,
+      "rmse": 1.7067,
+      "mae": 1.4144
+    },
+    "n_samples": 182,
+    "n_deepchem_samples": 193,
+    "n_skipped_non_finite_targets": 0,
+    "n_missing_ligand_files": 0,
+    "n_invalid_ligand_mols": 11,
+    "n_invalid_smiles": 0,
+    "timestamp": "2026-03-16T07:43:48.377956"
+  }
+}

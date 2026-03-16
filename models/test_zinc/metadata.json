@@ -1,0 +1,17 @@
+{
+  "Model data": {
+    "name": "test_zinc",
+    "seed": 42,
+    "head_type": "dino",
+    "training_time_seconds": 15.05754,
+    "training_time_hours": 0.0041826499999999996,
+    "timestamp": "2026-03-16T11:35:41.936750"
+  },
+  "DINO_data": {
+    "data_path": "data/zinc/zinc_data",
+    "best_loss": 4.602675533294677,
+    "best_epoch": 1,
+    "final_loss": 4.602675533294677,
+    "total_epochs": 1
+  }
+}

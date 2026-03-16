@@ -36,11 +36,18 @@ class ModelConfig:
     # Training parameters
     num_epochs: int = 100               # Number of training epochs
     batch_size: int = 32                # Batch size (number of graphs)
+    auto_scale_lr: bool = False         # Apply linear LR scaling from effective batch size
+    lr_scale_base: float = 5e-4         # Base LR in the linear scaling rule
+    lr_scale_reference_batch_size: int = 256  # Reference batch size for LR scaling rule
     learning_rate: float = 0.0005       # Initial learning rate
-    weight_decay: float = 0.04          # AdamW weight decay
+    weight_decay: float = 0.04          # Kept for backward compatibility
+    weight_decay_start: float = 0.04    # Start value for cosine weight decay schedule
+    weight_decay_end: float = 0.4       # End value for cosine weight decay schedule
     
     # DINO SSL parameters
     teacher_temp: float = 0.04          # Temperature for teacher softmax
+    teacher_temp_final: float = 0.07    # Final teacher temperature after warmup
+    teacher_temp_warmup_epochs: int = 30  # Epochs for linear teacher temp warmup
     student_temp: float = 0.1           # Temperature for student softmax
     teacher_momentum: float = 0.996     # EMA momentum for teacher network
     center_momentum: float = 0.9        # EMA momentum for loss center

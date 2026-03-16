@@ -1,0 +1,79 @@
+{
+  "Model data": {
+    "name": "GINO_DINO_DELANEY",
+    "seed": 42,
+    "head_type": "dino",
+    "training_time_seconds": 594.668131,
+    "training_time_hours": 0.16518559194444446,
+    "timestamp": "2026-03-16T10:00:25.074918"
+  },
+  "DINO_data": {
+    "data_path": "data/delaney-processed.csv",
+    "best_loss": 4.645002086957295,
+    "best_epoch": 6,
+    "final_loss": 4.848005374272664,
+    "total_epochs": 100
+  },
+  "KNN_eval": {
+    "dataset": "HIV",
+    "data_source": "deepchem.molnet.load_hiv",
+    "splitter": "scaffold",
+    "task": "HIV_active",
+    "evaluation_method": "KNN (k-Nearest Neighbors) with distance weights",
+    "best_k": 11,
+    "validation_metrics": {
+      "roc_auc": 0.739,
+      "pr_auc": 0.2554,
+      "f1": 0.2727
+    },
+    "test_metrics": {
+      "roc_auc": 0.7191,
+      "pr_auc": 0.32,
+      "f1": 0.3563,
+      "balanced_accuracy": 0.6176
+    },
+    "n_deepchem_train": 32896,
+    "n_deepchem_val": 4112,
+    "n_deepchem_test": 4112,
+    "n_train": 32896,
+    "n_val": 4112,
+    "n_test": 4112,
+    "n_invalid_smiles_train": 0,
+    "n_invalid_smiles_val": 0,
+    "n_invalid_smiles_test": 0,
+    "timestamp": "2026-03-16T10:56:50.258785"
+  },
+  "KNN_eval_PDBbind": {
+    "dataset": "PDBbind",
+    "data_source": "deepchem.molnet.load_pdbbind",
+    "protocol": "single_set_train_val_test_split",
+    "pdbbind_set": "core",
+    "splitter": "random",
+    "pdbbind_task": "-logKd/Ki",
+    "pdbbind_data_dir": "data/deepchem_pdbbind",
+    "pocket": true,
+    "evaluation_method": "KNN (k-Nearest Neighbors) with distance weights",
+    "best_k": 41,
+    "validation_metrics": {
+      "r2": -0.1286,
+      "rmse": 2.2818,
+      "mae": 1.7427
+    },
+    "test_metrics": {
+      "r2": 0.343,
+      "mse": 3.6324,
+      "rmse": 1.9059,
+      "mae": 1.5701
+    },
+    "n_deepchem_train": 154,
+    "n_deepchem_val": 19,
+    "n_deepchem_test": 20,
+    "n_train": 143,
+    "n_val": 19,
+    "n_test": 20,
+    "n_invalid_smiles_train": 0,
+    "n_invalid_smiles_val": 0,
+    "n_invalid_smiles_test": 0,
+    "timestamp": "2026-03-16T10:58:29.640671"
+  }
+}

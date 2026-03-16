@@ -24,9 +24,9 @@ class DINOLoss(nn.Module):
             teacher_output: (batch_size, out_dim) tensor from teacher
         """
         student_out = student_output / self.student_temp
-        
-        # Teacher sharpening (simplified - no centering initially to debug)
-        teacher_out = F.softmax(teacher_output / self.teacher_temp, dim=-1)
+
+        # Proper DINO teacher branch: center then sharpen.
+        teacher_out = F.softmax((teacher_output - self.center) / self.teacher_temp, dim=-1)
         teacher_out = teacher_out.detach()  # Stop gradient
         
         # Cross-entropy loss: KL divergence
@@ -176,9 +176,9 @@ class DINOGraphSSL:
                 global_batch
             )
         
-        # Compute DINO loss: compare student outputs with teacher outputs by graph_idx
+        # Compute DINO loss by matching student/teacher graph_idx pairs.
+        # Vectorized implementation avoids Python-side nested loops.
         loss = torch.tensor(0.0, device=self.device, requires_grad=True)
-        num_comparisons = 0
         
         # Get graph_idx for each view (concatenated tensor)
         # batch['graph_idx'] is concatenated across all graphs in batch
@@ -188,30 +188,22 @@ class DINOGraphSSL:
         
         teacher_graph_idx = student_graph_idx[global_indices]  # Only global views
         
-        # Collect all losses to properly accumulate gradients
-        losses = []
-        
-        # For each student output, find matching teacher outputs
-        for s_idx in range(num_graphs):
-            s_gid = student_graph_idx[s_idx]
-            
-            # Find teacher outputs with matching graph_idx
-            matching_teacher_mask = (teacher_graph_idx == s_gid)
-            matching_teacher_indices = torch.where(matching_teacher_mask)[0]
-            
-            if len(matching_teacher_indices) > 0:
-                # Compare with all matching teacher views
-                for t_rel_idx in matching_teacher_indices:
-                    # Compute loss between student view and teacher view
-                    sample_loss = self.loss_fn(
-                        student_out_all[s_idx:s_idx+1], 
-                        teacher_out[t_rel_idx:t_rel_idx+1]
-                    )
-                    losses.append(sample_loss)
-        
-        # Compute mean loss from all comparisons
-        if len(losses) > 0:
-            loss = torch.mean(torch.stack(losses))
+        # Pairwise cross-entropy matrix:
+        # pair_loss[t, s] = -sum( teacher_prob[t] * log_softmax(student_logits[s]) )
+        student_log_probs = F.log_softmax(student_out_all / self.loss_fn.student_temp, dim=-1)
+        teacher_probs = F.softmax(
+            (teacher_out - self.loss_fn.center) / self.loss_fn.teacher_temp,
+            dim=-1,
+        ).detach()
+        pair_loss = -torch.matmul(teacher_probs, student_log_probs.T)
+
+        # Keep only student/teacher pairs that came from the same source graph.
+        # Shape: [num_teacher_views, num_student_views]
+        match_mask = teacher_graph_idx.unsqueeze(1) == student_graph_idx.unsqueeze(0)
+        num_matches = match_mask.sum()
+
+        if num_matches > 0:
+            loss = pair_loss[match_mask].mean()
         else:
             loss = torch.tensor(0.0, device=self.device, requires_grad=True)
         
