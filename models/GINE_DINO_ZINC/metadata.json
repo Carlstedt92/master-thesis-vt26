@@ -42,5 +42,68 @@
     "n_invalid_ligand_mols": 11,
     "n_invalid_smiles": 0,
     "timestamp": "2026-03-16T07:43:48.377956"
+  },
+  "KNN_eval_LIPO": {
+    "dataset": "LIPO",
+    "data_source": "deepchem.molnet.load_lipo",
+    "splitter": "random",
+    "task": "exp",
+    "k_values": [
+      3,
+      5,
+      11,
+      21,
+      31,
+      41,
+      51
+    ],
+    "fingerprint": {
+      "type": "Morgan",
+      "radius": 2,
+      "nbits": 2048
+    },
+    "embeddings_model": "GINE_DINO_ZINC",
+    "embeddings": {
+      "best_k": 21,
+      "validation_metrics": {
+        "r2": 0.3498,
+        "rmse": 1.0081,
+        "mae": 0.772
+      },
+      "test_metrics": {
+        "r2": 0.309,
+        "mse": 1.0389,
+        "rmse": 1.0193,
+        "mae": 0.7724
+      },
+      "n_train": 3360,
+      "n_val": 420,
+      "n_test": 420,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "fingerprints": {
+      "best_k": 11,
+      "validation_metrics": {
+        "r2": 0.3071,
+        "rmse": 1.0407,
+        "mae": 0.7921
+      },
+      "test_metrics": {
+        "r2": 0.3535,
+        "mse": 0.9721,
+        "rmse": 0.986,
+        "mae": 0.7535
+      },
+      "n_train": 3360,
+      "n_val": 420,
+      "n_test": 420,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "plot_path": "models/GINE_DINO_ZINC/knn_lipo_embeddings_vs_fingerprints.png",
+    "timestamp": "2026-03-16T13:51:29.740716"
   }
 }
