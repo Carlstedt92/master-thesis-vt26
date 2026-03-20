@@ -10,7 +10,7 @@ from datahandling.dataset_creation import SmilesCsvDataset
 from torch.utils.data import DataLoader
 
 config = ModelConfig(
-    name="GINE_DINO_ZINC_2", # Model identifier (used for saving checkpoints and metadata)
+    name="GDZ_2Layer", # Model identifier (used for saving checkpoints and metadata)
     head_type="dino", # Options: "dino", "regression"
     # Single file mode: provide path to CSV file
     #data_path="data/delaney-processed.csv", # Path to dataset CSV file
@@ -33,7 +33,7 @@ config = ModelConfig(
     num_epochs=100, # Number of training epochs
     batch_size=1024, # Number of graphs per batch (before augmentation) Total views per batch = batch_size * (2 global + 4 local) = batch_size * 6
     auto_scale_lr=True, # Use linear LR scaling from effective batch size
-    lr_scale_base=5e-4, # Paper base LR used in scaling rule
+    lr_scale_base=2.5e-4, # Paper base LR used in scaling rule
     lr_scale_reference_batch_size=256, # Reference batch size used in scaling rule
     learning_rate=1e-3, # Ignored when auto_scale_lr=True
     weight_decay=0.04, # Kept for backward compatibility

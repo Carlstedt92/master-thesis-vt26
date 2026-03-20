@@ -5,6 +5,7 @@ Supports modular training with configurable models saved to models/{model_name}/
 
 import torch
 import torch.optim as optim
+import math
 from model.gine_model import GINEModel
 from model.dino_ssl import DINOGraphSSL, cosine_scheduler
 from datahandling.dataloader_creation import DataLoaderCreator
@@ -124,10 +125,17 @@ def dino_train(config: ModelConfig):
     # Training time tracking
     start_time = time.time()
 
+    collapse_loss_ref = math.log(float(config.projection_output_dim))
+
     for epoch in range(config.num_epochs):
         epoch_loss = 0
         num_batches = 0
         epoch_trained_graphs = 0
+        epoch_diag_sums = {
+            "teacher_entropy": 0.0,
+            "student_entropy": 0.0,
+            "embedding_std": 0.0,
+        }
         
         batch_load_start = time.time()
         for batch_idx, batch in enumerate(train_loader):
@@ -158,43 +166,47 @@ def dino_train(config: ModelConfig):
             # Student sees all views
             # Loss computed between matching graph_idx
             train_step_start = time.time()
-            loss = dino_ssl.train_step(batch, optimizer)
+            step_info = dino_ssl.train_step(batch, optimizer)
             train_step_time = time.time() - train_step_start
-            
+            loss = step_info["loss"]
+            step_metrics = step_info.get("metrics", {})
+
             epoch_loss += loss
             num_batches += 1
             iteration += 1
+            for key in epoch_diag_sums:
+                epoch_diag_sums[key] += float(step_metrics.get(key, 0.0))
             
             total_batch_time = time.time() - batch_start_time
             
             # Print progress
-            if batch_idx % 10 == 0:
-                current_lr = lr_schedule[iteration-1]
-                current_momentum = momentum_schedule[iteration-1]
-                current_wd = wd_schedule[iteration-1]
-                current_teacher_temp = teacher_temp_schedule[iteration-1]
+            # if batch_idx % 10 == 0:
+            #     current_lr = lr_schedule[iteration-1]
+            #     current_momentum = momentum_schedule[iteration-1]
+            #     current_wd = wd_schedule[iteration-1]
+            #     current_teacher_temp = teacher_temp_schedule[iteration-1]
                 
-                # Count views in batch for reporting
-                num_global = (batch['view'] == 1).sum().item()
-                num_local = (batch['view'] == 0).sum().item()
-                # GPU memory usage
-                gpu_mem_allocated = torch.cuda.memory_allocated() / 1e9  # GB
-                gpu_mem_reserved = torch.cuda.memory_reserved() / 1e9  # GB
+            #     # Count views in batch for reporting
+            #     num_global = (batch['view'] == 1).sum().item()
+            #     num_local = (batch['view'] == 0).sum().item()
+            #     # GPU memory usage
+            #     gpu_mem_allocated = torch.cuda.memory_allocated() / 1e9  # GB
+            #     gpu_mem_reserved = torch.cuda.memory_reserved() / 1e9  # GB
                 
-                print(f"Epoch [{epoch+1}/{config.num_epochs}] "
-                      f"Batch [{batch_idx}/{len(train_loader)}] "
-                      f"Loss: {loss:.4f} | "
-                      f"Load: {batch_load_time:.3f}s | "
-                      f"Train: {train_step_time:.3f}s | "
-                      f"Total: {total_batch_time:.3f}s | "
-                      f"GPU Mem: {gpu_mem_allocated:.2f}/{gpu_mem_reserved:.2f}GB | "
-                      f"Elapsed Time: {(time.time() - start_time)/60:.2f} min | "
-                      f"Graphs: {num_unique_graphs} "
-                      f"(Global: {num_global}, Local: {num_local}) | "
-                      f"LR: {current_lr:.6f}",
-                      f"Teacher Momentum: {current_momentum:.4f}",
-                      f"WD: {current_wd:.4f}",
-                      f"Teacher Temp: {current_teacher_temp:.4f}")
+            #     print(f"Epoch [{epoch+1}/{config.num_epochs}] "
+            #           f"Batch [{batch_idx}/{len(train_loader)}] "
+            #           f"Loss: {loss:.4f} | "
+            #           f"Load: {batch_load_time:.3f}s | "
+            #           f"Train: {train_step_time:.3f}s | "
+            #           f"Total: {total_batch_time:.3f}s | "
+            #           f"GPU Mem: {gpu_mem_allocated:.2f}/{gpu_mem_reserved:.2f}GB | "
+            #           f"Elapsed Time: {(time.time() - start_time)/60:.2f} min | "
+            #           f"Graphs: {num_unique_graphs} "
+            #           f"(Global: {num_global}, Local: {num_local}) | "
+            #           f"LR: {current_lr:.6f}",
+            #           f"Teacher Momentum: {current_momentum:.4f}",
+            #           f"WD: {current_wd:.4f}",
+            #           f"Teacher Temp: {current_teacher_temp:.4f}")
             
             # Start timing for next batch load (at end of every iteration)
             batch_load_start = time.time()
@@ -208,13 +220,38 @@ def dino_train(config: ModelConfig):
         valid_pct = (epoch_trained_graphs / total_graphs_in_epoch) * 100 if total_graphs_in_epoch > 0 else 0.0
 
         avg_loss = epoch_loss / num_batches
+        avg_teacher_entropy = epoch_diag_sums["teacher_entropy"] / num_batches
+        avg_student_entropy = epoch_diag_sums["student_entropy"] / num_batches
+        avg_embedding_std = epoch_diag_sums["embedding_std"] / num_batches
+
+        collapse_warning = (
+            abs(avg_loss - collapse_loss_ref) < 0.03
+            and avg_teacher_entropy > 0.95 * collapse_loss_ref
+            and avg_embedding_std < 0.02
+        )
+
+        epoch_diagnostics = {
+            "teacher_entropy": avg_teacher_entropy,
+            "student_entropy": avg_student_entropy,
+            "embedding_std": avg_embedding_std,
+            "collapse_warning": collapse_warning,
+        }
+
         is_best = avg_loss < manager.best_loss
-        manager.record_loss(epoch, avg_loss)
+        manager.record_loss(epoch, avg_loss, diagnostics=epoch_diagnostics)
+        # Persist after each epoch so interrupted runs keep partial history.
+        manager.save_loss_history(verbose=False)
         
         print(f"\n{'='*70}")
         print(f"Epoch {epoch+1}/{config.num_epochs} Summary: Avg Loss = {avg_loss:.6f}")
         print(f"Graphs trained this epoch: {epoch_trained_graphs}/{total_graphs_in_epoch} ({valid_pct:.2f}% valid)")
         print(f"Invalid SMILES skipped this epoch: {epoch_invalid_graphs}")
+        print(
+            f"Diagnostics: teacher_entropy={avg_teacher_entropy:.4f}, "
+            f"student_entropy={avg_student_entropy:.4f}, "
+            f"embedding_std={avg_embedding_std:.4f}, "
+            f"collapse_warning={collapse_warning}"
+        )
         print(f"{'='*70}\n")
         
         # Save checkpoints

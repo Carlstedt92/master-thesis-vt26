@@ -114,7 +114,7 @@ class DINOGraphSSL:
             optimizer: Optimizer for student network
             
         Returns:
-            loss: Scalar loss value
+            Dictionary with scalar loss and batch diagnostics
         """
         self.student.train()
         self.teacher.eval()
@@ -206,6 +206,12 @@ class DINOGraphSSL:
             loss = pair_loss[match_mask].mean()
         else:
             loss = torch.tensor(0.0, device=self.device, requires_grad=True)
+
+        with torch.no_grad():
+            student_probs = F.softmax(student_out_all / self.loss_fn.student_temp, dim=-1)
+            teacher_entropy = (-teacher_probs * torch.log(teacher_probs.clamp_min(1e-12))).sum(dim=-1).mean()
+            student_entropy = (-student_probs * torch.log(student_probs.clamp_min(1e-12))).sum(dim=-1).mean()
+            embedding_std = student_out_all.detach().std(dim=0, unbiased=False).mean()
         
         # Backward pass
         optimizer.zero_grad()
@@ -218,7 +224,14 @@ class DINOGraphSSL:
         # Update center with teacher outputs
         self.loss_fn.update_center(teacher_out)
         
-        return loss.item()
+        return {
+            "loss": float(loss.item()),
+            "metrics": {
+                "teacher_entropy": float(teacher_entropy.item()),
+                "student_entropy": float(student_entropy.item()),
+                "embedding_std": float(embedding_std.item()),
+            },
+        }
     
     def get_embeddings(self, data):
         """Extract embeddings from student encoder (for downstream tasks)."""

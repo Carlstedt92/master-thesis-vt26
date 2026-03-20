@@ -1,0 +1,181 @@
+{
+  "DINO_Loss": [
+    {
+      "epoch": 1,
+      "train_loss": 4.884324763653813,
+      "teacher_entropy": 4.800219328237491,
+      "student_entropy": 4.778647113288391,
+      "embedding_std": 0.026387688836063083,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 2,
+      "train_loss": 4.846833277822127,
+      "teacher_entropy": 4.844613840622384,
+      "student_entropy": 4.84677450980736,
+      "embedding_std": 0.008723008935225228,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 3,
+      "train_loss": 4.830065694037505,
+      "teacher_entropy": 4.815890171831862,
+      "student_entropy": 4.831549551466221,
+      "embedding_std": 0.015112323078680663,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 4,
+      "train_loss": 4.74269189683046,
+      "teacher_entropy": 4.674048990631392,
+      "student_entropy": 4.750720075888026,
+      "embedding_std": 0.03369801895019207,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 5,
+      "train_loss": 4.779420357466736,
+      "teacher_entropy": 4.732242916327645,
+      "student_entropy": 4.785956552657403,
+      "embedding_std": 0.028503162635372607,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 6,
+      "train_loss": 4.795854682639112,
+      "teacher_entropy": 4.7575751078025075,
+      "student_entropy": 4.8016561739290475,
+      "embedding_std": 0.026017858813482616,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 7,
+      "train_loss": 4.762060601964756,
+      "teacher_entropy": 4.705544886605288,
+      "student_entropy": 4.771932027396766,
+      "embedding_std": 0.03152143997374557,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 8,
+      "train_loss": 4.749856011641103,
+      "teacher_entropy": 4.691224746933229,
+      "student_entropy": 4.7576634773827395,
+      "embedding_std": 0.031345108060770205,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 9,
+      "train_loss": 4.76415949728378,
+      "teacher_entropy": 4.721440232481147,
+      "student_entropy": 4.765234361892841,
+      "embedding_std": 0.02529506076524063,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 10,
+      "train_loss": 4.7414606868251,
+      "teacher_entropy": 4.69132305774732,
+      "student_entropy": 4.742353818698945,
+      "embedding_std": 0.02587775961360977,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 11,
+      "train_loss": 4.723452929019747,
+      "teacher_entropy": 4.660052101990061,
+      "student_entropy": 4.724815360894493,
+      "embedding_std": 0.030514753948138816,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 12,
+      "train_loss": 4.4271266499433475,
+      "teacher_entropy": 4.253331068380286,
+      "student_entropy": 4.436369301331932,
+      "embedding_std": 0.04433282704990762,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 13,
+      "train_loss": 4.723141317560598,
+      "teacher_entropy": 4.657357211010139,
+      "student_entropy": 4.725297288059331,
+      "embedding_std": 0.034164332037504776,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 14,
+      "train_loss": 4.69634969681896,
+      "teacher_entropy": 4.635485397565108,
+      "student_entropy": 4.69697759632265,
+      "embedding_std": 0.02972757936051137,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 15,
+      "train_loss": 4.606805997615595,
+      "teacher_entropy": 4.524047036469547,
+      "student_entropy": 4.608286129269147,
+      "embedding_std": 0.06615542169594084,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 16,
+      "train_loss": 4.324268351167699,
+      "teacher_entropy": 4.198579201881425,
+      "student_entropy": 4.326883753140767,
+      "embedding_std": 0.07800154220432641,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 17,
+      "train_loss": 4.494885856731796,
+      "teacher_entropy": 4.41473779561526,
+      "student_entropy": 4.496719675987812,
+      "embedding_std": 0.07815948463102497,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 18,
+      "train_loss": 4.82818292412305,
+      "teacher_entropy": 4.816800377019824,
+      "student_entropy": 4.828131702827586,
+      "embedding_std": 0.08305467417970373,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 19,
+      "train_loss": 4.851394353470385,
+      "teacher_entropy": 4.851052232687103,
+      "student_entropy": 4.85137508513573,
+      "embedding_std": 0.006474460686972663,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 20,
+      "train_loss": 4.851993373023981,
+      "teacher_entropy": 4.851975927603682,
+      "student_entropy": 4.851992976697069,
+      "embedding_std": 0.0005662616548934524,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 21,
+      "train_loss": 4.852028948810576,
+      "teacher_entropy": 4.852027938891847,
+      "student_entropy": 4.852028793563367,
+      "embedding_std": 9.489758503798337e-05,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 22,
+      "train_loss": 4.852030753638318,
+      "teacher_entropy": 4.852030514633389,
+      "student_entropy": 4.852030726666258,
+      "embedding_std": 1.0481117012424666e-05,
+      "collapse_warning": true
+    }
+  ],
+  "Evaluation_Loss": {}
+}

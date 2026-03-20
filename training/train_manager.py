@@ -88,17 +88,21 @@ class TrainingManager:
         metadata[section_name] = section_data
         self._write_metadata(metadata)
     
-    def record_loss(self, epoch: int, train_loss: float):
+    def record_loss(self, epoch: int, train_loss: float, diagnostics: Dict[str, Any] | None = None):
         """Record DINO SSL training loss for an epoch.
         
         Args:
             epoch: Current epoch number (0-indexed)
             train_loss: Average training loss for the epoch
         """
-        self.dino_loss_history.append({
+        record: Dict[str, Any] = {
             "epoch": epoch + 1,
             "train_loss": float(train_loss),
-        })
+        }
+        if diagnostics is not None:
+            record.update(diagnostics)
+
+        self.dino_loss_history.append(record)
         
         if train_loss < self.best_loss:
             self.best_loss = train_loss
@@ -174,7 +178,7 @@ class TrainingManager:
             else:
                 print(f"  ✓ Best model saved")
 
-    def save_loss_history(self):
+    def save_loss_history(self, verbose: bool = True):
         """Save structured loss history to JSON."""
         history_path = os.path.join(self.model_dir, "loss_history.json")
         
@@ -185,7 +189,8 @@ class TrainingManager:
         
         with open(history_path, 'w') as f:
             json.dump(history_records, f, indent=2)
-        print(f"✓ Loss history saved: {history_path}")
+        if verbose:
+            print(f"✓ Loss history saved: {history_path}")
     
     def save_model_metadata(self):
         """Save model-level metadata under 'Model data'."""
@@ -210,13 +215,23 @@ class TrainingManager:
             print("✓ DINO metadata skipped: no DINO training history")
             return
 
+        warning_epochs = [
+            int(entry["epoch"]) for entry in self.dino_loss_history
+            if bool(entry.get("collapse_warning", False))
+        ]
+
         dino_data = {
             'data_path': self.config.data_path,
             'best_loss': float(self.best_loss),
             'best_epoch': train_losses.index(self.best_loss) + 1,
             'final_loss': float(train_losses[-1]),
             'total_epochs': len(self.dino_loss_history),
+            'collapse_warning_epochs': warning_epochs,
+            'collapse_warning_count': len(warning_epochs),
         }
+
+        if warning_epochs:
+            dino_data['first_collapse_warning_epoch'] = int(warning_epochs[0])
 
         self._update_metadata_section('DINO_data', dino_data)
         print(f"✓ DINO metadata saved: {os.path.join(self.model_dir, 'metadata.json')}")

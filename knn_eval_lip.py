@@ -31,7 +31,7 @@ from model.gine_model import GINEModel
 LIPO_SPLITTER = "random"
 LIPO_DATA_DIR = "data/MoleculeNet_LIPO_custom"
 
-SSL_MODEL_NAME = "GINE_DINO_ZINC"
+SSL_MODEL_NAME = "GINE_DINO_ZINC_2.5"
 CHECKPOINT_PATH = f"models/{SSL_MODEL_NAME}/checkpoints/best_model.pth"
 
 FP_RADIUS = 2

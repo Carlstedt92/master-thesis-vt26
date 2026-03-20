@@ -1,0 +1,17 @@
+{
+  "Model data": {
+    "name": "GDZ_RM_LAST_RELU",
+    "seed": 42,
+    "head_type": "dino",
+    "training_time_seconds": 27937.217337,
+    "training_time_hours": 7.7603381491666665,
+    "timestamp": "2026-03-17T19:00:09.311977"
+  },
+  "DINO_data": {
+    "data_path": "data/zinc/zinc_data",
+    "best_loss": 4.209846139855897,
+    "best_epoch": 3,
+    "final_loss": 4.852030635060413,
+    "total_epochs": 100
+  }
+}
