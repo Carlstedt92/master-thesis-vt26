@@ -39,13 +39,13 @@
       "validation_metrics": {
         "r2": 0.4121,
         "rmse": 0.9586,
-        "mae": 0.702
+        "mae": 0.7019
       },
       "test_metrics": {
-        "r2": 0.4335,
-        "mse": 0.8518,
-        "rmse": 0.9229,
-        "mae": 0.6606
+        "r2": 0.4337,
+        "mse": 0.8514,
+        "rmse": 0.9227,
+        "mae": 0.6602
       },
       "n_train": 3360,
       "n_val": 420,
@@ -75,7 +75,7 @@
       "n_invalid_smiles_test": 0
     },
     "plot_path": "models/GINE_DINO_ZINC_2.5/knn_lipo_embeddings_vs_fingerprints.png",
-    "timestamp": "2026-03-19T15:29:38.653304"
+    "timestamp": "2026-03-20T10:22:11.047485"
   },
   "KNN_eval_HIV": {
     "dataset": "HIV",
@@ -135,6 +135,155 @@
       "n_invalid_smiles_test": 0
     },
     "plot_path": "models/GINE_DINO_ZINC_2.5/knn_hiv_embeddings_vs_fingerprints.png",
-    "timestamp": "2026-03-20T08:43:16.979911"
+    "timestamp": "2026-03-20T10:16:09.773726"
+  },
+  "KNN_eval_LIPO_finetuned": {
+    "dataset": "LIPO",
+    "data_source": "deepchem.molnet.load_lipo",
+    "splitter": "random",
+    "task": "exp",
+    "k_values": [
+      3,
+      5,
+      11,
+      21,
+      31,
+      41,
+      51
+    ],
+    "fingerprint": {
+      "type": "Morgan",
+      "radius": 2,
+      "nbits": 2048
+    },
+    "embeddings_model": "GINE_DINO_ZINC_2.5",
+    "finetune": {
+      "head_type": "regression",
+      "epochs": 30,
+      "batch_size": 256,
+      "learning_rate": 0.0001,
+      "weight_decay": 1e-05,
+      "early_stop_patience": 6,
+      "best_epoch": 29,
+      "best_val_mse": 0.803651,
+      "epochs_ran": 30,
+      "n_invalid_graphs_train": 0,
+      "n_invalid_graphs_val": 0
+    },
+    "embeddings": {
+      "best_k": 11,
+      "validation_metrics": {
+        "r2": 0.6078,
+        "rmse": 0.783,
+        "mae": 0.6026
+      },
+      "test_metrics": {
+        "r2": 0.6039,
+        "mse": 0.5956,
+        "rmse": 0.7717,
+        "mae": 0.5828
+      },
+      "n_train": 3360,
+      "n_val": 420,
+      "n_test": 420,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "fingerprints": {
+      "best_k": 11,
+      "validation_metrics": {
+        "r2": 0.3071,
+        "rmse": 1.0407,
+        "mae": 0.7921
+      },
+      "test_metrics": {
+        "r2": 0.3535,
+        "mse": 0.9721,
+        "rmse": 0.986,
+        "mae": 0.7535
+      },
+      "n_train": 3360,
+      "n_val": 420,
+      "n_test": 420,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "plot_path": "models/GINE_DINO_ZINC_2.5/knn_lipo_finetuned_embeddings_vs_fingerprints.png",
+    "timestamp": "2026-03-20T10:24:01.123796"
+  },
+  "KNN_eval_HIV_finetuned": {
+    "dataset": "HIV",
+    "data_source": "deepchem.molnet.load_hiv",
+    "splitter": "scaffold",
+    "task": "HIV_active",
+    "k_values": [
+      3,
+      5,
+      11,
+      21,
+      31,
+      41,
+      51
+    ],
+    "evaluation_primary_metric": "roc_auc",
+    "fingerprint": {
+      "type": "Morgan",
+      "radius": 2,
+      "nbits": 2048
+    },
+    "embeddings_model": "GINE_DINO_ZINC_2.5",
+    "finetune": {
+      "head_type": "classification",
+      "epochs": 30,
+      "batch_size": 256,
+      "learning_rate": 0.0001,
+      "weight_decay": 1e-05,
+      "early_stop_patience": 6,
+      "best_epoch": 7,
+      "best_val_roc_auc": 0.716138,
+      "epochs_ran": 13,
+      "n_invalid_graphs_train": 0,
+      "n_invalid_graphs_val": 0
+    },
+    "embeddings": {
+      "best_k": 51,
+      "validation_metrics": {
+        "roc_auc": 0.7603,
+        "f1": 0.233
+      },
+      "test_metrics": {
+        "roc_auc": 0.7341,
+        "f1": 0.275,
+        "balanced_accuracy": 0.5836
+      },
+      "n_train": 32896,
+      "n_val": 4112,
+      "n_test": 4112,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "fingerprints": {
+      "best_k": 41,
+      "validation_metrics": {
+        "roc_auc": 0.7507,
+        "f1": 0.1111
+      },
+      "test_metrics": {
+        "roc_auc": 0.6985,
+        "f1": 0.0303,
+        "balanced_accuracy": 0.5077
+      },
+      "n_train": 32896,
+      "n_val": 4112,
+      "n_test": 4112,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "plot_path": "models/GINE_DINO_ZINC_2.5/knn_hiv_finetuned_embeddings_vs_fingerprints.png",
+    "timestamp": "2026-03-20T10:21:12.874149"
   }
 }

@@ -1,14 +1,17 @@
-"""KNN comparison on MoleculeNet HIV using embeddings vs Morgan fingerprints.
+"""KNN comparison on MoleculeNet HIV after supervised fine-tuning.
 
 Protocol:
-- Load HIV from DeepChem with configurable split.
+- Load HIV from DeepChem with MoleculeNet scaffold split.
+- Initialize from SSL checkpoint encoder weights.
+- Fine-tune on HIV train split (validated on val split) with classification head.
 - Build two feature sets per split:
-  1) GINE embeddings
+  1) Fine-tuned GINE embeddings
   2) Morgan fingerprints (RDKit)
 - Tune K on validation split for each feature type independently using ROC-AUC.
-- Evaluate on test split and plot side-by-side ROC curves.
+- Evaluate on test split and plot ROC curves side-by-side.
 """
 
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 import json
@@ -17,16 +20,13 @@ import deepchem as dc
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import torch.nn.functional as F
 from rdkit import Chem, DataStructs
 from rdkit.Chem import rdFingerprintGenerator
-from sklearn.metrics import (
-    balanced_accuracy_score,
-    f1_score,
-    roc_auc_score,
-    roc_curve,
-)
+from sklearn.metrics import balanced_accuracy_score, f1_score, roc_auc_score, roc_curve
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
+from torch_geometric.loader import DataLoader
 
 from datahandling.graph_creation import smiles_to_pygdata
 from model.config import ModelConfig
@@ -39,13 +39,20 @@ HIV_DATA_DIR = "data/MoleculeNet_HIV_custom"
 SSL_MODEL_NAME = "GINE_DINO_ZINC_2.5"
 CHECKPOINT_PATH = f"models/{SSL_MODEL_NAME}/checkpoints/best_model.pth"
 
+# Fine-tuning hyperparameters
+FT_EPOCHS = 30
+FT_BATCH_SIZE = 256
+FT_LEARNING_RATE = 1e-4
+FT_WEIGHT_DECAY = 1e-5
+FT_EARLY_STOP_PATIENCE = 6
+
 FP_RADIUS = 2
 FP_NBITS = 2048
 K_VALUES = [3, 5, 11, 21, 31, 41, 51]
 
 
 def load_hiv_splits_from_deepchem(data_dir: str, splitter: str):
-    """Load HIV via DeepChem and return split-wise SMILES/labels with basic stats."""
+    """Load HIV via DeepChem and return split-wise SMILES/labels with stats."""
     tasks, datasets, _ = dc.molnet.load_hiv(
         featurizer=dc.feat.RawFeaturizer(),
         splitter=splitter,
@@ -89,8 +96,121 @@ def load_hiv_splits_from_deepchem(data_dir: str, splitter: str):
     return rows_by_split, stats
 
 
+def build_graph_dataset(rows):
+    """Create list of PyG graphs with binary targets from SMILES rows."""
+    graphs = []
+    invalid_smiles = 0
+
+    for smiles, target in rows:
+        data = smiles_to_pygdata(smiles)
+        if data is None or data.num_nodes == 0:
+            invalid_smiles += 1
+            continue
+
+        data.y = torch.tensor([float(target)], dtype=torch.float32)
+        graphs.append(data)
+
+    return graphs, invalid_smiles
+
+
+def load_finetune_model(device):
+    """Load SSL checkpoint and initialize classification model with encoder weights."""
+    checkpoint = torch.load(CHECKPOINT_PATH, map_location=device, weights_only=False)
+    checkpoint_config = ModelConfig.from_dict(checkpoint["config"])
+
+    model = GINEModel.from_config(checkpoint_config, head_type="classification").to(device)
+
+    model_state = model.state_dict()
+    encoder_only = {
+        k: v for k, v in checkpoint["model_state_dict"].items() if k.startswith("encoder")
+    }
+    model_state.update(encoder_only)
+    model.load_state_dict(model_state)
+
+    return model
+
+
+def run_finetuning(model, train_loader, val_loader, device):
+    """Fine-tune model on HIV train set with early stopping on val ROC-AUC."""
+    optimizer = torch.optim.AdamW(
+        model.parameters(),
+        lr=FT_LEARNING_RATE,
+        weight_decay=FT_WEIGHT_DECAY,
+    )
+
+    best_val_auc = -np.inf
+    best_state = deepcopy(model.state_dict())
+    best_epoch = 0
+    patience = 0
+
+    for epoch in range(1, FT_EPOCHS + 1):
+        model.train()
+        train_losses = []
+
+        for batch in train_loader:
+            batch = batch.to(device)
+            optimizer.zero_grad()
+            logits = model(batch.x, batch.edge_index, batch.edge_attr, batch.batch).squeeze(-1)
+            target = batch.y.view(-1).float()
+            loss = F.binary_cross_entropy_with_logits(logits, target)
+            loss.backward()
+            optimizer.step()
+            train_losses.append(float(loss.item()))
+
+        model.eval()
+        val_losses = []
+        val_targets = []
+        val_probs = []
+        with torch.no_grad():
+            for batch in val_loader:
+                batch = batch.to(device)
+                logits = model(batch.x, batch.edge_index, batch.edge_attr, batch.batch).squeeze(-1)
+                target = batch.y.view(-1).float()
+                val_loss = F.binary_cross_entropy_with_logits(logits, target)
+                probs = torch.sigmoid(logits)
+
+                val_losses.append(float(val_loss.item()))
+                val_targets.extend(target.cpu().numpy().tolist())
+                val_probs.extend(probs.cpu().numpy().tolist())
+
+        avg_train_loss = float(np.mean(train_losses)) if train_losses else float("inf")
+        avg_val_loss = float(np.mean(val_losses)) if val_losses else float("inf")
+
+        if len(set(int(t) for t in val_targets)) < 2:
+            val_auc = -np.inf
+        else:
+            val_auc = float(roc_auc_score(np.asarray(val_targets), np.asarray(val_probs)))
+
+        print(
+            f"[Fine-tune] Epoch {epoch:02d}/{FT_EPOCHS} | "
+            f"Train BCE={avg_train_loss:.4f} | Val BCE={avg_val_loss:.4f} | Val ROC-AUC={val_auc:.4f}"
+        )
+
+        if val_auc > best_val_auc:
+            best_val_auc = val_auc
+            best_state = deepcopy(model.state_dict())
+            best_epoch = epoch
+            patience = 0
+        else:
+            patience += 1
+            if patience >= FT_EARLY_STOP_PATIENCE:
+                print(
+                    f"[Fine-tune] Early stopping at epoch {epoch} "
+                    f"(best epoch: {best_epoch}, best val ROC-AUC: {best_val_auc:.4f})"
+                )
+                break
+
+    model.load_state_dict(best_state)
+    model.eval()
+    return {
+        "best_epoch": int(best_epoch),
+        "best_val_roc_auc": float(best_val_auc),
+        "epochs_ran": int(epoch),
+    }
+
+
 def build_embedding_features(rows, model, device):
-    """Convert split rows into embeddings and labels, skipping invalid graphs."""
+    """Build embeddings and labels from SMILES rows."""
     features = []
     labels = []
     invalid_smiles = 0
@@ -192,12 +312,12 @@ def plot_hiv_roc_comparison(
     fpr_fp, tpr_fp, _ = roc_curve(y_test_fp, y_proba_fp)
 
     plt.figure(figsize=(7, 6))
-    plt.plot(fpr_emb, tpr_emb, linewidth=2, label=f"Embeddings (ROC-AUC={emb_metrics['roc_auc']:.3f})")
+    plt.plot(fpr_emb, tpr_emb, linewidth=2, label=f"Fine-tuned Embeddings (ROC-AUC={emb_metrics['roc_auc']:.3f})")
     plt.plot(fpr_fp, tpr_fp, linewidth=2, label=f"Morgan (ROC-AUC={fp_metrics['roc_auc']:.3f})")
     plt.plot([0, 1], [0, 1], "k--", linewidth=1.5, label="Random")
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
-    plt.title("HIV Test Set: ROC Comparison")
+    plt.title("HIV Test Set: ROC Comparison (Fine-tuned Encoder)")
     plt.legend(loc="lower right")
     plt.grid(alpha=0.3)
     plt.tight_layout()
@@ -212,16 +332,22 @@ def main():
     )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    checkpoint = torch.load(
-        CHECKPOINT_PATH,
-        map_location=device,
-        weights_only=False,
-    )
-    config = ModelConfig.from_dict(checkpoint["config"])
+    model = load_finetune_model(device)
 
-    model = GINEModel.from_config(config).to(device)
-    model.load_state_dict(checkpoint["model_state_dict"])
-    model.eval()
+    train_graphs, ft_inv_train = build_graph_dataset(rows_by_split["train"])
+    val_graphs, ft_inv_val = build_graph_dataset(rows_by_split["val"])
+
+    if len(train_graphs) < 10 or len(val_graphs) < 10:
+        raise RuntimeError(
+            "Too few valid graphs for fine-tuning. "
+            f"Invalid train/val: {ft_inv_train}/{ft_inv_val}."
+        )
+
+    train_loader = DataLoader(train_graphs, batch_size=FT_BATCH_SIZE, shuffle=True)
+    val_loader = DataLoader(val_graphs, batch_size=FT_BATCH_SIZE, shuffle=False)
+
+    print("Starting supervised fine-tuning on HIV train split...")
+    ft_info = run_finetuning(model, train_loader, val_loader, device)
 
     emb_train_X, emb_train_y, emb_inv_train = build_embedding_features(rows_by_split["train"], model, device)
     emb_val_X, emb_val_y, emb_inv_val = build_embedding_features(rows_by_split["val"], model, device)
@@ -284,8 +410,12 @@ def main():
         "DeepChem split sizes (train/val/test): "
         f"{split_stats['n_train_deepchem']}/{split_stats['n_val_deepchem']}/{split_stats['n_test_deepchem']}"
     )
+    print(
+        f"Fine-tune summary: best_epoch={ft_info['best_epoch']}, "
+        f"best_val_roc_auc={ft_info['best_val_roc_auc']:.4f}, epochs_ran={ft_info['epochs_ran']}"
+    )
 
-    print("\nEmbeddings")
+    print("\nFine-tuned embeddings")
     print(
         f"Samples used (train/val/test): {len(emb_train_y)}/{len(emb_val_y)}/{len(emb_test_y)} | "
         f"Invalid SMILES: {emb_inv_train}/{emb_inv_val}/{emb_inv_test}"
@@ -309,7 +439,7 @@ def main():
         f"F1={fp_test_metrics['f1']:.4f}, BAcc={fp_test_metrics['balanced_accuracy']:.4f}"
     )
 
-    plot_path = f"models/{SSL_MODEL_NAME}/knn_hiv_embeddings_vs_fingerprints.png"
+    plot_path = f"models/{SSL_MODEL_NAME}/knn_hiv_finetuned_embeddings_vs_fingerprints.png"
     plot_hiv_roc_comparison(
         y_test_emb=emb_test_y,
         y_proba_emb=emb_test_proba,
@@ -327,7 +457,7 @@ def main():
         with open(metadata_path, "r") as f:
             metadata = json.load(f)
 
-    metadata["KNN_eval_HIV"] = {
+    metadata["KNN_eval_HIV_finetuned"] = {
         "dataset": "HIV",
         "data_source": "deepchem.molnet.load_hiv",
         "splitter": split_stats["splitter"],
@@ -340,6 +470,19 @@ def main():
             "nbits": FP_NBITS,
         },
         "embeddings_model": SSL_MODEL_NAME,
+        "finetune": {
+            "head_type": "classification",
+            "epochs": FT_EPOCHS,
+            "batch_size": FT_BATCH_SIZE,
+            "learning_rate": FT_LEARNING_RATE,
+            "weight_decay": FT_WEIGHT_DECAY,
+            "early_stop_patience": FT_EARLY_STOP_PATIENCE,
+            "best_epoch": ft_info["best_epoch"],
+            "best_val_roc_auc": round(ft_info["best_val_roc_auc"], 6),
+            "epochs_ran": ft_info["epochs_ran"],
+            "n_invalid_graphs_train": int(ft_inv_train),
+            "n_invalid_graphs_val": int(ft_inv_val),
+        },
         "embeddings": {
             "best_k": int(emb_best_k),
             "validation_metrics": {k: round(v, 4) for k, v in emb_val_metrics.items()},

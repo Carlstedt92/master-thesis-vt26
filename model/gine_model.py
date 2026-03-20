@@ -99,6 +99,23 @@ class RegressionHead(nn.Module):
         return self.mlp(x)
 
 
+class ClassificationHead(nn.Module):
+    """Binary classification head for downstream tasks."""
+
+    def __init__(self, input_dim: int, hidden_dim: int = 128, output_dim: int = 1):
+        super(ClassificationHead, self).__init__()
+
+        self.mlp = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, output_dim),
+        )
+
+    def forward(self, x):
+        # Return logits; loss should apply sigmoid internally (BCEWithLogitsLoss).
+        return self.mlp(x)
+
+
 class GINEModel(nn.Module):
     """Graph Isomorphism Network (GINE) for different tasks.
     The model is designed to be flexible and can be used for both SSL training (with projection head) and downstream tasks (without projection head).
@@ -133,6 +150,13 @@ class GINEModel(nn.Module):
                 input_dim=hidden_dim,
                 hidden_dim=hidden_dim // 2,
                 output_dim=1
+            )
+        elif head_type == "classification":
+            # Binary classification head for downstream tasks
+            self.head = ClassificationHead(
+                input_dim=hidden_dim,
+                hidden_dim=hidden_dim // 2,
+                output_dim=1,
             )
         else:
             raise ValueError(f"Unsupported head type: {head_type}")

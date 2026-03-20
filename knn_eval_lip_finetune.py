@@ -1,14 +1,17 @@
-"""KNN comparison on MoleculeNet LIPO using embeddings vs Morgan fingerprints.
+"""KNN comparison on MoleculeNet LIPO after supervised fine-tuning.
 
 Protocol:
 - Load LIPO from DeepChem with MoleculeNet random split.
+- Initialize from SSL checkpoint encoder weights.
+- Fine-tune on LIPO train split (validated on val split) with regression head.
 - Build two feature sets per split:
-  1) GINE_DINO_ZINC graph embeddings
+  1) Fine-tuned GINE embeddings
   2) Morgan fingerprints (RDKit)
 - Tune K on validation split for each feature type independently.
 - Evaluate on test split and plot both methods side-by-side.
 """
 
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 import json
@@ -17,11 +20,13 @@ import deepchem as dc
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import torch.nn.functional as F
 from rdkit import Chem, DataStructs
 from rdkit.Chem import rdFingerprintGenerator
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import StandardScaler
+from torch_geometric.loader import DataLoader
 
 from datahandling.graph_creation import smiles_to_pygdata
 from model.config import ModelConfig
@@ -33,6 +38,13 @@ LIPO_DATA_DIR = "data/MoleculeNet_LIPO_custom"
 
 SSL_MODEL_NAME = "GINE_DINO_ZINC_2.5"
 CHECKPOINT_PATH = f"models/{SSL_MODEL_NAME}/checkpoints/best_model.pth"
+
+# Fine-tuning hyperparameters
+FT_EPOCHS = 30
+FT_BATCH_SIZE = 256
+FT_LEARNING_RATE = 1e-4
+FT_WEIGHT_DECAY = 1e-5
+FT_EARLY_STOP_PATIENCE = 6
 
 FP_RADIUS = 2
 FP_NBITS = 2048
@@ -66,7 +78,6 @@ def load_lipo_splits_from_deepchem(data_dir: str, splitter: str):
             if not np.isfinite(label):
                 skipped_non_finite += 1
                 continue
-
             rows.append((str(smiles), float(label)))
 
         rows_by_split[split_name] = rows
@@ -77,8 +88,110 @@ def load_lipo_splits_from_deepchem(data_dir: str, splitter: str):
     return rows_by_split, stats
 
 
+def build_graph_dataset(rows):
+    """Create list of PyG graphs with regression targets from SMILES rows."""
+    graphs = []
+    invalid_smiles = 0
+
+    for smiles, target in rows:
+        data = smiles_to_pygdata(smiles)
+        if data is None or data.num_nodes == 0:
+            invalid_smiles += 1
+            continue
+
+        data.y = torch.tensor([float(target)], dtype=torch.float32)
+        graphs.append(data)
+
+    return graphs, invalid_smiles
+
+
+def load_finetune_model(device):
+    """Load SSL checkpoint and initialize regression model with encoder weights."""
+    checkpoint = torch.load(CHECKPOINT_PATH, map_location=device, weights_only=False)
+    checkpoint_config = ModelConfig.from_dict(checkpoint["config"])
+
+    model = GINEModel.from_config(checkpoint_config, head_type="regression").to(device)
+
+    model_state = model.state_dict()
+    encoder_only = {
+        k: v for k, v in checkpoint["model_state_dict"].items() if k.startswith("encoder")
+    }
+    model_state.update(encoder_only)
+    model.load_state_dict(model_state)
+
+    return model, checkpoint_config
+
+
+def run_finetuning(model, train_loader, val_loader, device):
+    """Fine-tune model on LIPO train set with early stopping on val MSE."""
+    optimizer = torch.optim.AdamW(
+        model.parameters(),
+        lr=FT_LEARNING_RATE,
+        weight_decay=FT_WEIGHT_DECAY,
+    )
+
+    best_val_mse = float("inf")
+    best_state = deepcopy(model.state_dict())
+    best_epoch = 0
+    patience = 0
+
+    for epoch in range(1, FT_EPOCHS + 1):
+        model.train()
+        train_losses = []
+
+        for batch in train_loader:
+            batch = batch.to(device)
+            optimizer.zero_grad()
+            preds = model(batch.x, batch.edge_index, batch.edge_attr, batch.batch).squeeze(-1)
+            target = batch.y.view(-1).float()
+            loss = F.mse_loss(preds, target)
+            loss.backward()
+            optimizer.step()
+            train_losses.append(float(loss.item()))
+
+        model.eval()
+        val_losses = []
+        with torch.no_grad():
+            for batch in val_loader:
+                batch = batch.to(device)
+                preds = model(batch.x, batch.edge_index, batch.edge_attr, batch.batch).squeeze(-1)
+                target = batch.y.view(-1).float()
+                val_loss = F.mse_loss(preds, target)
+                val_losses.append(float(val_loss.item()))
+
+        avg_train_mse = float(np.mean(train_losses)) if train_losses else float("inf")
+        avg_val_mse = float(np.mean(val_losses)) if val_losses else float("inf")
+
+        print(
+            f"[Fine-tune] Epoch {epoch:02d}/{FT_EPOCHS} | "
+            f"Train MSE={avg_train_mse:.4f} | Val MSE={avg_val_mse:.4f}"
+        )
+
+        if avg_val_mse < best_val_mse:
+            best_val_mse = avg_val_mse
+            best_state = deepcopy(model.state_dict())
+            best_epoch = epoch
+            patience = 0
+        else:
+            patience += 1
+            if patience >= FT_EARLY_STOP_PATIENCE:
+                print(
+                    f"[Fine-tune] Early stopping at epoch {epoch} "
+                    f"(best epoch: {best_epoch}, best val MSE: {best_val_mse:.4f})"
+                )
+                break
+
+    model.load_state_dict(best_state)
+    model.eval()
+    return {
+        "best_epoch": int(best_epoch),
+        "best_val_mse": float(best_val_mse),
+        "epochs_ran": int(epoch),
+    }
+
+
 def build_embedding_features(rows, model, device):
-    """Build SSL embeddings and labels from SMILES rows."""
+    """Build embeddings and labels from SMILES rows."""
     features = []
     labels = []
     invalid_smiles = 0
@@ -171,14 +284,7 @@ def tune_and_eval_knn_regression(X_train, y_train, X_val, y_val, X_test, y_test,
     return best_k, val_metrics, test_metrics, y_test_pred
 
 
-def plot_lipo_comparison(
-    y_test,
-    y_pred_emb,
-    y_pred_fp,
-    emb_metrics,
-    fp_metrics,
-    output_path,
-):
+def plot_lipo_comparison(y_test, y_pred_emb, y_pred_fp, emb_metrics, fp_metrics, output_path):
     """Create one figure with side-by-side prediction comparisons."""
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -191,7 +297,7 @@ def plot_lipo_comparison(
     axes[0].scatter(y_test, y_pred_emb, alpha=0.6, s=18)
     axes[0].plot([ymin, ymax], [ymin, ymax], "k--", linewidth=1)
     axes[0].set_title(
-        "Embeddings (GINE_DINO_ZINC)\n"
+        "Fine-tuned Embeddings\n"
         f"R2={emb_metrics['r2']:.3f}, RMSE={emb_metrics['rmse']:.3f}, MAE={emb_metrics['mae']:.3f}"
     )
     axes[0].set_xlabel("True logP")
@@ -207,7 +313,7 @@ def plot_lipo_comparison(
     axes[1].set_xlabel("True logP")
     axes[1].grid(alpha=0.3)
 
-    fig.suptitle("LIPO Test Set: KNN Comparison", fontsize=13)
+    fig.suptitle("LIPO Test Set: KNN Comparison (Fine-tuned Encoder)", fontsize=13)
     fig.tight_layout()
     fig.savefig(output, dpi=300)
     plt.close(fig)
@@ -220,12 +326,22 @@ def main():
     )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    checkpoint = torch.load(CHECKPOINT_PATH, map_location=device, weights_only=False)
-    config = ModelConfig.from_dict(checkpoint["config"])
+    model, _ = load_finetune_model(device)
 
-    model = GINEModel.from_config(config).to(device)
-    model.load_state_dict(checkpoint["model_state_dict"])
-    model.eval()
+    train_graphs, ft_inv_train = build_graph_dataset(rows_by_split["train"])
+    val_graphs, ft_inv_val = build_graph_dataset(rows_by_split["val"])
+
+    if len(train_graphs) < 10 or len(val_graphs) < 10:
+        raise RuntimeError(
+            "Too few valid graphs for fine-tuning. "
+            f"Invalid train/val: {ft_inv_train}/{ft_inv_val}."
+        )
+
+    train_loader = DataLoader(train_graphs, batch_size=FT_BATCH_SIZE, shuffle=True)
+    val_loader = DataLoader(val_graphs, batch_size=FT_BATCH_SIZE, shuffle=False)
+
+    print("Starting supervised fine-tuning on LIPO train split...")
+    ft_info = run_finetuning(model, train_loader, val_loader, device)
 
     emb_train_X, emb_train_y, emb_inv_train = build_embedding_features(rows_by_split["train"], model, device)
     emb_val_X, emb_val_y, emb_inv_val = build_embedding_features(rows_by_split["val"], model, device)
@@ -282,7 +398,12 @@ def main():
         "DeepChem split sizes (train/val/test): "
         f"{split_stats['n_train_deepchem']}/{split_stats['n_val_deepchem']}/{split_stats['n_test_deepchem']}"
     )
-    print("\nEmbeddings (GINE_DINO_ZINC)")
+    print(
+        f"Fine-tune summary: best_epoch={ft_info['best_epoch']}, "
+        f"best_val_mse={ft_info['best_val_mse']:.4f}, epochs_ran={ft_info['epochs_ran']}"
+    )
+
+    print("\nFine-tuned embeddings")
     print(
         f"Samples used (train/val/test): {len(emb_train_y)}/{len(emb_val_y)}/{len(emb_test_y)} | "
         f"Invalid SMILES: {emb_inv_train}/{emb_inv_val}/{emb_inv_test}"
@@ -304,7 +425,7 @@ def main():
         f"Test R2={fp_test_metrics['r2']:.4f}, RMSE={fp_test_metrics['rmse']:.4f}, MAE={fp_test_metrics['mae']:.4f}"
     )
 
-    plot_path = f"models/{SSL_MODEL_NAME}/knn_lipo_embeddings_vs_fingerprints.png"
+    plot_path = f"models/{SSL_MODEL_NAME}/knn_lipo_finetuned_embeddings_vs_fingerprints.png"
     plot_lipo_comparison(
         y_test=emb_test_y,
         y_pred_emb=emb_pred_test,
@@ -321,7 +442,7 @@ def main():
         with open(metadata_path, "r") as f:
             metadata = json.load(f)
 
-    metadata["KNN_eval_LIPO"] = {
+    metadata["KNN_eval_LIPO_finetuned"] = {
         "dataset": "LIPO",
         "data_source": "deepchem.molnet.load_lipo",
         "splitter": split_stats["splitter"],
@@ -333,6 +454,19 @@ def main():
             "nbits": FP_NBITS,
         },
         "embeddings_model": SSL_MODEL_NAME,
+        "finetune": {
+            "head_type": "regression",
+            "epochs": FT_EPOCHS,
+            "batch_size": FT_BATCH_SIZE,
+            "learning_rate": FT_LEARNING_RATE,
+            "weight_decay": FT_WEIGHT_DECAY,
+            "early_stop_patience": FT_EARLY_STOP_PATIENCE,
+            "best_epoch": ft_info["best_epoch"],
+            "best_val_mse": round(ft_info["best_val_mse"], 6),
+            "epochs_ran": ft_info["epochs_ran"],
+            "n_invalid_graphs_train": int(ft_inv_train),
+            "n_invalid_graphs_val": int(ft_inv_val),
+        },
         "embeddings": {
             "best_k": int(emb_best_k),
             "validation_metrics": {k: round(v, 4) for k, v in emb_val_metrics.items()},
@@ -367,4 +501,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
