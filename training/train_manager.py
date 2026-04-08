@@ -2,6 +2,7 @@
 
 import os
 import json
+import shutil
 import torch
 from datetime import datetime
 from pathlib import Path
@@ -27,6 +28,8 @@ class TrainingManager:
         self.best_loss = float('inf')  # For DINO training
         self.best_eval_metric = None  # For validation metrics (MSE for regression, ROC-AUC for classification)
         self.best_eval_epoch = None
+        self.online_eval_history: List[Dict[str, Any]] = []
+        self.top_eval_checkpoints: List[Dict[str, Any]] = []
         self.start_time = datetime.now()
         
         # Save config
@@ -178,6 +181,116 @@ class TrainingManager:
             else:
                 print(f"  ✓ Best model saved")
 
+    def _to_json_safe(self, value: Any):
+        """Recursively convert values to JSON-serializable Python scalars/containers."""
+        if isinstance(value, dict):
+            return {str(k): self._to_json_safe(v) for k, v in value.items()}
+        if isinstance(value, list):
+            return [self._to_json_safe(v) for v in value]
+        if isinstance(value, tuple):
+            return [self._to_json_safe(v) for v in value]
+        if isinstance(value, (str, bool)) or value is None:
+            return value
+        if isinstance(value, int):
+            return int(value)
+        if isinstance(value, float):
+            return float(value)
+        if hasattr(value, "item"):
+            try:
+                return value.item()
+            except Exception:
+                pass
+        return str(value)
+
+    def _save_top_eval_index(self):
+        """Save a compact top-k checkpoint index for plotting/reporting."""
+        index_path = os.path.join(self.model_dir, "top_eval_checkpoints.json")
+        payload = {
+            "top_eval_checkpoints": self.top_eval_checkpoints,
+            "generated_at": datetime.now().isoformat(),
+        }
+        with open(index_path, "w") as f:
+            json.dump(payload, f, indent=2)
+
+    def record_online_eval(self, epoch: int, ssl_loss: float, eval_result: Dict[str, Any], saved_path: str | None):
+        """Record online downstream evaluation results for one epoch."""
+        record = {
+            "epoch": int(epoch + 1),
+            "ssl_train_loss": float(ssl_loss),
+            "saved_checkpoint_path": saved_path,
+            "evaluation": self._to_json_safe(eval_result),
+        }
+        self.online_eval_history.append(record)
+        self.eval_loss_history["online_eval"] = self.online_eval_history
+
+    def update_top_eval_checkpoints(
+        self,
+        epoch: int,
+        model,
+        optimizer,
+        ssl_loss: float,
+        eval_result: Dict[str, Any],
+        top_k: int = 5,
+    ) -> str | None:
+        """Keep only top-k checkpoints by online aggregate eval score (higher is better)."""
+        if top_k <= 0:
+            return None
+
+        score = float(eval_result.get("aggregate_primary_score", float("-inf")))
+        if not self.top_eval_checkpoints:
+            should_save = True
+        elif len(self.top_eval_checkpoints) < top_k:
+            should_save = True
+        else:
+            worst_score = min(item["score"] for item in self.top_eval_checkpoints)
+            should_save = score > worst_score
+
+        if not should_save:
+            return None
+
+        checkpoint = {
+            "epoch": epoch,
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+            "loss": float(ssl_loss),
+            "eval_metric": score,
+            "online_eval": self._to_json_safe(eval_result),
+            "config": self.config.to_dict(),
+        }
+
+        checkpoint_name = f"checkpoint_online_eval_epoch_{epoch + 1}.pth"
+        checkpoint_path = os.path.join(self.checkpoint_dir, checkpoint_name)
+        torch.save(checkpoint, checkpoint_path)
+
+        entry = {
+            "epoch": int(epoch + 1),
+            "score": score,
+            "ssl_train_loss": float(ssl_loss),
+            "checkpoint_path": checkpoint_path,
+            "metric_definition": eval_result.get(
+                "aggregate_primary_score_definition",
+                "mean(validation primary metric across datasets)",
+            ),
+            "datasets": eval_result.get("dataset_names", []),
+        }
+        self.top_eval_checkpoints.append(entry)
+        self.top_eval_checkpoints.sort(key=lambda item: (item["score"], -item["epoch"]), reverse=True)
+
+        while len(self.top_eval_checkpoints) > top_k:
+            dropped = self.top_eval_checkpoints.pop()
+            dropped_path = dropped.get("checkpoint_path")
+            if dropped_path and os.path.exists(dropped_path):
+                os.remove(dropped_path)
+
+        best_entry = self.top_eval_checkpoints[0]
+        best_source = best_entry.get("checkpoint_path")
+        best_target = os.path.join(self.checkpoint_dir, "best_online_eval_model.pth")
+        if best_source and os.path.exists(best_source):
+            shutil.copy2(best_source, best_target)
+
+        self._save_top_eval_index()
+        return checkpoint_path
+
     def save_loss_history(self, verbose: bool = True):
         """Save structured loss history to JSON."""
         history_path = os.path.join(self.model_dir, "loss_history.json")
@@ -238,6 +351,37 @@ class TrainingManager:
         print(f"  Best loss: {dino_data['best_loss']:.6f} (epoch {dino_data['best_epoch']})")
         print(f"  Final loss: {dino_data['final_loss']:.6f}")
 
+    def save_online_eval_metadata(self):
+        """Save online eval metadata under 'Online_eval_data'."""
+        if not self.online_eval_history:
+            return
+
+        best_entry = None
+        for entry in self.online_eval_history:
+            evaluation = entry.get("evaluation", {})
+            score = evaluation.get("aggregate_primary_score")
+            if score is None:
+                continue
+            if best_entry is None or float(score) > float(best_entry["evaluation"]["aggregate_primary_score"]):
+                best_entry = entry
+
+        online_eval_data = {
+            "total_evaluated_epochs": len(self.online_eval_history),
+            "top_k_retained": int(getattr(self.config, "online_eval_top_k_checkpoints", 5)),
+            "fixed_k": int(getattr(self.config, "online_eval_fixed_k", 5)),
+            "every_n_epochs": int(getattr(self.config, "online_eval_every_n_epochs", 1)),
+            "top_eval_checkpoints": self.top_eval_checkpoints,
+        }
+
+        if best_entry is not None:
+            online_eval_data["best_epoch"] = int(best_entry["epoch"])
+            online_eval_data["best_aggregate_primary_score"] = float(
+                best_entry["evaluation"]["aggregate_primary_score"]
+            )
+
+        self._update_metadata_section("Online_eval_data", online_eval_data)
+        print(f"✓ Online eval metadata saved: {os.path.join(self.model_dir, 'metadata.json')}")
+
     def save_regression_metadata(self):
         """Save regression evaluation metadata under 'Regression_data'."""
         regression_history = self.eval_loss_history.get('regression', [])
@@ -296,6 +440,7 @@ class TrainingManager:
         """Backward-compatible metadata save wrapper."""
         self.save_model_metadata()
         self.save_dino_metadata()
+        self.save_online_eval_metadata()
         self.save_regression_metadata()
         self.save_classification_metadata()
     

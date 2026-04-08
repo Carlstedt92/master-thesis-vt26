@@ -1,0 +1,1080 @@
+{
+  "DINO_Loss": [
+    {
+      "epoch": 1,
+      "train_loss": 4.891759038151844,
+      "teacher_entropy": 4.809337068072967,
+      "student_entropy": 4.76773006400254,
+      "embedding_std": 0.026685850011429972,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 2,
+      "train_loss": 4.842717798683178,
+      "teacher_entropy": 4.841806451419478,
+      "student_entropy": 4.842563836549306,
+      "embedding_std": 0.012089739614920113,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 3,
+      "train_loss": 4.845192467390859,
+      "teacher_entropy": 4.844777441601891,
+      "student_entropy": 4.845217569873481,
+      "embedding_std": 0.010003442328659967,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 4,
+      "train_loss": 4.307921651993144,
+      "teacher_entropy": 4.279529812296292,
+      "student_entropy": 4.346258113496062,
+      "embedding_std": 0.0453030043204122,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 5,
+      "train_loss": 2.5960060554625586,
+      "teacher_entropy": 2.5112051868222305,
+      "student_entropy": 2.678373687115812,
+      "embedding_std": 0.046566073761607624,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 6,
+      "train_loss": 1.40764112700673,
+      "teacher_entropy": 1.3359645949549825,
+      "student_entropy": 1.4828240769984322,
+      "embedding_std": 0.0383616968363794,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 7,
+      "train_loss": 1.1642289232017413,
+      "teacher_entropy": 1.0911751522509305,
+      "student_entropy": 1.2413875492636266,
+      "embedding_std": 0.03372070788999008,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 8,
+      "train_loss": 2.2754904250424137,
+      "teacher_entropy": 2.2283344637157336,
+      "student_entropy": 2.3227507956720514,
+      "embedding_std": 0.03702983564067401,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 9,
+      "train_loss": 4.7350119188225035,
+      "teacher_entropy": 4.732217256312291,
+      "student_entropy": 4.736272097715992,
+      "embedding_std": 0.013141390568655655,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 10,
+      "train_loss": 4.851601343111624,
+      "teacher_entropy": 4.851496767168146,
+      "student_entropy": 4.851549506367786,
+      "embedding_std": 0.0015528992100836464,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 11,
+      "train_loss": 4.85091826450446,
+      "teacher_entropy": 4.850814000921783,
+      "student_entropy": 4.8509516394985965,
+      "embedding_std": 0.002259213975704671,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 12,
+      "train_loss": 4.837057791030353,
+      "teacher_entropy": 4.836723515918864,
+      "student_entropy": 4.837235408182765,
+      "embedding_std": 0.005600295978691288,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 13,
+      "train_loss": 4.792853199588008,
+      "teacher_entropy": 4.791961698055989,
+      "student_entropy": 4.793006675867378,
+      "embedding_std": 0.008421268466290837,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 14,
+      "train_loss": 4.849214686929007,
+      "teacher_entropy": 4.849152802699633,
+      "student_entropy": 4.849195332101542,
+      "embedding_std": 0.0035383992753753864,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 15,
+      "train_loss": 4.851484843353641,
+      "teacher_entropy": 4.851470241027232,
+      "student_entropy": 4.851479470820001,
+      "embedding_std": 0.0017681261201377863,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 16,
+      "train_loss": 4.851954126863004,
+      "teacher_entropy": 4.851951991555911,
+      "student_entropy": 4.851952540531822,
+      "embedding_std": 0.0007093465333905229,
+      "collapse_warning": true
+    }
+  ],
+  "Evaluation_Loss": {
+    "online_eval": [
+      {
+        "epoch": 1,
+        "ssl_train_loss": 4.891759038151844,
+        "saved_checkpoint_path": "./models/GDZ_GAT_TEST/checkpoints/checkpoint_online_eval_epoch_1.pth",
+        "evaluation": {
+          "fixed_k": 5,
+          "linear_probe_enabled": true,
+          "linear_probe_alphas": [
+            1.0
+          ],
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 0.34783720597371637,
+          "aggregate_primary_score_definition": "mean(validation primary metric across datasets)",
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_r2",
+              "primary_metric_value": 0.34783720597371637,
+              "fixed_k": 5,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 5,
+                  "validation_metrics": {
+                    "r2": 0.34783720597371637,
+                    "rmse": 1.009634852872283,
+                    "mae": 0.7505655593318699
+                  }
+                },
+                "linear_probe": {
+                  "best_alpha": 1.0,
+                  "validation_metrics": {
+                    "r2": 0.2985376017937996,
+                    "rmse": 1.04710087537419,
+                    "mae": 0.8567634567646754
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 2,
+        "ssl_train_loss": 4.842717798683178,
+        "saved_checkpoint_path": "./models/GDZ_GAT_TEST/checkpoints/checkpoint_online_eval_epoch_2.pth",
+        "evaluation": {
+          "fixed_k": 5,
+          "linear_probe_enabled": true,
+          "linear_probe_alphas": [
+            1.0
+          ],
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 0.38168231954820264,
+          "aggregate_primary_score_definition": "mean(validation primary metric across datasets)",
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_r2",
+              "primary_metric_value": 0.38168231954820264,
+              "fixed_k": 5,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 5,
+                  "validation_metrics": {
+                    "r2": 0.38168231954820264,
+                    "rmse": 0.9830874621821719,
+                    "mae": 0.7488945980944235
+                  }
+                },
+                "linear_probe": {
+                  "best_alpha": 1.0,
+                  "validation_metrics": {
+                    "r2": 0.19607893137222343,
+                    "rmse": 1.1209675224836364,
+                    "mae": 0.9131620491913386
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 3,
+        "ssl_train_loss": 4.845192467390859,
+        "saved_checkpoint_path": "./models/GDZ_GAT_TEST/checkpoints/checkpoint_online_eval_epoch_3.pth",
+        "evaluation": {
+          "fixed_k": 5,
+          "linear_probe_enabled": true,
+          "linear_probe_alphas": [
+            1.0
+          ],
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 0.34056879661695416,
+          "aggregate_primary_score_definition": "mean(validation primary metric across datasets)",
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_r2",
+              "primary_metric_value": 0.34056879661695416,
+              "fixed_k": 5,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 5,
+                  "validation_metrics": {
+                    "r2": 0.34056879661695416,
+                    "rmse": 1.0152454962197386,
+                    "mae": 0.7711769535592332
+                  }
+                },
+                "linear_probe": {
+                  "best_alpha": 1.0,
+                  "validation_metrics": {
+                    "r2": 0.1942678853990195,
+                    "rmse": 1.1222294508834072,
+                    "mae": 0.9206721497036161
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 4,
+        "ssl_train_loss": 4.307921651993144,
+        "saved_checkpoint_path": "./models/GDZ_GAT_TEST/checkpoints/checkpoint_online_eval_epoch_4.pth",
+        "evaluation": {
+          "fixed_k": 5,
+          "linear_probe_enabled": true,
+          "linear_probe_alphas": [
+            1.0
+          ],
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 0.3418054294256955,
+          "aggregate_primary_score_definition": "mean(validation primary metric across datasets)",
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_r2",
+              "primary_metric_value": 0.3418054294256955,
+              "fixed_k": 5,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 5,
+                  "validation_metrics": {
+                    "r2": 0.3418054294256955,
+                    "rmse": 1.0142931034306695,
+                    "mae": 0.7717784194480597
+                  }
+                },
+                "linear_probe": {
+                  "best_alpha": 1.0,
+                  "validation_metrics": {
+                    "r2": 0.20806766771405694,
+                    "rmse": 1.1125777283704965,
+                    "mae": 0.9050278750260671
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 5,
+        "ssl_train_loss": 2.5960060554625586,
+        "saved_checkpoint_path": "./models/GDZ_GAT_TEST/checkpoints/checkpoint_online_eval_epoch_5.pth",
+        "evaluation": {
+          "fixed_k": 5,
+          "linear_probe_enabled": true,
+          "linear_probe_alphas": [
+            1.0
+          ],
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 0.29059248543033955,
+          "aggregate_primary_score_definition": "mean(validation primary metric across datasets)",
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_r2",
+              "primary_metric_value": 0.29059248543033955,
+              "fixed_k": 5,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 5,
+                  "validation_metrics": {
+                    "r2": 0.29059248543033955,
+                    "rmse": 1.0530141741769847,
+                    "mae": 0.7958722409208769
+                  }
+                },
+                "linear_probe": {
+                  "best_alpha": 1.0,
+                  "validation_metrics": {
+                    "r2": 0.233457280626297,
+                    "rmse": 1.094597637221841,
+                    "mae": 0.8777628245694297
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 6,
+        "ssl_train_loss": 1.40764112700673,
+        "saved_checkpoint_path": "./models/GDZ_GAT_TEST/checkpoints/checkpoint_online_eval_epoch_6.pth",
+        "evaluation": {
+          "fixed_k": 5,
+          "linear_probe_enabled": true,
+          "linear_probe_alphas": [
+            1.0
+          ],
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 0.3798791665657538,
+          "aggregate_primary_score_definition": "mean(validation primary metric across datasets)",
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_r2",
+              "primary_metric_value": 0.3798791665657538,
+              "fixed_k": 5,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 5,
+                  "validation_metrics": {
+                    "r2": 0.3798791665657538,
+                    "rmse": 0.9845198703600843,
+                    "mae": 0.7553101012277699
+                  }
+                },
+                "linear_probe": {
+                  "best_alpha": 1.0,
+                  "validation_metrics": {
+                    "r2": 0.25558320423008296,
+                    "rmse": 1.0786844210116173,
+                    "mae": 0.8695422225112007
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 7,
+        "ssl_train_loss": 1.1642289232017413,
+        "saved_checkpoint_path": null,
+        "evaluation": {
+          "fixed_k": 5,
+          "linear_probe_enabled": true,
+          "linear_probe_alphas": [
+            1.0
+          ],
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 0.3265035977818018,
+          "aggregate_primary_score_definition": "mean(validation primary metric across datasets)",
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_r2",
+              "primary_metric_value": 0.3265035977818018,
+              "fixed_k": 5,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 5,
+                  "validation_metrics": {
+                    "r2": 0.3265035977818018,
+                    "rmse": 1.0260156019471622,
+                    "mae": 0.7807878200470086
+                  }
+                },
+                "linear_probe": {
+                  "best_alpha": 1.0,
+                  "validation_metrics": {
+                    "r2": 0.23261648174097715,
+                    "rmse": 1.0951977891870166,
+                    "mae": 0.8858649481478191
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 8,
+        "ssl_train_loss": 2.2754904250424137,
+        "saved_checkpoint_path": "./models/GDZ_GAT_TEST/checkpoints/checkpoint_online_eval_epoch_8.pth",
+        "evaluation": {
+          "fixed_k": 5,
+          "linear_probe_enabled": true,
+          "linear_probe_alphas": [
+            1.0
+          ],
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 0.3655201764142657,
+          "aggregate_primary_score_definition": "mean(validation primary metric across datasets)",
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_r2",
+              "primary_metric_value": 0.3655201764142657,
+              "fixed_k": 5,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 5,
+                  "validation_metrics": {
+                    "r2": 0.3655201764142657,
+                    "rmse": 0.995852992796395,
+                    "mae": 0.7677387491664059
+                  }
+                },
+                "linear_probe": {
+                  "best_alpha": 1.0,
+                  "validation_metrics": {
+                    "r2": 0.2397792072536684,
+                    "rmse": 1.0900745410422452,
+                    "mae": 0.8809700838384174
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 9,
+        "ssl_train_loss": 4.7350119188225035,
+        "saved_checkpoint_path": "./models/GDZ_GAT_TEST/checkpoints/checkpoint_online_eval_epoch_9.pth",
+        "evaluation": {
+          "fixed_k": 5,
+          "linear_probe_enabled": true,
+          "linear_probe_alphas": [
+            1.0
+          ],
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 0.34917487596454366,
+          "aggregate_primary_score_definition": "mean(validation primary metric across datasets)",
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_r2",
+              "primary_metric_value": 0.34917487596454366,
+              "fixed_k": 5,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 5,
+                  "validation_metrics": {
+                    "r2": 0.34917487596454366,
+                    "rmse": 1.0085988757280815,
+                    "mae": 0.7657509564091383
+                  }
+                },
+                "linear_probe": {
+                  "best_alpha": 1.0,
+                  "validation_metrics": {
+                    "r2": 0.23139795811066177,
+                    "rmse": 1.0960669732414383,
+                    "mae": 0.8884250640074413
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 10,
+        "ssl_train_loss": 4.851601343111624,
+        "saved_checkpoint_path": "./models/GDZ_GAT_TEST/checkpoints/checkpoint_online_eval_epoch_10.pth",
+        "evaluation": {
+          "fixed_k": 5,
+          "linear_probe_enabled": true,
+          "linear_probe_alphas": [
+            1.0
+          ],
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 0.3886764126119425,
+          "aggregate_primary_score_definition": "mean(validation primary metric across datasets)",
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_r2",
+              "primary_metric_value": 0.3886764126119425,
+              "fixed_k": 5,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 5,
+                  "validation_metrics": {
+                    "r2": 0.3886764126119425,
+                    "rmse": 0.9775115583476401,
+                    "mae": 0.7443446507482214
+                  }
+                },
+                "linear_probe": {
+                  "best_alpha": 1.0,
+                  "validation_metrics": {
+                    "r2": 0.24957931202087114,
+                    "rmse": 1.0830256040704527,
+                    "mae": 0.8693909721601577
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 11,
+        "ssl_train_loss": 4.85091826450446,
+        "saved_checkpoint_path": null,
+        "evaluation": {
+          "fixed_k": 5,
+          "linear_probe_enabled": true,
+          "linear_probe_alphas": [
+            1.0
+          ],
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 0.3488868261039836,
+          "aggregate_primary_score_definition": "mean(validation primary metric across datasets)",
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_r2",
+              "primary_metric_value": 0.3488868261039836,
+              "fixed_k": 5,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 5,
+                  "validation_metrics": {
+                    "r2": 0.3488868261039836,
+                    "rmse": 1.0088220498310068,
+                    "mae": 0.7707721196396632
+                  }
+                },
+                "linear_probe": {
+                  "best_alpha": 1.0,
+                  "validation_metrics": {
+                    "r2": 0.23209472812796939,
+                    "rmse": 1.0955700452320096,
+                    "mae": 0.895346338669459
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 12,
+        "ssl_train_loss": 4.837057791030353,
+        "saved_checkpoint_path": null,
+        "evaluation": {
+          "fixed_k": 5,
+          "linear_probe_enabled": true,
+          "linear_probe_alphas": [
+            1.0
+          ],
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 0.3415354932646,
+          "aggregate_primary_score_definition": "mean(validation primary metric across datasets)",
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_r2",
+              "primary_metric_value": 0.3415354932646,
+              "fixed_k": 5,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 5,
+                  "validation_metrics": {
+                    "r2": 0.3415354932646,
+                    "rmse": 1.0145010710535363,
+                    "mae": 0.7775047705806821
+                  }
+                },
+                "linear_probe": {
+                  "best_alpha": 1.0,
+                  "validation_metrics": {
+                    "r2": 0.17242504269921533,
+                    "rmse": 1.1373391659161671,
+                    "mae": 0.9318852361724491
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 13,
+        "ssl_train_loss": 4.792853199588008,
+        "saved_checkpoint_path": null,
+        "evaluation": {
+          "fixed_k": 5,
+          "linear_probe_enabled": true,
+          "linear_probe_alphas": [
+            1.0
+          ],
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 0.3015621914547163,
+          "aggregate_primary_score_definition": "mean(validation primary metric across datasets)",
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_r2",
+              "primary_metric_value": 0.3015621914547163,
+              "fixed_k": 5,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 5,
+                  "validation_metrics": {
+                    "r2": 0.3015621914547163,
+                    "rmse": 1.044840973903314,
+                    "mae": 0.7864470085026836
+                  }
+                },
+                "linear_probe": {
+                  "best_alpha": 1.0,
+                  "validation_metrics": {
+                    "r2": 0.1931906185398774,
+                    "rmse": 1.122979412784063,
+                    "mae": 0.9008280254772731
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 14,
+        "ssl_train_loss": 4.849214686929007,
+        "saved_checkpoint_path": null,
+        "evaluation": {
+          "fixed_k": 5,
+          "linear_probe_enabled": true,
+          "linear_probe_alphas": [
+            1.0
+          ],
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 0.33197635292331784,
+          "aggregate_primary_score_definition": "mean(validation primary metric across datasets)",
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_r2",
+              "primary_metric_value": 0.33197635292331784,
+              "fixed_k": 5,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 5,
+                  "validation_metrics": {
+                    "r2": 0.33197635292331784,
+                    "rmse": 1.021838455858321,
+                    "mae": 0.7803528673288854
+                  }
+                },
+                "linear_probe": {
+                  "best_alpha": 1.0,
+                  "validation_metrics": {
+                    "r2": 0.1962060922016351,
+                    "rmse": 1.1208788640303196,
+                    "mae": 0.8995833179383051
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 15,
+        "ssl_train_loss": 4.851484843353641,
+        "saved_checkpoint_path": "./models/GDZ_GAT_TEST/checkpoints/checkpoint_online_eval_epoch_15.pth",
+        "evaluation": {
+          "fixed_k": 5,
+          "linear_probe_enabled": true,
+          "linear_probe_alphas": [
+            1.0
+          ],
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 0.3500573377619741,
+          "aggregate_primary_score_definition": "mean(validation primary metric across datasets)",
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_r2",
+              "primary_metric_value": 0.3500573377619741,
+              "fixed_k": 5,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 5,
+                  "validation_metrics": {
+                    "r2": 0.3500573377619741,
+                    "rmse": 1.0079148579666062,
+                    "mae": 0.786206985519547
+                  }
+                },
+                "linear_probe": {
+                  "best_alpha": 1.0,
+                  "validation_metrics": {
+                    "r2": 0.20653374559967275,
+                    "rmse": 1.1136547029515325,
+                    "mae": 0.8922753000145867
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 16,
+        "ssl_train_loss": 4.851954126863004,
+        "saved_checkpoint_path": null,
+        "evaluation": {
+          "fixed_k": 5,
+          "linear_probe_enabled": true,
+          "linear_probe_alphas": [
+            1.0
+          ],
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 0.3104593752869339,
+          "aggregate_primary_score_definition": "mean(validation primary metric across datasets)",
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_r2",
+              "primary_metric_value": 0.3104593752869339,
+              "fixed_k": 5,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 5,
+                  "validation_metrics": {
+                    "r2": 0.3104593752869339,
+                    "rmse": 1.0381646905186623,
+                    "mae": 0.7936415515378918
+                  }
+                },
+                "linear_probe": {
+                  "best_alpha": 1.0,
+                  "validation_metrics": {
+                    "r2": 0.19017002632676083,
+                    "rmse": 1.1250795953137744,
+                    "mae": 0.9045280662377677
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

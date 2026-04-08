@@ -1,0 +1,10 @@
+{
+  "n_train_invalid_smiles": 0,
+  "n_val_invalid_smiles": 0,
+  "n_test_invalid_smiles": 0,
+  "dataset": "hiv",
+  "feature_type": "fingerprints",
+  "fingerprint_radius": 2,
+  "fingerprint_nbits": 2048,
+  "output_path": "evaluation_cache/hiv_morgan.npz"
+}

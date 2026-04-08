@@ -19,6 +19,9 @@ def smiles_to_pygdata(smiles: str) -> Optional[Data]:
     if mol is None:
         return None
     mol = Chem.AddHs(mol)
+    
+    # Assign stereochemistry (important for GetChiralTag and GetStereo)
+    Chem.AssignStereochemistry(mol, cleanIt=True, force=True)
 
     # Define mapping for bond types to incides for one-hot encoding
     bond_type_mapping = {
@@ -26,6 +29,16 @@ def smiles_to_pygdata(smiles: str) -> Optional[Data]:
         Chem.rdchem.BondType.DOUBLE: 1,
         Chem.rdchem.BondType.TRIPLE: 2,
         Chem.rdchem.BondType.AROMATIC: 3
+    }
+    
+    # Define mapping for bond stereo types
+    bond_stereo_mapping = {
+        Chem.rdchem.BondStereo.STEREONONE: 0,
+        Chem.rdchem.BondStereo.STEREOANY: 1,
+        Chem.rdchem.BondStereo.STEREOZ: 2,
+        Chem.rdchem.BondStereo.STEREOE: 3,
+        Chem.rdchem.BondStereo.STEREOCIS: 4,
+        Chem.rdchem.BondStereo.STEREOTRANS: 5,
     }
 
     # Extract atom features
@@ -35,8 +48,8 @@ def smiles_to_pygdata(smiles: str) -> Optional[Data]:
             atom.GetDegree(),
             atom.GetFormalCharge(),
             atom.GetIsAromatic(),
-            atom.GetTotalNumHs(),
-            atom.GetNumRadicalElectrons()
+            atom.GetNumRadicalElectrons(),
+            int(atom.IsInRing()),  # Whether atom is in a ring
         ]
 
         # One hot encode the atom symbol
@@ -59,14 +72,23 @@ def smiles_to_pygdata(smiles: str) -> Optional[Data]:
         else:
             hybridization_onehot.append(0)  # Not other hybridization type
 
-        features = atom_type_onehot + features + hybridization_onehot
+        # Create one hot encoding for chiral tag
+        chiral_tags = [
+            Chem.rdchem.ChiralType.CHI_UNSPECIFIED,
+            Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CCW,
+            Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW,
+            Chem.rdchem.ChiralType.CHI_OTHER,
+        ]
+        chiral_tag_onehot = [1 if atom.GetChiralTag() == c else 0 for c in chiral_tags]
+
+        features = atom_type_onehot + features + hybridization_onehot + chiral_tag_onehot
         node_features.append(features)
 
     # Keep node features as float for stable collation across all molecules.
     if node_features:
         node_features = torch.tensor(node_features, dtype=torch.float)
     else:
-        node_features = torch.empty((0, 20), dtype=torch.float)
+        node_features = torch.empty((0, 24), dtype=torch.float)
 
     # Extract bond information
     edge_index = []
@@ -86,9 +108,17 @@ def smiles_to_pygdata(smiles: str) -> Optional[Data]:
         # Extract additional properties
         is_conjugated = int(bond.GetIsConjugated())
         is_in_ring = int(bond.IsInRing())
+        
+        # Create one hot encoding for bond stereochemistry
+        bond_stereo = bond.GetStereo()
+        bond_stereo_onehot = np.zeros(len(bond_stereo_mapping))
+        if bond_stereo in bond_stereo_mapping:
+            bond_stereo_onehot[bond_stereo_mapping[bond_stereo]] = 1
+        else:
+            bond_stereo_onehot[0] = 1  # Default to STEREONONE for unknown types
 
         # Combine bond type one-hot encoding with additional properties
-        features = np.concatenate([bond_type_onehot, [is_conjugated, is_in_ring]])
+        features = np.concatenate([bond_type_onehot, [is_conjugated, is_in_ring], bond_stereo_onehot])
 
         # Add features for both directions
         edge_features.append(features)
@@ -98,7 +128,7 @@ def smiles_to_pygdata(smiles: str) -> Optional[Data]:
     if edge_features:
         edge_features = np.array(edge_features)
     else:
-        edge_features = np.empty((0, len(bond_type_mapping) + 2))
+        edge_features = np.empty((0, len(bond_type_mapping) + 2 + len(bond_stereo_mapping)))
 
     if edge_index:
         edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()

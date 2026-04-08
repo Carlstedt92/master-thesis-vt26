@@ -1,7 +1,7 @@
 """Script for testing the trained model on the test set and evaluating its performance."""
 
 import torch
-from model.gine_model import GINEModel
+from model.gnn_model import GNNModel
 from datahandling.dataset_creation import SmilesCsvDataset
 from datahandling.graph_creation import smiles_to_pygdata
 from torch_geometric.loader import DataLoader
@@ -23,7 +23,7 @@ def load_model(model_path, device):
     
     # Initialize the model architecture (must match the training config)
     checkpoint_config = ModelConfig.from_dict(checkpoint["config"])
-    model = GINEModel.from_config(
+    model = GNNModel.from_config(
         checkpoint_config,
         head_type="regression"  # Load with regression head for downstream evaluation
     ).to(device)
@@ -206,7 +206,7 @@ if __name__ == "__main__":
         learning_rate=1e-3
     )
     random_manager = TrainingManager(random_config)
-    random_model = GINEModel.from_config(random_config).to(device)
+    random_model = GNNModel.from_config(random_config).to(device)
     random_optimizer = torch.optim.Adam(random_model.parameters(), lr=1e-3)
  
     # Train the regression head on the training set and track loss history

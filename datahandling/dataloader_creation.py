@@ -23,6 +23,19 @@ class DataLoaderCreator:
     
     def _get_collate_fn(self):
         """Build collate function using augmentation settings from config."""
+        k_hops = getattr(self.config, 'k_hops', 2)
+        local_views = getattr(self.config, 'local_views', 4)
+        local_augmentation_mode = getattr(self.config, 'local_augmentation_mode', 'k_hop')
+        node_mask_ratio = getattr(self.config, 'node_mask_ratio', 0.15)
+        feature_mask_ratio = getattr(self.config, 'feature_mask_ratio', 0.15)
+        augmenter = GraphAugmentation(
+            local_views=local_views,
+            k_hops=k_hops,
+            local_augmentation_mode=local_augmentation_mode,
+            node_mask_ratio=node_mask_ratio,
+            feature_mask_ratio=feature_mask_ratio,
+        )
+
         def _normalize_dtypes(data: Data) -> Data:
             """Enforce stable tensor dtypes expected by PyG batching and model code."""
             if hasattr(data, 'x') and data.x is not None:
@@ -42,10 +55,6 @@ class DataLoaderCreator:
             valid_batch = [data for data in batch if data is not None]
             if not valid_batch:
                 return None
-
-            k_hops = getattr(self.config, 'k_hops', 2)
-            local_views = getattr(self.config, 'local_views', 4)
-            augmenter = GraphAugmentation(local_views=local_views, k_hops=k_hops)
             augmented = [augmenter(data) for data in valid_batch]
             flat: List[Data] = [_normalize_dtypes(view_data) for views in augmented for view_data in views]
             result = Batch.from_data_list(flat)

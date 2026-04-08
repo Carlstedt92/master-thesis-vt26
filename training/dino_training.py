@@ -6,17 +6,18 @@ Supports modular training with configurable models saved to models/{model_name}/
 import torch
 import torch.optim as optim
 import math
-from model.gine_model import GINEModel
+from model.gnn_model import GNNModel
 from model.dino_ssl import DINOGraphSSL, cosine_scheduler
 from datahandling.dataloader_creation import DataLoaderCreator
 from model.config import ModelConfig
+from training.online_evaluator import OnlineDownstreamEvaluator
 from training.train_manager import TrainingManager
 import time
 
 
 def dino_train(config: ModelConfig):
     """
-    Train GINE with DINO using ModelConfig for modular training.
+    Train GNN with DINO using ModelConfig for modular training.
     
     Args:
         config: ModelConfig object with all model and training parameters
@@ -50,16 +51,55 @@ def dino_train(config: ModelConfig):
         scaled_learning_rate = config.learning_rate
     print(f"  Learning rate (used): {scaled_learning_rate}")
 
+    online_eval_enabled = bool(getattr(config, "online_eval_enabled", False))
+    online_eval_every_n_epochs = int(getattr(config, "online_eval_every_n_epochs", 1))
+    online_eval_fixed_k = int(getattr(config, "online_eval_fixed_k", 5))
+    online_eval_top_k = int(getattr(config, "online_eval_top_k_checkpoints", 5))
+    online_eval_linear_probe_enabled = bool(getattr(config, "online_eval_linear_probe_enabled", True))
+    online_eval_linear_probe_alphas = [
+        float(item.strip())
+        for item in str(getattr(config, "online_eval_linear_probe_alphas", "1.0")).split(",")
+        if item.strip()
+    ]
+    online_eval_datasets = [
+        item.strip()
+        for item in str(getattr(config, "online_eval_datasets", "lipo")).split(",")
+        if item.strip()
+    ]
+
+    if online_eval_enabled:
+        print("  Online eval: enabled")
+        print(f"    Datasets: {','.join(online_eval_datasets)}")
+        print(f"    Every N epochs: {online_eval_every_n_epochs}")
+        print(f"    Fixed k: {online_eval_fixed_k}")
+        print(f"    Linear probe enabled: {online_eval_linear_probe_enabled}")
+        if online_eval_linear_probe_enabled:
+            print(f"    Linear probe alphas/Cs: {online_eval_linear_probe_alphas}")
+        print(f"    Top-k checkpoints kept: {online_eval_top_k}")
+    else:
+        print("  Online eval: disabled")
+
     # Initialize training manager
     manager = TrainingManager(config)
+
+    online_evaluator = None
+    if online_eval_enabled:
+        online_evaluator = OnlineDownstreamEvaluator(
+            dataset_names=online_eval_datasets,
+            fixed_k=online_eval_fixed_k,
+            include_linear_probe=online_eval_linear_probe_enabled,
+            linear_probe_alphas=online_eval_linear_probe_alphas,
+            fingerprint_radius=2,
+            fingerprint_nbits=2048,
+        )
     
     # Create dataloader - everything comes from config
     creator = DataLoaderCreator(config)
     train_loader = creator.create_dataloader_auto()
     print(f"✓ DataLoader created with {len(train_loader)} batches\n")
     
-    # Initialize GINE student model
-    student_model = GINEModel.from_config(config)
+    # Initialize GNN student model
+    student_model = GNNModel.from_config(config)
     
     num_params = sum(p.numel() for p in student_model.parameters())
     print(f"✓ Model parameters: {num_params:,}\n")
@@ -128,6 +168,9 @@ def dino_train(config: ModelConfig):
     collapse_loss_ref = math.log(float(config.projection_output_dim))
 
     for epoch in range(config.num_epochs):
+        print(f"\n{'='*70}")
+        print(f"Epoch {epoch+1}/{config.num_epochs} started at {time.strftime('%H:%M:%S')}")
+        print(f"{'='*70}")
         epoch_loss = 0
         num_batches = 0
         epoch_trained_graphs = 0
@@ -179,34 +222,24 @@ def dino_train(config: ModelConfig):
             
             total_batch_time = time.time() - batch_start_time
             
-            # Print progress
-            # if batch_idx % 10 == 0:
-            #     current_lr = lr_schedule[iteration-1]
-            #     current_momentum = momentum_schedule[iteration-1]
-            #     current_wd = wd_schedule[iteration-1]
-            #     current_teacher_temp = teacher_temp_schedule[iteration-1]
+            # Print progress every 100 batches
+            if batch_idx % 100 == 0:
+                current_lr = lr_schedule[iteration-1]
+                current_momentum = momentum_schedule[iteration-1]
+                current_wd = wd_schedule[iteration-1]
+                current_teacher_temp = teacher_temp_schedule[iteration-1]
                 
-            #     # Count views in batch for reporting
-            #     num_global = (batch['view'] == 1).sum().item()
-            #     num_local = (batch['view'] == 0).sum().item()
-            #     # GPU memory usage
-            #     gpu_mem_allocated = torch.cuda.memory_allocated() / 1e9  # GB
-            #     gpu_mem_reserved = torch.cuda.memory_reserved() / 1e9  # GB
+                # Count views in batch for reporting
+                num_global = (batch['view'] == 1).sum().item()
+                num_local = (batch['view'] == 0).sum().item()
+                # GPU memory usage
+                gpu_mem_allocated = torch.cuda.memory_allocated() / 1e9  # GB
+                gpu_mem_reserved = torch.cuda.memory_reserved() / 1e9  # GB
                 
-            #     print(f"Epoch [{epoch+1}/{config.num_epochs}] "
-            #           f"Batch [{batch_idx}/{len(train_loader)}] "
-            #           f"Loss: {loss:.4f} | "
-            #           f"Load: {batch_load_time:.3f}s | "
-            #           f"Train: {train_step_time:.3f}s | "
-            #           f"Total: {total_batch_time:.3f}s | "
-            #           f"GPU Mem: {gpu_mem_allocated:.2f}/{gpu_mem_reserved:.2f}GB | "
-            #           f"Elapsed Time: {(time.time() - start_time)/60:.2f} min | "
-            #           f"Graphs: {num_unique_graphs} "
-            #           f"(Global: {num_global}, Local: {num_local}) | "
-            #           f"LR: {current_lr:.6f}",
-            #           f"Teacher Momentum: {current_momentum:.4f}",
-            #           f"WD: {current_wd:.4f}",
-            #           f"Teacher Temp: {current_teacher_temp:.4f}")
+                elapsed_time_min = (time.time() - start_time) / 60
+                print(f"  Batch [{batch_idx+1:4d}/{len(train_loader)}] Loss: {loss:.4f} | "
+                      f"LR: {current_lr:.2e} | GPU Mem: {gpu_mem_allocated:.1f}/{gpu_mem_reserved:.1f}GB | "
+                      f"Elapsed: {elapsed_time_min:.1f}min")
             
             # Start timing for next batch load (at end of every iteration)
             batch_load_start = time.time()
@@ -242,17 +275,49 @@ def dino_train(config: ModelConfig):
         # Persist after each epoch so interrupted runs keep partial history.
         manager.save_loss_history(verbose=False)
         
+        elapsed_total = (time.time() - start_time) / 60
         print(f"\n{'='*70}")
-        print(f"Epoch {epoch+1}/{config.num_epochs} Summary: Avg Loss = {avg_loss:.6f}")
-        print(f"Graphs trained this epoch: {epoch_trained_graphs}/{total_graphs_in_epoch} ({valid_pct:.2f}% valid)")
-        print(f"Invalid SMILES skipped this epoch: {epoch_invalid_graphs}")
+        print(f"Epoch {epoch+1}/{config.num_epochs} Complete at {time.strftime('%H:%M:%S')}")
+        print(f"Average Loss: {avg_loss:.6f}")
+        print(f"Graphs trained: {epoch_trained_graphs}/{total_graphs_in_epoch} ({valid_pct:.2f}% valid)")
+        print(f"Invalid SMILES skipped: {epoch_invalid_graphs}")
         print(
             f"Diagnostics: teacher_entropy={avg_teacher_entropy:.4f}, "
             f"student_entropy={avg_student_entropy:.4f}, "
             f"embedding_std={avg_embedding_std:.4f}, "
-            f"collapse_warning={collapse_warning}"
+            f"collapse={collapse_warning}"
         )
-        print(f"{'='*70}\n")
+        print(f"Total elapsed time: {elapsed_total:.1f} min")
+        print(f"{'='*70}")
+
+        saved_online_path = None
+        if online_evaluator is not None and (epoch + 1) % max(1, online_eval_every_n_epochs) == 0:
+            print(f"  • Running online downstream eval (fixed k={online_eval_fixed_k})...")
+            online_eval_result = online_evaluator.evaluate_model(dino_ssl.student, torch.device(config.device))
+            aggregate_score = online_eval_result.get("aggregate_primary_score", float("-inf"))
+            print(f"    ✓ Online eval done | aggregate validation score={aggregate_score:.6f}")
+
+            saved_online_path = manager.update_top_eval_checkpoints(
+                epoch=epoch,
+                model=dino_ssl.student,
+                optimizer=optimizer,
+                ssl_loss=avg_loss,
+                eval_result=online_eval_result,
+                top_k=online_eval_top_k,
+            )
+            manager.record_online_eval(
+                epoch=epoch,
+                ssl_loss=avg_loss,
+                eval_result=online_eval_result,
+                saved_path=saved_online_path,
+            )
+
+            if saved_online_path is not None:
+                print(f"    ✓ Top-{online_eval_top_k} checkpoint updated: {saved_online_path}")
+            else:
+                print(f"    • Checkpoint not in top-{online_eval_top_k}; not saved")
+
+            manager.save_loss_history(verbose=False)
         
         # Save checkpoints
         manager.save_checkpoint(epoch, dino_ssl.student, optimizer, avg_loss, is_best=is_best)
@@ -261,5 +326,19 @@ def dino_train(config: ModelConfig):
     manager.save_loss_history()
     manager.save_model_metadata()
     manager.save_dino_metadata()
+    manager.save_online_eval_metadata()
+    
+    # Training complete summary
+    total_time = (time.time() - start_time) / 60
+    print(f"\n{'='*70}")
+    print(f"✓ TRAINING COMPLETE!")
+    print(f"{'='*70}")
+    print(f"Total training time: {total_time:.1f} minutes ({total_time/60:.2f} hours)")
+    print(f"Model: {config.name}")
+    print(f"Epochs trained: {config.num_epochs}")
+    print(f"Results saved to: models/{config.name}/")
+    if manager.best_loss is not None:
+        print(f"Best SSL loss: {manager.best_loss:.6f}")
+    print(f"{'='*70}\\n")
     
     return dino_ssl, manager

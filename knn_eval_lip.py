@@ -25,13 +25,13 @@ from sklearn.preprocessing import StandardScaler
 
 from datahandling.graph_creation import smiles_to_pygdata
 from model.config import ModelConfig
-from model.gine_model import GINEModel
+from model.gnn_model import GNNModel
 
 
 LIPO_SPLITTER = "random"
 LIPO_DATA_DIR = "data/MoleculeNet_LIPO_custom"
 
-SSL_MODEL_NAME = "GINE_DINO_ZINC_2.5"
+SSL_MODEL_NAME = "GDZ_5000Epochs"
 CHECKPOINT_PATH = f"models/{SSL_MODEL_NAME}/checkpoints/best_model.pth"
 
 FP_RADIUS = 2
@@ -223,7 +223,7 @@ def main():
     checkpoint = torch.load(CHECKPOINT_PATH, map_location=device, weights_only=False)
     config = ModelConfig.from_dict(checkpoint["config"])
 
-    model = GINEModel.from_config(config).to(device)
+    model = GNNModel.from_config(config).to(device)
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
 

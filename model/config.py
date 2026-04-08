@@ -19,14 +19,20 @@ class ModelConfig:
     k_hops: int = 2                     # Number of hops for local subgraph extraction
 
     # Data dimensions
-    num_features: int = 20              # Node feature dimension
-    edge_features: int = 6              # Edge attribute dimension
+    num_features: int = 24              # Node feature dimension
+    edge_features: int = 12             # Edge attribute dimension
     
     # Encoder architecture
+    encoder_type: str = "GINE"          # Encoder type: "GINE", "GAT"
     hidden_dim: int = 128               # Hidden dimension for GINE layers
     num_layers: int = 5                 # Number of GINE convolutional layers
     dropout: float = 0.0                # Dropout rate (0 for GIN paper - no dropout for molecule graphs)
     epsilon: float = 0.0                # GINE epsilon parameter
+
+    # Augmentation mode
+    local_augmentation_mode: str = "k_hop"   # "k_hop" or "masking"
+    node_mask_ratio: float = 0.15             # Fraction of nodes to mask in masking mode
+    feature_mask_ratio: float = 0.15          # Fraction of node features to mask in masking mode
     
     # Projection head
     projection_hidden_dim: int = 256    # MLP hidden dimension (reduced for molecular graphs)
@@ -55,6 +61,15 @@ class ModelConfig:
     # Learning rate schedule
     warmup_epochs: int = 10             # Warmup epochs before cosine annealing
     final_learning_rate: float = 1e-6   # Final learning rate after schedule
+
+    # Online downstream evaluation during SSL training
+    online_eval_enabled: bool = False          # Run downstream eval during SSL training
+    online_eval_every_n_epochs: int = 1        # Evaluate every N epochs (1 = every epoch)
+    online_eval_datasets: str = "lipo"         # Comma-separated downstream datasets
+    online_eval_fixed_k: int = 5               # Fixed k for kNN speed during training
+    online_eval_top_k_checkpoints: int = 5     # Keep top-K checkpoints by eval score
+    online_eval_linear_probe_enabled: bool = True      # Also evaluate linear probe during online eval
+    online_eval_linear_probe_alphas: str = "1.0"      # Comma-separated alpha/C values for linear probe
     
     def to_dict(self):
         """Convert config to dictionary for saving."""

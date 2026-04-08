@@ -1,0 +1,731 @@
+{
+  "checkpoints_dir": "models/GINE_DINO_ZINC_2.5/checkpoints",
+  "datasets": {
+    "lipo": {
+      "dataset": "lipo",
+      "task": "exp",
+      "splitter": "random",
+      "n_train": 3360,
+      "n_train_skipped_non_finite": 0,
+      "n_train_skipped_non_binary": 0,
+      "n_val": 420,
+      "n_val_skipped_non_finite": 0,
+      "n_val_skipped_non_binary": 0,
+      "n_test": 420,
+      "n_test_skipped_non_finite": 0,
+      "n_test_skipped_non_binary": 0,
+      "fingerprints_cache_path": "evaluation_cache/lipo_morgan.npz",
+      "fingerprints_cache_built": false,
+      "checkpoints": {
+        "best_model.pth": {
+          "embeddings": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "knn": {
+              "best_k": 3,
+              "validation_metrics": {
+                "r2": 0.41206356747188744,
+                "rmse": 0.9586310932332943,
+                "mae": 0.7020082171882391
+              },
+              "test_metrics": {
+                "r2": 0.4334708037343681,
+                "mse": 0.8518064307980378,
+                "rmse": 0.9229336004274835,
+                "mae": 0.6605814279492221
+              }
+            },
+            "linear_probe": {
+              "best_alpha": 0.01,
+              "validation_metrics": {
+                "r2": 0.4040883904438525,
+                "rmse": 0.9651109609882903,
+                "mae": 0.7811994555904751
+              },
+              "test_metrics": {
+                "r2": 0.36303219274122633,
+                "mse": 0.9577145856044265,
+                "rmse": 0.9786289315181861,
+                "mae": 0.7621543574106127
+              }
+            }
+          },
+          "fingerprints": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "dataset": "lipo",
+            "feature_type": "fingerprints",
+            "fingerprint_radius": 2,
+            "fingerprint_nbits": 2048,
+            "output_path": "evaluation_cache/lipo_morgan.npz",
+            "knn": {
+              "best_k": 11,
+              "validation_metrics": {
+                "r2": 0.3070914752424794,
+                "rmse": 1.0406969386539104,
+                "mae": 0.7920925663164836
+              },
+              "test_metrics": {
+                "r2": 0.353458219087576,
+                "mse": 0.972109558326444,
+                "rmse": 0.985956164505524,
+                "mae": 0.753459738847061
+              }
+            },
+            "linear_probe": {
+              "best_alpha": 10.0,
+              "validation_metrics": {
+                "r2": 0.027965693273491965,
+                "rmse": 1.232614071584821,
+                "mae": 0.8902783884888603
+              },
+              "test_metrics": {
+                "r2": -0.022533159618671084,
+                "mse": 1.537432363254637,
+                "rmse": 1.239932402695662,
+                "mae": 0.881410192875635
+              }
+            }
+          }
+        },
+        "checkpoint_epoch_30.pth": {
+          "embeddings": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "knn": {
+              "best_k": 3,
+              "validation_metrics": {
+                "r2": 0.41197078758508354,
+                "rmse": 0.9587067291105683,
+                "mae": 0.702184586549035
+              },
+              "test_metrics": {
+                "r2": 0.43374239920662006,
+                "mse": 0.8513980727268831,
+                "rmse": 0.9227123456022918,
+                "mae": 0.6601465962969393
+              }
+            },
+            "linear_probe": {
+              "best_alpha": 0.01,
+              "validation_metrics": {
+                "r2": 0.403340528431137,
+                "rmse": 0.9657163725149734,
+                "mae": 0.7817508160046169
+              },
+              "test_metrics": {
+                "r2": 0.3616615546705725,
+                "mse": 0.959775412002387,
+                "rmse": 0.9796812808267733,
+                "mae": 0.7630400423208872
+              }
+            }
+          },
+          "fingerprints": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "dataset": "lipo",
+            "feature_type": "fingerprints",
+            "fingerprint_radius": 2,
+            "fingerprint_nbits": 2048,
+            "output_path": "evaluation_cache/lipo_morgan.npz",
+            "knn": {
+              "best_k": 11,
+              "validation_metrics": {
+                "r2": 0.3070914752424794,
+                "rmse": 1.0406969386539104,
+                "mae": 0.7920925663164836
+              },
+              "test_metrics": {
+                "r2": 0.353458219087576,
+                "mse": 0.972109558326444,
+                "rmse": 0.985956164505524,
+                "mae": 0.753459738847061
+              }
+            },
+            "linear_probe": {
+              "best_alpha": 10.0,
+              "validation_metrics": {
+                "r2": 0.027965693273491965,
+                "rmse": 1.232614071584821,
+                "mae": 0.8902783884888603
+              },
+              "test_metrics": {
+                "r2": -0.022533159618671084,
+                "mse": 1.537432363254637,
+                "rmse": 1.239932402695662,
+                "mae": 0.881410192875635
+              }
+            }
+          }
+        },
+        "checkpoint_epoch_20.pth": {
+          "embeddings": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "knn": {
+              "best_k": 5,
+              "validation_metrics": {
+                "r2": 0.48286514503996536,
+                "rmse": 0.899059076728639,
+                "mae": 0.6750286132679504
+              },
+              "test_metrics": {
+                "r2": 0.38396518977359506,
+                "mse": 0.9262407240531014,
+                "rmse": 0.9624140086538129,
+                "mae": 0.7016751310272211
+              }
+            },
+            "linear_probe": {
+              "best_alpha": 0.01,
+              "validation_metrics": {
+                "r2": 0.47474560924419107,
+                "rmse": 0.9060896519722815,
+                "mae": 0.7212492260705858
+              },
+              "test_metrics": {
+                "r2": 0.44748844118494524,
+                "mse": 0.8307301759400295,
+                "rmse": 0.9114440059268751,
+                "mae": 0.7077123337586722
+              }
+            }
+          },
+          "fingerprints": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "dataset": "lipo",
+            "feature_type": "fingerprints",
+            "fingerprint_radius": 2,
+            "fingerprint_nbits": 2048,
+            "output_path": "evaluation_cache/lipo_morgan.npz",
+            "knn": {
+              "best_k": 11,
+              "validation_metrics": {
+                "r2": 0.3070914752424794,
+                "rmse": 1.0406969386539104,
+                "mae": 0.7920925663164836
+              },
+              "test_metrics": {
+                "r2": 0.353458219087576,
+                "mse": 0.972109558326444,
+                "rmse": 0.985956164505524,
+                "mae": 0.753459738847061
+              }
+            },
+            "linear_probe": {
+              "best_alpha": 10.0,
+              "validation_metrics": {
+                "r2": 0.027965693273491965,
+                "rmse": 1.232614071584821,
+                "mae": 0.8902783884888603
+              },
+              "test_metrics": {
+                "r2": -0.022533159618671084,
+                "mse": 1.537432363254637,
+                "rmse": 1.239932402695662,
+                "mae": 0.881410192875635
+              }
+            }
+          }
+        },
+        "checkpoint_epoch_10.pth": {
+          "embeddings": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "knn": {
+              "best_k": 5,
+              "validation_metrics": {
+                "r2": 0.4444711116779758,
+                "rmse": 0.9318363519074012,
+                "mae": 0.7102252164262043
+              },
+              "test_metrics": {
+                "r2": 0.3705213198357512,
+                "mse": 0.9464542892909615,
+                "rmse": 0.9728588228982464,
+                "mae": 0.7058794681939979
+              }
+            },
+            "linear_probe": {
+              "best_alpha": 0.01,
+              "validation_metrics": {
+                "r2": 0.5013622258850263,
+                "rmse": 0.8828337193126725,
+                "mae": 0.7217486489273253
+              },
+              "test_metrics": {
+                "r2": 0.42385412622752827,
+                "mse": 0.8662656110084009,
+                "rmse": 0.930733909884238,
+                "mae": 0.6924705899670011
+              }
+            }
+          },
+          "fingerprints": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "dataset": "lipo",
+            "feature_type": "fingerprints",
+            "fingerprint_radius": 2,
+            "fingerprint_nbits": 2048,
+            "output_path": "evaluation_cache/lipo_morgan.npz",
+            "knn": {
+              "best_k": 11,
+              "validation_metrics": {
+                "r2": 0.3070914752424794,
+                "rmse": 1.0406969386539104,
+                "mae": 0.7920925663164836
+              },
+              "test_metrics": {
+                "r2": 0.353458219087576,
+                "mse": 0.972109558326444,
+                "rmse": 0.985956164505524,
+                "mae": 0.753459738847061
+              }
+            },
+            "linear_probe": {
+              "best_alpha": 10.0,
+              "validation_metrics": {
+                "r2": 0.027965693273491965,
+                "rmse": 1.232614071584821,
+                "mae": 0.8902783884888603
+              },
+              "test_metrics": {
+                "r2": -0.022533159618671084,
+                "mse": 1.537432363254637,
+                "rmse": 1.239932402695662,
+                "mae": 0.881410192875635
+              }
+            }
+          }
+        },
+        "checkpoint_epoch_50.pth": {
+          "embeddings": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "knn": {
+              "best_k": 5,
+              "validation_metrics": {
+                "r2": 0.308562082333114,
+                "rmse": 1.039591980962285,
+                "mae": 0.7895665784893746
+              },
+              "test_metrics": {
+                "r2": 0.33236540177594787,
+                "mse": 1.003823718069888,
+                "rmse": 1.0019100349182495,
+                "mae": 0.7419404379440686
+              }
+            },
+            "linear_probe": {
+              "best_alpha": 0.01,
+              "validation_metrics": {
+                "r2": 0.370392943049092,
+                "rmse": 0.9920215770089359,
+                "mae": 0.8093498486564272
+              },
+              "test_metrics": {
+                "r2": 0.3443191434322027,
+                "mse": 0.9858506390441034,
+                "rmse": 0.9929001153409659,
+                "mae": 0.7984360971450805
+              }
+            }
+          },
+          "fingerprints": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "dataset": "lipo",
+            "feature_type": "fingerprints",
+            "fingerprint_radius": 2,
+            "fingerprint_nbits": 2048,
+            "output_path": "evaluation_cache/lipo_morgan.npz",
+            "knn": {
+              "best_k": 11,
+              "validation_metrics": {
+                "r2": 0.3070914752424794,
+                "rmse": 1.0406969386539104,
+                "mae": 0.7920925663164836
+              },
+              "test_metrics": {
+                "r2": 0.353458219087576,
+                "mse": 0.972109558326444,
+                "rmse": 0.985956164505524,
+                "mae": 0.753459738847061
+              }
+            },
+            "linear_probe": {
+              "best_alpha": 10.0,
+              "validation_metrics": {
+                "r2": 0.027965693273491965,
+                "rmse": 1.232614071584821,
+                "mae": 0.8902783884888603
+              },
+              "test_metrics": {
+                "r2": -0.022533159618671084,
+                "mse": 1.537432363254637,
+                "rmse": 1.239932402695662,
+                "mae": 0.881410192875635
+              }
+            }
+          }
+        }
+      }
+    },
+    "hiv": {
+      "dataset": "hiv",
+      "task": "HIV_active",
+      "splitter": "scaffold",
+      "n_train": 32896,
+      "n_train_skipped_non_finite": 0,
+      "n_train_skipped_non_binary": 0,
+      "n_val": 4112,
+      "n_val_skipped_non_finite": 0,
+      "n_val_skipped_non_binary": 0,
+      "n_test": 4112,
+      "n_test_skipped_non_finite": 0,
+      "n_test_skipped_non_binary": 0,
+      "fingerprints_cache_path": "evaluation_cache/hiv_morgan.npz",
+      "fingerprints_cache_built": false,
+      "checkpoints": {
+        "best_model.pth": {
+          "embeddings": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "knn": {
+              "best_k": 21,
+              "validation_metrics": {
+                "roc_auc": 0.7169681879017857,
+                "f1": 0.24299065420560748
+              },
+              "test_metrics": {
+                "roc_auc": 0.6936077734420276,
+                "f1": 0.2857142857142857,
+                "balanced_accuracy": 0.5874570181200015
+              }
+            },
+            "linear_probe": {
+              "best_C": 0.01,
+              "validation_metrics": {
+                "roc_auc": 0.7023377466609089,
+                "f1": 0.20618556701030927
+              },
+              "test_metrics": {
+                "roc_auc": 0.7037630877409884,
+                "f1": 0.1360544217687075,
+                "balanced_accuracy": 0.5375825831626937
+              }
+            }
+          },
+          "fingerprints": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "dataset": "hiv",
+            "feature_type": "fingerprints",
+            "fingerprint_radius": 2,
+            "fingerprint_nbits": 2048,
+            "output_path": "evaluation_cache/hiv_morgan.npz",
+            "knn": {
+              "best_k": 41,
+              "validation_metrics": {
+                "roc_auc": 0.7507327471356249,
+                "f1": 0.1111111111111111
+              },
+              "test_metrics": {
+                "roc_auc": 0.6985038442220762,
+                "f1": 0.030303030303030304,
+                "balanced_accuracy": 0.5076923076923077
+              }
+            },
+            "linear_probe": {
+              "best_C": 0.01,
+              "validation_metrics": {
+                "roc_auc": 0.774171467423762,
+                "f1": 0.256
+              },
+              "test_metrics": {
+                "roc_auc": 0.7261986632152377,
+                "f1": 0.2918918918918919,
+                "balanced_accuracy": 0.6003303326507746
+              }
+            }
+          }
+        },
+        "checkpoint_epoch_30.pth": {
+          "embeddings": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "knn": {
+              "best_k": 21,
+              "validation_metrics": {
+                "roc_auc": 0.7169681879017858,
+                "f1": 0.24299065420560748
+              },
+              "test_metrics": {
+                "roc_auc": 0.6936077734420276,
+                "f1": 0.2857142857142857,
+                "balanced_accuracy": 0.5874570181200015
+              }
+            },
+            "linear_probe": {
+              "best_C": 0.01,
+              "validation_metrics": {
+                "roc_auc": 0.7023377466609089,
+                "f1": 0.20618556701030927
+              },
+              "test_metrics": {
+                "roc_auc": 0.7037630877409884,
+                "f1": 0.1360544217687075,
+                "balanced_accuracy": 0.5375825831626937
+              }
+            }
+          },
+          "fingerprints": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "dataset": "hiv",
+            "feature_type": "fingerprints",
+            "fingerprint_radius": 2,
+            "fingerprint_nbits": 2048,
+            "output_path": "evaluation_cache/hiv_morgan.npz",
+            "knn": {
+              "best_k": 41,
+              "validation_metrics": {
+                "roc_auc": 0.7507327471356249,
+                "f1": 0.1111111111111111
+              },
+              "test_metrics": {
+                "roc_auc": 0.6985038442220762,
+                "f1": 0.030303030303030304,
+                "balanced_accuracy": 0.5076923076923077
+              }
+            },
+            "linear_probe": {
+              "best_C": 0.01,
+              "validation_metrics": {
+                "roc_auc": 0.774171467423762,
+                "f1": 0.256
+              },
+              "test_metrics": {
+                "roc_auc": 0.7261986632152377,
+                "f1": 0.2918918918918919,
+                "balanced_accuracy": 0.6003303326507746
+              }
+            }
+          }
+        },
+        "checkpoint_epoch_20.pth": {
+          "embeddings": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "knn": {
+              "best_k": 51,
+              "validation_metrics": {
+                "roc_auc": 0.759533369473004,
+                "f1": 0.16666666666666666
+              },
+              "test_metrics": {
+                "roc_auc": 0.6846462929335859,
+                "f1": 0.2716049382716049,
+                "balanced_accuracy": 0.5833597341884634
+              }
+            },
+            "linear_probe": {
+              "best_C": 1.0,
+              "validation_metrics": {
+                "roc_auc": 0.7790365408822366,
+                "f1": 0.20952380952380953
+              },
+              "test_metrics": {
+                "roc_auc": 0.7408240930340377,
+                "f1": 0.174496644295302,
+                "balanced_accuracy": 0.5492466097438473
+              }
+            }
+          },
+          "fingerprints": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "dataset": "hiv",
+            "feature_type": "fingerprints",
+            "fingerprint_radius": 2,
+            "fingerprint_nbits": 2048,
+            "output_path": "evaluation_cache/hiv_morgan.npz",
+            "knn": {
+              "best_k": 41,
+              "validation_metrics": {
+                "roc_auc": 0.7507327471356249,
+                "f1": 0.1111111111111111
+              },
+              "test_metrics": {
+                "roc_auc": 0.6985038442220762,
+                "f1": 0.030303030303030304,
+                "balanced_accuracy": 0.5076923076923077
+              }
+            },
+            "linear_probe": {
+              "best_C": 0.01,
+              "validation_metrics": {
+                "roc_auc": 0.774171467423762,
+                "f1": 0.256
+              },
+              "test_metrics": {
+                "roc_auc": 0.7261986632152377,
+                "f1": 0.2918918918918919,
+                "balanced_accuracy": 0.6003303326507746
+              }
+            }
+          }
+        },
+        "checkpoint_epoch_10.pth": {
+          "embeddings": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "knn": {
+              "best_k": 41,
+              "validation_metrics": {
+                "roc_auc": 0.7415125370967593,
+                "f1": 0.1875
+              },
+              "test_metrics": {
+                "roc_auc": 0.7600799752733455,
+                "f1": 0.294478527607362,
+                "balanced_accuracy": 0.5911776069234633
+              }
+            },
+            "linear_probe": {
+              "best_C": 0.01,
+              "validation_metrics": {
+                "roc_auc": 0.7299325290725275,
+                "f1": 0.1568627450980392
+              },
+              "test_metrics": {
+                "roc_auc": 0.7702642661206197,
+                "f1": 0.02877697841726619,
+                "balanced_accuracy": 0.5068133523934629
+              }
+            }
+          },
+          "fingerprints": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "dataset": "hiv",
+            "feature_type": "fingerprints",
+            "fingerprint_radius": 2,
+            "fingerprint_nbits": 2048,
+            "output_path": "evaluation_cache/hiv_morgan.npz",
+            "knn": {
+              "best_k": 41,
+              "validation_metrics": {
+                "roc_auc": 0.7507327471356249,
+                "f1": 0.1111111111111111
+              },
+              "test_metrics": {
+                "roc_auc": 0.6985038442220762,
+                "f1": 0.030303030303030304,
+                "balanced_accuracy": 0.5076923076923077
+              }
+            },
+            "linear_probe": {
+              "best_C": 0.01,
+              "validation_metrics": {
+                "roc_auc": 0.774171467423762,
+                "f1": 0.256
+              },
+              "test_metrics": {
+                "roc_auc": 0.7261986632152377,
+                "f1": 0.2918918918918919,
+                "balanced_accuracy": 0.6003303326507746
+              }
+            }
+          }
+        },
+        "checkpoint_epoch_50.pth": {
+          "embeddings": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "knn": {
+              "best_k": 51,
+              "validation_metrics": {
+                "roc_auc": 0.7340273375169597,
+                "f1": 0.17204301075268819
+              },
+              "test_metrics": {
+                "roc_auc": 0.6825416296410772,
+                "f1": 0.2064516129032258,
+                "balanced_accuracy": 0.5604083761542324
+              }
+            },
+            "linear_probe": {
+              "best_C": 1.0,
+              "validation_metrics": {
+                "roc_auc": 0.7015812637246523,
+                "f1": 0.22429906542056074
+              },
+              "test_metrics": {
+                "roc_auc": 0.715809604759881,
+                "f1": 0.07092198581560284,
+                "balanced_accuracy": 0.5184773789746165
+              }
+            }
+          },
+          "fingerprints": {
+            "n_train_invalid_smiles": 0,
+            "n_val_invalid_smiles": 0,
+            "n_test_invalid_smiles": 0,
+            "dataset": "hiv",
+            "feature_type": "fingerprints",
+            "fingerprint_radius": 2,
+            "fingerprint_nbits": 2048,
+            "output_path": "evaluation_cache/hiv_morgan.npz",
+            "knn": {
+              "best_k": 41,
+              "validation_metrics": {
+                "roc_auc": 0.7507327471356249,
+                "f1": 0.1111111111111111
+              },
+              "test_metrics": {
+                "roc_auc": 0.6985038442220762,
+                "f1": 0.030303030303030304,
+                "balanced_accuracy": 0.5076923076923077
+              }
+            },
+            "linear_probe": {
+              "best_C": 0.01,
+              "validation_metrics": {
+                "roc_auc": 0.774171467423762,
+                "f1": 0.256
+              },
+              "test_metrics": {
+                "roc_auc": 0.7261986632152377,
+                "f1": 0.2918918918918919,
+                "balanced_accuracy": 0.6003303326507746
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

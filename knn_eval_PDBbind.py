@@ -16,7 +16,7 @@ import deepchem as dc
 from pathlib import Path
 from datetime import datetime
 from rdkit import Chem
-from model.gine_model import GINEModel
+from model.gnn_model import GNNModel
 from model.config import ModelConfig
 from datahandling.graph_creation import smiles_to_pygdata
 from sklearn.neighbors import KNeighborsRegressor
@@ -216,7 +216,7 @@ def load_pdbbind_splits_from_deepchem(
 
 
 def extract_embeddings(
-    model: GINEModel,
+    model: GNNModel,
     device: torch.device,
     smiles_list: list[str],
     target_list: list[float],
@@ -265,7 +265,7 @@ checkpoint = torch.load(
 )
 config = ModelConfig.from_dict(checkpoint["config"])
 
-model = GINEModel.from_config(config).to(device)
+model = GNNModel.from_config(config).to(device)
 model.load_state_dict(checkpoint["model_state_dict"])
 model.eval()
 

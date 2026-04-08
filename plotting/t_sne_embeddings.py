@@ -6,7 +6,7 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 from torch_geometric.data import Batch
 from torch.utils.data import DataLoader
-from model.gine_model import GINEModel
+from model.gnn_model import GNNModel
 from model.config import ModelConfig
 
 
@@ -15,7 +15,7 @@ def load_model_from_checkpoint(checkpoint_path: str, device: str | None = None):
     checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
     config = ModelConfig.from_dict(checkpoint["config"])
 
-    model = GINEModel.from_config(config)
+    model = GNNModel.from_config(config)
     model.load_state_dict(checkpoint["model_state_dict"])
 
     if device is None:

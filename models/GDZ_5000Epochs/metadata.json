@@ -1,0 +1,65 @@
+{
+  "KNN_eval_LIPO": {
+    "dataset": "LIPO",
+    "data_source": "deepchem.molnet.load_lipo",
+    "splitter": "random",
+    "task": "exp",
+    "k_values": [
+      3,
+      5,
+      11,
+      21,
+      31,
+      41,
+      51
+    ],
+    "fingerprint": {
+      "type": "Morgan",
+      "radius": 2,
+      "nbits": 2048
+    },
+    "embeddings_model": "GDZ_5000Epochs",
+    "embeddings": {
+      "best_k": 21,
+      "validation_metrics": {
+        "r2": 0.1805,
+        "rmse": 1.1318,
+        "mae": 0.8744
+      },
+      "test_metrics": {
+        "r2": 0.2112,
+        "mse": 1.1861,
+        "rmse": 1.0891,
+        "mae": 0.8243
+      },
+      "n_train": 3360,
+      "n_val": 420,
+      "n_test": 420,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "fingerprints": {
+      "best_k": 11,
+      "validation_metrics": {
+        "r2": 0.3071,
+        "rmse": 1.0407,
+        "mae": 0.7921
+      },
+      "test_metrics": {
+        "r2": 0.3535,
+        "mse": 0.9721,
+        "rmse": 0.986,
+        "mae": 0.7535
+      },
+      "n_train": 3360,
+      "n_val": 420,
+      "n_test": 420,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "plot_path": "models/GDZ_5000Epochs/knn_lipo_embeddings_vs_fingerprints.png",
+    "timestamp": "2026-04-07T10:31:28.414105"
+  }
+}
