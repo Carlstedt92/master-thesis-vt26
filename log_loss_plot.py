@@ -7,22 +7,31 @@ import pandas as pd
 import seaborn as sns
 
 
-def _extract_linear_probe_validation_metric(online_eval_entry: dict, dataset: str):
+def _extract_online_knn_validation_metric(online_eval_entry: dict, dataset: str):
     datasets = online_eval_entry.get("evaluation", {}).get("datasets", {})
     dataset_payload = datasets.get(dataset)
     if dataset_payload is None:
         return None, None
 
-    linear_probe = dataset_payload.get("embeddings", {}).get("linear_probe", {})
-    validation_metrics = linear_probe.get("validation_metrics", {})
+    primary_value = dataset_payload.get("primary_metric_value")
+    primary_name = dataset_payload.get("primary_metric_name")
+    if primary_value is not None and primary_name is not None:
+        return primary_value, str(primary_name)
+
+    knn = dataset_payload.get("embeddings", {}).get("knn", {})
+    validation_metrics = knn.get("validation_metrics", {})
     if not validation_metrics:
         return None, None
 
-    # LIPO is regression-only in this workflow, so we plot validation RMSE.
-    return validation_metrics.get("rmse"), "linear_probe_val_rmse"
+    for metric_name in ("r2", "rmse", "mae", "roc_auc", "f1", "balanced_accuracy"):
+        metric_value = validation_metrics.get(metric_name)
+        if metric_value is not None:
+            return metric_value, f"knn_val_{metric_name}"
+
+    return None, None
 
 
-def plot_ssl_and_linear_probe(loss_history_path: Path, output_path: Path, dataset: str):
+def plot_ssl_and_online_knn(loss_history_path: Path, output_path: Path, dataset: str):
     with open(loss_history_path, "r", encoding="utf-8") as f:
         loss_history = json.load(f)
 
@@ -32,17 +41,17 @@ def plot_ssl_and_linear_probe(loss_history_path: Path, output_path: Path, datase
     if dino_loss.empty:
         raise ValueError("No DINO_Loss entries found in loss_history.json")
 
-    linear_rows = []
-    metric_label = "linear_probe_val_metric"
+    eval_rows = []
+    metric_label = "online_val_metric"
     for entry in online_eval:
-        value, detected_label = _extract_linear_probe_validation_metric(entry, dataset)
+        value, detected_label = _extract_online_knn_validation_metric(entry, dataset)
         if value is None:
             continue
         if detected_label is not None:
             metric_label = detected_label
-        linear_rows.append({"epoch": int(entry["epoch"]), "linear_probe_metric": float(value)})
+        eval_rows.append({"epoch": int(entry["epoch"]), "online_metric": float(value)})
 
-    linear_df = pd.DataFrame(linear_rows)
+    eval_df = pd.DataFrame(eval_rows)
 
     sns.set_style("whitegrid")
     fig, ax1 = plt.subplots(figsize=(11, 6))
@@ -64,16 +73,14 @@ def plot_ssl_and_linear_probe(loss_history_path: Path, output_path: Path, datase
         lines.append(line)
         labels.append(line.get_label())
 
-    if not linear_df.empty:
+    if not eval_df.empty:
         ax2 = ax1.twinx()
         ax2.plot(
-            linear_df["epoch"],
-            linear_df["linear_probe_metric"],
+            eval_df["epoch"],
+            eval_df["online_metric"],
             color="#d62728",
             label=metric_label,
             linewidth=2,
-            marker="o",
-            markersize=3,
         )
         ax2.set_ylabel(metric_label, color="#d62728")
         ax2.tick_params(axis="y", labelcolor="#d62728")
@@ -81,17 +88,15 @@ def plot_ssl_and_linear_probe(loss_history_path: Path, output_path: Path, datase
             lines.append(line)
             labels.append(line.get_label())
 
-    plt.title(f"SSL and Linear Probe Curves ({dataset})")
+    plt.title(f"SSL and Online kNN Curves ({dataset})")
     fig.legend(lines, labels, loc="upper right", frameon=True)
     fig.tight_layout()
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)
     plt.close(fig)
-
-
 def main():
-    parser = argparse.ArgumentParser(description="Plot SSL loss and linear-probe metric per epoch.")
+    parser = argparse.ArgumentParser(description="Plot SSL loss and online kNN metric per epoch.")
     parser.add_argument("--model", required=True, help="Model directory name under models/.")
     parser.add_argument("--dataset", default="lipo", help="Dataset key in online eval history (e.g., lipo or hiv).")
     parser.add_argument(
@@ -102,7 +107,7 @@ def main():
     parser.add_argument(
         "--output",
         default=None,
-        help="Optional output image path. Defaults to models/<model>/loss_curves_ssl_linearprobe_<dataset>.png",
+        help="Optional output image path. Defaults to models/<model>/loss_curves_ssl_knn_<dataset>.png",
     )
     args = parser.parse_args()
 
@@ -114,10 +119,10 @@ def main():
     output_path = (
         Path(args.output)
         if args.output is not None
-        else Path(f"models/{args.model}/loss_curves_ssl_linearprobe_{args.dataset}.png")
+        else Path(f"models/{args.model}/loss_curves_ssl_knn_{args.dataset}.png")
     )
 
-    plot_ssl_and_linear_probe(loss_history_path, output_path, args.dataset)
+    plot_ssl_and_online_knn(loss_history_path, output_path, args.dataset)
     print(f"Saved plot: {output_path}")
 
 

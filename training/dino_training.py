@@ -55,12 +55,6 @@ def dino_train(config: ModelConfig):
     online_eval_every_n_epochs = int(getattr(config, "online_eval_every_n_epochs", 1))
     online_eval_fixed_k = int(getattr(config, "online_eval_fixed_k", 5))
     online_eval_top_k = int(getattr(config, "online_eval_top_k_checkpoints", 5))
-    online_eval_linear_probe_enabled = bool(getattr(config, "online_eval_linear_probe_enabled", True))
-    online_eval_linear_probe_alphas = [
-        float(item.strip())
-        for item in str(getattr(config, "online_eval_linear_probe_alphas", "1.0")).split(",")
-        if item.strip()
-    ]
     online_eval_datasets = [
         item.strip()
         for item in str(getattr(config, "online_eval_datasets", "lipo")).split(",")
@@ -72,9 +66,7 @@ def dino_train(config: ModelConfig):
         print(f"    Datasets: {','.join(online_eval_datasets)}")
         print(f"    Every N epochs: {online_eval_every_n_epochs}")
         print(f"    Fixed k: {online_eval_fixed_k}")
-        print(f"    Linear probe enabled: {online_eval_linear_probe_enabled}")
-        if online_eval_linear_probe_enabled:
-            print(f"    Linear probe alphas/Cs: {online_eval_linear_probe_alphas}")
+        print("    Mode: kNN-only")
         print(f"    Top-k checkpoints kept: {online_eval_top_k}")
     else:
         print("  Online eval: disabled")
@@ -87,8 +79,6 @@ def dino_train(config: ModelConfig):
         online_evaluator = OnlineDownstreamEvaluator(
             dataset_names=online_eval_datasets,
             fixed_k=online_eval_fixed_k,
-            include_linear_probe=online_eval_linear_probe_enabled,
-            linear_probe_alphas=online_eval_linear_probe_alphas,
             fingerprint_radius=2,
             fingerprint_nbits=2048,
         )

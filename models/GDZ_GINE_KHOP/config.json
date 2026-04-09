@@ -1,5 +1,5 @@
 {
-  "name": "GDZ_GAT_KHOP",
+  "name": "GDZ_GINE_KHOP",
   "head_type": "dino",
   "data_path": "data/zinc/zinc_data",
   "seed": 42,
@@ -9,7 +9,7 @@
   "k_hops": 2,
   "num_features": 24,
   "edge_features": 12,
-  "encoder_type": "GAT",
+  "encoder_type": "GINE",
   "hidden_dim": 128,
   "num_layers": 3,
   "dropout": 0.0,

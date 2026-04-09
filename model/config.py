@@ -1,6 +1,6 @@
 """Configuration for model training."""
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, fields
 import torch
 
 
@@ -68,8 +68,6 @@ class ModelConfig:
     online_eval_datasets: str = "lipo"         # Comma-separated downstream datasets
     online_eval_fixed_k: int = 5               # Fixed k for kNN speed during training
     online_eval_top_k_checkpoints: int = 5     # Keep top-K checkpoints by eval score
-    online_eval_linear_probe_enabled: bool = True      # Also evaluate linear probe during online eval
-    online_eval_linear_probe_alphas: str = "1.0"      # Comma-separated alpha/C values for linear probe
     
     def to_dict(self):
         """Convert config to dictionary for saving."""
@@ -77,5 +75,7 @@ class ModelConfig:
     
     @classmethod
     def from_dict(cls, config_dict):
-        """Create config from dictionary."""
-        return cls(**config_dict)
+        """Create config from dictionary, ignoring unknown keys for compatibility."""
+        valid_field_names = {field.name for field in fields(cls)}
+        filtered_config = {k: v for k, v in config_dict.items() if k in valid_field_names}
+        return cls(**filtered_config)

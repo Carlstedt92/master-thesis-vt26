@@ -1,4 +1,4 @@
-"""Run end-to-end kNN and linear-probe evaluation for checkpoints.
+"""Run end-to-end kNN evaluation for checkpoints.
 
 Fingerprints are cached once per dataset, while embeddings are extracted
 transiently for each checkpoint and never written to disk.
@@ -20,8 +20,6 @@ from datahandling.graph_creation import smiles_to_pygdata
 from evaluation import (
     evaluate_knn_classification,
     evaluate_knn_regression,
-    evaluate_linear_probe_classification,
-    evaluate_linear_probe_regression,
 )
 from model.config import ModelConfig
 from model.gnn_model import GNNModel
@@ -204,7 +202,7 @@ def _select_top_n_by_ssl_loss(checkpoint_paths, top_n: int):
     return [item[2] for item in selected]
 
 
-def _evaluate_feature_set(feature_set, task: str, k_values, alphas):
+def _evaluate_feature_set(feature_set, task: str, k_values):
     def _strip_prediction_arrays(result_dict: dict):
         # Keep scalar metrics in the summary and drop large ndarray payloads.
         result_dict.pop("test_predictions", None)
@@ -221,18 +219,8 @@ def _evaluate_feature_set(feature_set, task: str, k_values, alphas):
             feature_set["test_y"],
             k_values=k_values,
         )
-        probe_result = evaluate_linear_probe_regression(
-            feature_set["train_X"],
-            feature_set["train_y"],
-            feature_set["val_X"],
-            feature_set["val_y"],
-            feature_set["test_X"],
-            feature_set["test_y"],
-            alphas=alphas,
-        )
         return {
             "knn": _strip_prediction_arrays(knn_result),
-            "linear_probe": _strip_prediction_arrays(probe_result),
         }
 
     if task == "classification":
@@ -245,18 +233,8 @@ def _evaluate_feature_set(feature_set, task: str, k_values, alphas):
             feature_set["test_y"],
             k_values=k_values,
         )
-        probe_result = evaluate_linear_probe_classification(
-            feature_set["train_X"],
-            feature_set["train_y"],
-            feature_set["val_X"],
-            feature_set["val_y"],
-            feature_set["test_X"],
-            feature_set["test_y"],
-            Cs=alphas,
-        )
         return {
             "knn": _strip_prediction_arrays(knn_result),
-            "linear_probe": _strip_prediction_arrays(probe_result),
         }
 
     raise ValueError(f"Unsupported task: {task}")
@@ -333,11 +311,6 @@ def main():
         help="Comma-separated k values for kNN.",
     )
     parser.add_argument(
-        "--alphas",
-        default="0.01,0.1,1,10",
-        help="Comma-separated regularization values for linear probing.",
-    )
-    parser.add_argument(
         "--output",
         default=None,
         help="Optional path to save a JSON summary. Defaults to models/<model_name>/evaluation/results.json.",
@@ -353,7 +326,6 @@ def main():
 
     args = parser.parse_args()
     k_values = _parse_csv(args.k_values, int)
-    alphas = _parse_csv(args.alphas, float)
 
     checkpoint_paths = _load_checkpoint_paths(args.checkpoints_dir)
     if args.top_n_by_ssl_loss is not None:
@@ -385,8 +357,8 @@ def main():
 
         # Evaluate fingerprints once per dataset
         print(f"  • Evaluating Morgan fingerprints baseline...")
-        fingerprint_result = _evaluate_feature_set(fingerprint_features, dataset_task, k_values, alphas)
-        print(f"    ✓ Fingerprints | best_k={fingerprint_result['knn'].get('best_k')}, best_alpha={fingerprint_result['linear_probe'].get('best_alpha')}")
+        fingerprint_result = _evaluate_feature_set(fingerprint_features, dataset_task, k_values)
+        print(f"    ✓ Fingerprints | best_k={fingerprint_result['knn'].get('best_k')}")
 
         # Evaluate each checkpoint's embeddings
         print(f"  • Checkpoints to evaluate: {total_checkpoints}")
@@ -397,7 +369,7 @@ def main():
             checkpoint_result = {
                 "embeddings": {
                     **embedding_stats,
-                    **_evaluate_feature_set(embeddings_features, dataset_task, k_values, alphas),
+                    **_evaluate_feature_set(embeddings_features, dataset_task, k_values),
                 }
             }
 

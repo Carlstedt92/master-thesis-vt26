@@ -1,0 +1,55 @@
+{
+  "top_eval_checkpoints": [
+    {
+      "epoch": 23,
+      "score": 0.4359055306612123,
+      "ssl_train_loss": 4.8434290698364535,
+      "checkpoint_path": "./models/GDZ_GINE_KHOP/checkpoints/checkpoint_online_eval_epoch_23.pth",
+      "metric_definition": "mean(validation primary metric across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    },
+    {
+      "epoch": 24,
+      "score": 0.3613107205638242,
+      "ssl_train_loss": 4.699713124089089,
+      "checkpoint_path": "./models/GDZ_GINE_KHOP/checkpoints/checkpoint_online_eval_epoch_24.pth",
+      "metric_definition": "mean(validation primary metric across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    },
+    {
+      "epoch": 22,
+      "score": 0.357803723431912,
+      "ssl_train_loss": 4.850025843564032,
+      "checkpoint_path": "./models/GDZ_GINE_KHOP/checkpoints/checkpoint_online_eval_epoch_22.pth",
+      "metric_definition": "mean(validation primary metric across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    },
+    {
+      "epoch": 25,
+      "score": 0.3451716041805629,
+      "ssl_train_loss": 4.771560938022862,
+      "checkpoint_path": "./models/GDZ_GINE_KHOP/checkpoints/checkpoint_online_eval_epoch_25.pth",
+      "metric_definition": "mean(validation primary metric across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    },
+    {
+      "epoch": 2,
+      "score": 0.32191859055420713,
+      "ssl_train_loss": 4.849448944905522,
+      "checkpoint_path": "./models/GDZ_GINE_KHOP/checkpoints/checkpoint_online_eval_epoch_2.pth",
+      "metric_definition": "mean(validation primary metric across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    }
+  ],
+  "generated_at": "2026-04-09T12:12:43.448132"
+}
