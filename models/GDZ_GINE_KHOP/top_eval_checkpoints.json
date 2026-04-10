@@ -1,6 +1,16 @@
 {
   "top_eval_checkpoints": [
     {
+      "epoch": 27,
+      "score": 0.488496563657131,
+      "ssl_train_loss": 4.467659092526573,
+      "checkpoint_path": "./models/GDZ_GINE_KHOP/checkpoints/checkpoint_online_eval_epoch_27.pth",
+      "metric_definition": "mean(validation primary metric across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    },
+    {
       "epoch": 23,
       "score": 0.4359055306612123,
       "ssl_train_loss": 4.8434290698364535,
@@ -11,45 +21,35 @@
       ]
     },
     {
-      "epoch": 24,
-      "score": 0.3613107205638242,
-      "ssl_train_loss": 4.699713124089089,
-      "checkpoint_path": "./models/GDZ_GINE_KHOP/checkpoints/checkpoint_online_eval_epoch_24.pth",
+      "epoch": 28,
+      "score": 0.4094508788703012,
+      "ssl_train_loss": 4.588547554391234,
+      "checkpoint_path": "./models/GDZ_GINE_KHOP/checkpoints/checkpoint_online_eval_epoch_28.pth",
       "metric_definition": "mean(validation primary metric across datasets)",
       "datasets": [
         "lipo"
       ]
     },
     {
-      "epoch": 22,
-      "score": 0.357803723431912,
-      "ssl_train_loss": 4.850025843564032,
-      "checkpoint_path": "./models/GDZ_GINE_KHOP/checkpoints/checkpoint_online_eval_epoch_22.pth",
+      "epoch": 30,
+      "score": 0.4086222069745722,
+      "ssl_train_loss": 4.750674014372833,
+      "checkpoint_path": "./models/GDZ_GINE_KHOP/checkpoints/checkpoint_online_eval_epoch_30.pth",
       "metric_definition": "mean(validation primary metric across datasets)",
       "datasets": [
         "lipo"
       ]
     },
     {
-      "epoch": 25,
-      "score": 0.3451716041805629,
-      "ssl_train_loss": 4.771560938022862,
-      "checkpoint_path": "./models/GDZ_GINE_KHOP/checkpoints/checkpoint_online_eval_epoch_25.pth",
-      "metric_definition": "mean(validation primary metric across datasets)",
-      "datasets": [
-        "lipo"
-      ]
-    },
-    {
-      "epoch": 2,
-      "score": 0.32191859055420713,
-      "ssl_train_loss": 4.849448944905522,
-      "checkpoint_path": "./models/GDZ_GINE_KHOP/checkpoints/checkpoint_online_eval_epoch_2.pth",
+      "epoch": 32,
+      "score": 0.4058818684090566,
+      "ssl_train_loss": 4.3195658319836845,
+      "checkpoint_path": "./models/GDZ_GINE_KHOP/checkpoints/checkpoint_online_eval_epoch_32.pth",
       "metric_definition": "mean(validation primary metric across datasets)",
       "datasets": [
         "lipo"
       ]
     }
   ],
-  "generated_at": "2026-04-09T12:12:43.448132"
+  "generated_at": "2026-04-09T15:08:25.023494"
 }

@@ -4,7 +4,13 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
+
+
+def _set_plot_style():
+    try:
+        plt.style.use("seaborn-v0_8-whitegrid")
+    except OSError:
+        plt.style.use("ggplot")
 
 
 def _extract_online_knn_validation_metric(online_eval_entry: dict, dataset: str):
@@ -53,7 +59,7 @@ def plot_ssl_and_online_knn(loss_history_path: Path, output_path: Path, dataset:
 
     eval_df = pd.DataFrame(eval_rows)
 
-    sns.set_style("whitegrid")
+    _set_plot_style()
     fig, ax1 = plt.subplots(figsize=(11, 6))
 
     ax1.plot(
@@ -95,6 +101,8 @@ def plot_ssl_and_online_knn(loss_history_path: Path, output_path: Path, dataset:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path)
     plt.close(fig)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Plot SSL loss and online kNN metric per epoch.")
     parser.add_argument("--model", required=True, help="Model directory name under models/.")

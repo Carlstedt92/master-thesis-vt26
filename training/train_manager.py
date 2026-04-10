@@ -232,18 +232,24 @@ class TrainingManager:
         eval_result: Dict[str, Any],
         top_k: int = 5,
     ) -> str | None:
-        """Keep only top-k checkpoints by online aggregate eval score (higher is better)."""
+        """Keep only top-k checkpoints by online aggregate eval score."""
         if top_k <= 0:
             return None
 
         score = float(eval_result.get("aggregate_primary_score", float("-inf")))
+        higher_is_better = bool(eval_result.get("aggregate_primary_score_higher_is_better", True))
+
         if not self.top_eval_checkpoints:
             should_save = True
         elif len(self.top_eval_checkpoints) < top_k:
             should_save = True
         else:
-            worst_score = min(item["score"] for item in self.top_eval_checkpoints)
-            should_save = score > worst_score
+            if higher_is_better:
+                worst_score = min(item["score"] for item in self.top_eval_checkpoints)
+                should_save = score > worst_score
+            else:
+                worst_score = max(item["score"] for item in self.top_eval_checkpoints)
+                should_save = score < worst_score
 
         if not should_save:
             return None
@@ -267,6 +273,7 @@ class TrainingManager:
             "score": score,
             "ssl_train_loss": float(ssl_loss),
             "checkpoint_path": checkpoint_path,
+            "metric_higher_is_better": higher_is_better,
             "metric_definition": eval_result.get(
                 "aggregate_primary_score_definition",
                 "mean(validation primary metric across datasets)",
@@ -274,7 +281,10 @@ class TrainingManager:
             "datasets": eval_result.get("dataset_names", []),
         }
         self.top_eval_checkpoints.append(entry)
-        self.top_eval_checkpoints.sort(key=lambda item: (item["score"], -item["epoch"]), reverse=True)
+        if higher_is_better:
+            self.top_eval_checkpoints.sort(key=lambda item: (item["score"], -item["epoch"]), reverse=True)
+        else:
+            self.top_eval_checkpoints.sort(key=lambda item: (item["score"], item["epoch"]))
 
         while len(self.top_eval_checkpoints) > top_k:
             dropped = self.top_eval_checkpoints.pop()
@@ -357,12 +367,23 @@ class TrainingManager:
             return
 
         best_entry = None
+        higher_is_better = True
         for entry in self.online_eval_history:
             evaluation = entry.get("evaluation", {})
             score = evaluation.get("aggregate_primary_score")
             if score is None:
                 continue
-            if best_entry is None or float(score) > float(best_entry["evaluation"]["aggregate_primary_score"]):
+            if best_entry is None:
+                best_entry = entry
+                higher_is_better = bool(evaluation.get("aggregate_primary_score_higher_is_better", True))
+                continue
+
+            if "aggregate_primary_score_higher_is_better" in evaluation:
+                higher_is_better = bool(evaluation.get("aggregate_primary_score_higher_is_better", True))
+
+            best_score = float(best_entry["evaluation"]["aggregate_primary_score"])
+            current_score = float(score)
+            if (higher_is_better and current_score > best_score) or (not higher_is_better and current_score < best_score):
                 best_entry = entry
 
         online_eval_data = {
@@ -377,6 +398,9 @@ class TrainingManager:
             online_eval_data["best_epoch"] = int(best_entry["epoch"])
             online_eval_data["best_aggregate_primary_score"] = float(
                 best_entry["evaluation"]["aggregate_primary_score"]
+            )
+            online_eval_data["best_aggregate_primary_score_higher_is_better"] = bool(
+                best_entry["evaluation"].get("aggregate_primary_score_higher_is_better", True)
             )
 
         self._update_metadata_section("Online_eval_data", online_eval_data)

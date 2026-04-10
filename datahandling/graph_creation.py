@@ -6,14 +6,23 @@ import numpy as np
 from typing import Optional
 
 def smiles_to_pygdata(smiles: str) -> Optional[Data]:
-    """ Convert a SMILES string to a graph representation suitable for GNNs.
+    """Convert a SMILES string to a graph representation suitable for GNNs.
 
     Args:
         smiles (str): The SMILES string representing the molecule.
 
     Returns:
-        Data: A PyTorch Geometric Data object containing 21 node features, edge indices, and 6 edge attributes,
-                along with the original SMILES string as metadata.
+        Data: A PyTorch Geometric Data object with:
+            - 24 node features per atom:
+                - 11 atom-type flags: C, O, N, H, F, P, S, Cl, Br, I, other
+                - 5 atom properties: degree, formal charge, aromaticity, radical electrons, ring membership
+                - 4 hybridization flags: SP, SP2, SP3, other
+                - 4 chirality flags: unspecified, tetrahedral CCW, tetrahedral CW, other
+            - 12 edge features per bond direction:
+                - 4 bond-type flags: single, double, triple, aromatic
+                - 2 bond properties: conjugated, in ring
+                - 6 bond-stereo flags: none, any, Z, E, cis, trans
+            - edge_index describing the bidirectional molecular graph
     """
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:

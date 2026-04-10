@@ -95,8 +95,9 @@ class OnlineDownstreamEvaluator:
             embedding_knn = self._evaluate_fixed_k_knn(embedding_features, task)
 
             if task == "regression":
-                primary_metric_name = "val_r2"
-                primary_metric_value = float(embedding_knn["validation_metrics"]["r2"])
+                primary_metric_name = "val_rmse"
+                primary_metric_value = float(embedding_knn["validation_metrics"]["rmse"])
+                primary_metric_higher_is_better = False
 
             primary_scores.append(primary_metric_value)
 
@@ -104,6 +105,7 @@ class OnlineDownstreamEvaluator:
                 "task": task,
                 "primary_metric_name": primary_metric_name,
                 "primary_metric_value": primary_metric_value,
+                "primary_metric_higher_is_better": primary_metric_higher_is_better,
                 "fixed_k": int(self.fixed_k),
                 "embeddings": {
                     **embedding_stats,
@@ -118,6 +120,7 @@ class OnlineDownstreamEvaluator:
             "fixed_k": int(self.fixed_k),
             "dataset_names": list(self.dataset_names),
             "aggregate_primary_score": aggregate_score,
-            "aggregate_primary_score_definition": "mean(validation primary metric across datasets)",
+            "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+            "aggregate_primary_score_higher_is_better": False,
             "datasets": dataset_results,
         }
