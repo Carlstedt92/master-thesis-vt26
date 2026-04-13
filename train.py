@@ -22,6 +22,10 @@ def build_default_config() -> ModelConfig:
 
         # Data source
         data_path="data/zinc/zinc_data",  # Directory of .smi files or path to single CSV
+        use_precomputed=False,  # Toggle to load precomputed shards instead of SMILES
+        precomputed_data_path="",  # Directory with shard_*.pt when use_precomputed=True
+        cache_data_in_memory=False,  # Cache source rows/graphs in RAM after initial read
+        precomputed_cache_in_memory=False,  # Cache all precomputed graphs in RAM (per worker)
 
         # Reproducibility and runtime
         seed=42,

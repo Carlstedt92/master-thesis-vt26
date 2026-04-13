@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from copy import deepcopy
+import time
 
 
 class DINOLoss(nn.Module):
@@ -46,7 +47,7 @@ class DINOGraphSSL:
     
     def __init__(self, student_model, teacher_model=None, device='cuda', 
                  teacher_temp=0.04, student_temp=0.1, center_momentum=0.9,
-                 teacher_momentum=0.996):
+                 teacher_momentum=0.996, profile_timing: bool = False):
         """
         Args:
             student_model: Student network (SSL_GINEModel)
@@ -71,6 +72,7 @@ class DINOGraphSSL:
             param.requires_grad = False
         
         self.teacher_momentum = teacher_momentum
+        self.profile_timing = profile_timing
         
         # DINO loss
         output_dim = student_model.head.mlp[-1].out_features
@@ -92,6 +94,7 @@ class DINOGraphSSL:
             student_temp=config.student_temp,
             center_momentum=config.center_momentum,
             teacher_momentum=config.teacher_momentum,
+            profile_timing=bool(getattr(config, "profile_timing", False)),
         )
     
     @torch.no_grad()
@@ -118,9 +121,15 @@ class DINOGraphSSL:
         """
         self.student.train()
         self.teacher.eval()
+        profile_enabled = self.profile_timing
+        timing = {}
+        step_start = time.perf_counter()
         
         # Move data to device
+        to_device_start = time.perf_counter()
         batch = batch.to(self.device)
+        if profile_enabled:
+            timing["to_device"] = time.perf_counter() - to_device_start
         
         # Get number of graphs in batch (each graph is one view)
         num_graphs = batch.num_graphs
@@ -135,13 +144,14 @@ class DINOGraphSSL:
         global_indices = torch.where(global_mask)[0]
         
         # Forward pass: Student sees ALL views
-        student_out_all = self.student(
-            batch.x, batch.edge_index, 
-            batch.edge_attr, batch.batch
-        )
+        student_fwd_start = time.perf_counter()
+        student_out_all = self.student(batch.x, batch.edge_index, batch.edge_attr, batch.batch)
+        if profile_enabled:
+            timing["student_forward"] = time.perf_counter() - student_fwd_start
         
         # Forward pass: Teacher sees only GLOBAL views
         with torch.no_grad():
+            teacher_fwd_start = time.perf_counter()
             # Create a mask for nodes belonging to global view graphs
             global_graph_mask = torch.isin(batch.batch, global_indices)
             
@@ -173,11 +183,14 @@ class DINOGraphSSL:
                 batch.x[global_node_indices],
                 global_edge_index,
                 global_edge_attr,
-                global_batch
+                global_batch,
             )
+            if profile_enabled:
+                timing["teacher_forward"] = time.perf_counter() - teacher_fwd_start
         
         # Compute DINO loss by matching student/teacher graph_idx pairs.
         # Vectorized implementation avoids Python-side nested loops.
+        loss_start = time.perf_counter()
         loss = torch.tensor(0.0, device=self.device, requires_grad=True)
         
         # Get graph_idx for each view (concatenated tensor)
@@ -207,6 +220,9 @@ class DINOGraphSSL:
         else:
             loss = torch.tensor(0.0, device=self.device, requires_grad=True)
 
+        if profile_enabled:
+            timing["loss_compute"] = time.perf_counter() - loss_start
+
         with torch.no_grad():
             student_probs = F.softmax(student_out_all / self.loss_fn.student_temp, dim=-1)
             teacher_entropy = (-teacher_probs * torch.log(teacher_probs.clamp_min(1e-12))).sum(dim=-1).mean()
@@ -214,15 +230,22 @@ class DINOGraphSSL:
             embedding_std = student_out_all.detach().std(dim=0, unbiased=False).mean()
         
         # Backward pass
+        backward_start = time.perf_counter()
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        if profile_enabled:
+            timing["backward_step"] = time.perf_counter() - backward_start
         
         # Update teacher with EMA
+        ema_start = time.perf_counter()
         self.update_teacher()
         
         # Update center with teacher outputs
         self.loss_fn.update_center(teacher_out)
+        if profile_enabled:
+            timing["ema_and_center"] = time.perf_counter() - ema_start
+            timing["train_step_total"] = time.perf_counter() - step_start
         
         return {
             "loss": float(loss.item()),
@@ -231,6 +254,7 @@ class DINOGraphSSL:
                 "student_entropy": float(student_entropy.item()),
                 "embedding_std": float(embedding_std.item()),
             },
+            "timing": timing,
         }
     
     def get_embeddings(self, data):

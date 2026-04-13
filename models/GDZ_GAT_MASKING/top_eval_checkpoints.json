@@ -1,0 +1,16 @@
+{
+  "top_eval_checkpoints": [
+    {
+      "epoch": 1,
+      "score": 1.0203427882018299,
+      "ssl_train_loss": 4.855641632516683,
+      "checkpoint_path": "./models/GDZ_GAT_MASKING/checkpoints/checkpoint_online_eval_epoch_1.pth",
+      "metric_higher_is_better": false,
+      "metric_definition": "mean(validation RMSE across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    }
+  ],
+  "generated_at": "2026-04-13T15:25:57.841910"
+}

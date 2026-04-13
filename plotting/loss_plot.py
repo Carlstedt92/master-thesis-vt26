@@ -175,7 +175,7 @@ def plot_ssl_and_online_knn(loss_history_path, output_path, model_name="Model", 
     plt.close(fig)
 if __name__ == "__main__":
     # Example usage
-    model = "GDZ_GAT_TEST"
+    model = "GDZ_GINE_KHOP"
     path = f"models/{model}/loss_history.json"
     loss_data = load_loss_data(path)
     

@@ -13,6 +13,7 @@ from model.config import ModelConfig
 from training.online_evaluator import OnlineDownstreamEvaluator
 from training.train_manager import TrainingManager
 import time
+from collections import defaultdict
 
 
 def dino_train(config: ModelConfig):
@@ -50,6 +51,10 @@ def dino_train(config: ModelConfig):
     else:
         scaled_learning_rate = config.learning_rate
     print(f"  Learning rate (used): {scaled_learning_rate}")
+    profile_timing = bool(getattr(config, "profile_timing", False))
+    profile_every = int(getattr(config, "profile_log_every_n_batches", 50))
+    if profile_timing:
+        print(f"  Profiling: enabled (log every {profile_every} batches)")
 
     online_eval_enabled = bool(getattr(config, "online_eval_enabled", False))
     online_eval_every_n_epochs = int(getattr(config, "online_eval_every_n_epochs", 1))
@@ -169,6 +174,14 @@ def dino_train(config: ModelConfig):
             "student_entropy": 0.0,
             "embedding_std": 0.0,
         }
+        epoch_timing_sums = defaultdict(float)
+        epoch_timing_sums["batch_load"] = 0.0
+        epoch_timing_sums["batch_total"] = 0.0
+        epoch_timing_sums["collate_total"] = 0.0
+        epoch_timing_sums["filter_invalid"] = 0.0
+        epoch_timing_sums["augmentation"] = 0.0
+        epoch_timing_sums["normalize_flatten"] = 0.0
+        epoch_timing_sums["batch_from_data_list"] = 0.0
         
         batch_load_start = time.time()
         for batch_idx, batch in enumerate(train_loader):
@@ -203,17 +216,28 @@ def dino_train(config: ModelConfig):
             train_step_time = time.time() - train_step_start
             loss = step_info["loss"]
             step_metrics = step_info.get("metrics", {})
+            step_timing = step_info.get("timing", {})
+            collate_timing = getattr(batch, "profile_timing", {}) or {}
 
             epoch_loss += loss
             num_batches += 1
             iteration += 1
             for key in epoch_diag_sums:
                 epoch_diag_sums[key] += float(step_metrics.get(key, 0.0))
+            for key, value in step_timing.items():
+                epoch_timing_sums[key] += float(value)
+            for key, value in collate_timing.items():
+                epoch_timing_sums[key] += float(value)
+            epoch_timing_sums["batch_load"] += float(batch_load_time)
             
             total_batch_time = time.time() - batch_start_time
+            epoch_timing_sums["batch_total"] += float(total_batch_time)
+            if collate_timing:
+                epoch_timing_sums["loader_wait_minus_collate"] += float(max(batch_load_time - collate_timing.get("collate_total", 0.0), 0.0))
             
             # Print progress every 100 batches
-            if batch_idx % 100 == 0:
+            should_print_batch = batch_idx % 100 == 0 or (profile_timing and batch_idx < 10)
+            if should_print_batch:
                 current_lr = lr_schedule[iteration-1]
                 current_momentum = momentum_schedule[iteration-1]
                 current_wd = wd_schedule[iteration-1]
@@ -230,6 +254,20 @@ def dino_train(config: ModelConfig):
                 print(f"  Batch [{batch_idx+1:4d}/{len(train_loader)}] Loss: {loss:.4f} | "
                       f"LR: {current_lr:.2e} | GPU Mem: {gpu_mem_allocated:.1f}/{gpu_mem_reserved:.1f}GB | "
                       f"Elapsed: {elapsed_time_min:.1f}min")
+                if profile_timing and step_timing:
+                    print(
+                        "    Timing (s): "
+                        f"load={batch_load_time:.3f}, "
+                        f"collate={collate_timing.get('collate_total', 0.0):.3f}, "
+                        f"to_device={step_timing.get('to_device', 0.0):.3f}, "
+                        f"student_fwd={step_timing.get('student_forward', 0.0):.3f}, "
+                        f"teacher_fwd={step_timing.get('teacher_forward', 0.0):.3f}, "
+                        f"loss={step_timing.get('loss_compute', 0.0):.3f}, "
+                        f"backward={step_timing.get('backward_step', 0.0):.3f}, "
+                        f"ema={step_timing.get('ema_and_center', 0.0):.3f}, "
+                        f"step_total={step_timing.get('train_step_total', 0.0):.3f}, "
+                        f"batch_total={total_batch_time:.3f}"
+                    )
             
             # Start timing for next batch load (at end of every iteration)
             batch_load_start = time.time()
@@ -277,6 +315,19 @@ def dino_train(config: ModelConfig):
             f"embedding_std={avg_embedding_std:.4f}, "
             f"collapse={collapse_warning}"
         )
+        if profile_timing and num_batches > 0:
+            print("Timing summary (avg seconds/batch):")
+            print(f"  batch_load: {epoch_timing_sums['batch_load'] / num_batches:.3f}")
+            print(f"  collate_total: {epoch_timing_sums['collate_total'] / num_batches:.3f}")
+            print(f"  filter_invalid: {epoch_timing_sums['filter_invalid'] / num_batches:.3f}")
+            print(f"  augmentation: {epoch_timing_sums['augmentation'] / num_batches:.3f}")
+            print(f"  normalize_flatten: {epoch_timing_sums['normalize_flatten'] / num_batches:.3f}")
+            print(f"  batch_from_data_list: {epoch_timing_sums['batch_from_data_list'] / num_batches:.3f}")
+            if epoch_timing_sums["loader_wait_minus_collate"] > 0:
+                print(f"  loader_wait_minus_collate: {epoch_timing_sums['loader_wait_minus_collate'] / num_batches:.3f}")
+            print(f"  batch_total: {epoch_timing_sums['batch_total'] / num_batches:.3f}")
+            for key in ["to_device", "student_forward", "teacher_forward", "loss_compute", "backward_step", "ema_and_center", "train_step_total"]:
+                print(f"  {key}: {epoch_timing_sums[key] / num_batches:.3f}")
         print(f"Total elapsed time: {elapsed_total:.1f} min")
         print(f"{'='*70}")
 

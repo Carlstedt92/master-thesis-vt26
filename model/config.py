@@ -12,6 +12,14 @@ class ModelConfig:
     name: str                           # e.g., "dino_gine_5layer", "dino_gine_3layer"
     head_type: str = "dino"             # Head type: "dino", "classification", etc.
     data_path: str = "data/delaney-processed.csv"  # Path to dataset CSV file
+    use_precomputed: bool = False       # If true, load precomputed graph shards instead of parsing SMILES online
+    precomputed_data_path: str = ""     # Directory containing shard_*.pt and optional metadata.json
+    cache_data_in_memory: bool = False   # Keep source rows/graphs in RAM after first read
+    precomputed_cache_in_memory: bool = False  # Keep all precomputed graphs in RAM (per dataloader worker)
+    precomputed_max_cached_shards: int = 4  # LRU cache size for shard files when precomputed_cache_in_memory=False
+    loader_debug: bool = False           # Verbose logging for dataset/dataloader startup and shard cache behavior
+    profile_timing: bool = False         # Emit detailed per-batch timing for loader/train-step components
+    profile_log_every_n_batches: int = 50  # How often to print cumulative timing summaries
     seed: int = 42                      # Random seed for reproducibility
     device: str = "cuda" if torch.cuda.is_available() else "cpu" # Device to train on (cuda or cpu)
     num_workers: int = 0                # Number of worker processes for data loading (0 = main process)
