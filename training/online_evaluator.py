@@ -81,7 +81,13 @@ class OnlineDownstreamEvaluator:
             },
         }
 
-    def evaluate_model(self, model: torch.nn.Module, device: torch.device) -> Dict[str, Any]:
+    def evaluate_model(
+        self,
+        model: torch.nn.Module,
+        device: torch.device,
+        explicit_hydrogens: bool = True,
+        encode_hydrogen_count: bool = False,
+    ) -> Dict[str, Any]:
         dataset_results: Dict[str, Any] = {}
         primary_scores = []
 
@@ -90,7 +96,11 @@ class OnlineDownstreamEvaluator:
             task = context["task"]
 
             embedding_features, embedding_stats = _build_embeddings_from_model(
-                context["rows_by_split"], model, device
+                context["rows_by_split"],
+                model,
+                device,
+                explicit_hydrogens=explicit_hydrogens,
+                encode_hydrogen_count=encode_hydrogen_count,
             )
             embedding_knn = self._evaluate_fixed_k_knn(embedding_features, task)
 

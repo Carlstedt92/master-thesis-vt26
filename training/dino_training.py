@@ -319,10 +319,19 @@ def dino_train(config: ModelConfig):
             print("Timing summary (avg seconds/batch):")
             print(f"  batch_load: {epoch_timing_sums['batch_load'] / num_batches:.3f}")
             print(f"  collate_total: {epoch_timing_sums['collate_total'] / num_batches:.3f}")
-            print(f"  filter_invalid: {epoch_timing_sums['filter_invalid'] / num_batches:.3f}")
-            print(f"  augmentation: {epoch_timing_sums['augmentation'] / num_batches:.3f}")
-            print(f"  normalize_flatten: {epoch_timing_sums['normalize_flatten'] / num_batches:.3f}")
-            print(f"  batch_from_data_list: {epoch_timing_sums['batch_from_data_list'] / num_batches:.3f}")
+            for key in [
+                "filter_invalid",
+                "augmentation",
+                "normalize_flatten",
+                "batch_from_data_list",
+                "base_batch_from_data_list",
+                "global_clone",
+                "local_masking",
+                "combine_views",
+                "loader_wait_minus_collate",
+            ]:
+                if key in epoch_timing_sums:
+                    print(f"  {key}: {epoch_timing_sums[key] / num_batches:.3f}")
             if epoch_timing_sums["loader_wait_minus_collate"] > 0:
                 print(f"  loader_wait_minus_collate: {epoch_timing_sums['loader_wait_minus_collate'] / num_batches:.3f}")
             print(f"  batch_total: {epoch_timing_sums['batch_total'] / num_batches:.3f}")
@@ -334,7 +343,12 @@ def dino_train(config: ModelConfig):
         saved_online_path = None
         if online_evaluator is not None and (epoch + 1) % max(1, online_eval_every_n_epochs) == 0:
             print(f"  • Running online downstream eval (fixed k={online_eval_fixed_k})...")
-            online_eval_result = online_evaluator.evaluate_model(dino_ssl.student, torch.device(config.device))
+            online_eval_result = online_evaluator.evaluate_model(
+                dino_ssl.student,
+                torch.device(config.device),
+                explicit_hydrogens=bool(getattr(config, "explicit_hydrogens", True)),
+                encode_hydrogen_count=bool(getattr(config, "encode_hydrogen_count", False)),
+            )
             aggregate_score = online_eval_result.get("aggregate_primary_score", float("-inf"))
             print(f"    ✓ Online eval done | aggregate validation score={aggregate_score:.6f}")
 

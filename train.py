@@ -26,6 +26,8 @@ def build_default_config() -> ModelConfig:
         precomputed_data_path="",  # Directory with shard_*.pt when use_precomputed=True
         cache_data_in_memory=False,  # Cache source rows/graphs in RAM after initial read
         precomputed_cache_in_memory=False,  # Cache all precomputed graphs in RAM (per worker)
+        explicit_hydrogens=True,  # Add H atoms as explicit nodes (set False for heavy-atom-only graphs)
+        encode_hydrogen_count=False,  # Append total H-count as extra atom feature (typically with explicit_hydrogens=False)
 
         # Reproducibility and runtime
         seed=42,
@@ -40,7 +42,7 @@ def build_default_config() -> ModelConfig:
         feature_mask_ratio=0.15,  # Feature masking ratio when mode="masking"
 
         # Input feature dimensions (dataset/dataloader dependent)
-        num_features=24,
+        num_features=24,  # Set to 25 when encode_hydrogen_count=True
         edge_features=12,
 
         # Encoder size/depth

@@ -240,7 +240,13 @@ def _evaluate_feature_set(feature_set, task: str, k_values):
     raise ValueError(f"Unsupported task: {task}")
 
 
-def _build_embeddings_from_model(rows_by_split, model: torch.nn.Module, device: torch.device):
+def _build_embeddings_from_model(
+    rows_by_split,
+    model: torch.nn.Module,
+    device: torch.device,
+    explicit_hydrogens: bool,
+    encode_hydrogen_count: bool,
+):
     arrays = {}
     for split_name, rows in rows_by_split.items():
         features = []
@@ -249,7 +255,11 @@ def _build_embeddings_from_model(rows_by_split, model: torch.nn.Module, device: 
 
         with torch.no_grad():
             for smiles, target in rows:
-                data = smiles_to_pygdata(smiles)
+                data = smiles_to_pygdata(
+                    smiles,
+                    explicit_hydrogens=explicit_hydrogens,
+                    encode_hydrogen_count=encode_hydrogen_count,
+                )
                 if data is None or data.num_nodes == 0:
                     invalid_smiles += 1
                     continue
@@ -288,7 +298,13 @@ def _build_embeddings(rows_by_split, checkpoint_path: Path, device: torch.device
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
 
-    return _build_embeddings_from_model(rows_by_split, model, device)
+    return _build_embeddings_from_model(
+        rows_by_split,
+        model,
+        device,
+        explicit_hydrogens=bool(getattr(config, "explicit_hydrogens", True)),
+        encode_hydrogen_count=bool(getattr(config, "encode_hydrogen_count", False)),
+    )
 
 
 def main():

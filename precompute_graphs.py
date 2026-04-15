@@ -28,6 +28,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--pattern", default="*.smi", help="Glob for .smi files when input is a directory")
     parser.add_argument("--shard-size", type=int, default=50000, help="Graphs per shard file")
     parser.add_argument(
+        "--explicit-hydrogens",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Include hydrogen atoms as explicit graph nodes (default: true)",
+    )
+    parser.add_argument(
+        "--encode-hydrogen-count",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Append total hydrogen count as an extra atom feature",
+    )
+    parser.add_argument(
         "--overwrite",
         action="store_true",
         help="Overwrite existing shard_*.pt files and metadata.json in output directory",
@@ -119,7 +131,11 @@ def main() -> None:
             total_invalid += 1
             continue
 
-        data = smiles_to_pygdata(smiles)
+        data = smiles_to_pygdata(
+            smiles,
+            explicit_hydrogens=bool(args.explicit_hydrogens),
+            encode_hydrogen_count=bool(args.encode_hydrogen_count),
+        )
         if data is None:
             total_invalid += 1
             continue
@@ -150,6 +166,8 @@ def main() -> None:
         "smiles_col": args.smiles_col,
         "pattern": args.pattern if source_type == "smi_dir" else None,
         "shard_size": args.shard_size,
+        "explicit_hydrogens": bool(args.explicit_hydrogens),
+        "encode_hydrogen_count": bool(args.encode_hydrogen_count),
         "num_shards": len(shard_sizes),
         "shard_sizes": shard_sizes,
         "total_rows": total_rows,

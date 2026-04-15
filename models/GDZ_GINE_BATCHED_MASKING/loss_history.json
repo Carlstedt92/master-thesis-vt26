@@ -1,0 +1,65 @@
+{
+  "DINO_Loss": [
+    {
+      "epoch": 1,
+      "train_loss": 4.853107517702851,
+      "teacher_entropy": 4.8499571857603945,
+      "student_entropy": 4.848077520023365,
+      "embedding_std": 0.002603085972167424,
+      "collapse_warning": true
+    }
+  ],
+  "Evaluation_Loss": {
+    "online_eval": [
+      {
+        "epoch": 1,
+        "ssl_train_loss": 4.853107517702851,
+        "saved_checkpoint_path": "./models/GDZ_GINE_BATCHED_MASKING/checkpoints/checkpoint_online_eval_epoch_1.pth",
+        "evaluation": {
+          "fixed_k": 5,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.0525792804257792,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.0525792804257792,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 5,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 5,
+                  "validation_metrics": {
+                    "r2": 0.2911783335492565,
+                    "rmse": 1.0525792804257792,
+                    "mae": 0.8136048760620186
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "top_eval_checkpoints": [
+    {
+      "epoch": 18,
+      "score": 0.9911556868056715,
+      "ssl_train_loss": 4.851499388085321,
+      "checkpoint_path": "./models/GDZ_GAT_MASKING_IMPLICIT_H/checkpoints/checkpoint_online_eval_epoch_18.pth",
+      "metric_higher_is_better": false,
+      "metric_definition": "mean(validation RMSE across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    },
+    {
+      "epoch": 17,
+      "score": 0.9953273572857304,
+      "ssl_train_loss": 4.851489210958694,
+      "checkpoint_path": "./models/GDZ_GAT_MASKING_IMPLICIT_H/checkpoints/checkpoint_online_eval_epoch_17.pth",
+      "metric_higher_is_better": false,
+      "metric_definition": "mean(validation RMSE across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    },
+    {
+      "epoch": 21,
+      "score": 1.0027880019893425,
+      "ssl_train_loss": 4.851516437945472,
+      "checkpoint_path": "./models/GDZ_GAT_MASKING_IMPLICIT_H/checkpoints/checkpoint_online_eval_epoch_21.pth",
+      "metric_higher_is_better": false,
+      "metric_definition": "mean(validation RMSE across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    },
+    {
+      "epoch": 23,
+      "score": 1.006295656447574,
+      "ssl_train_loss": 4.8515345161717995,
+      "checkpoint_path": "./models/GDZ_GAT_MASKING_IMPLICIT_H/checkpoints/checkpoint_online_eval_epoch_23.pth",
+      "metric_higher_is_better": false,
+      "metric_definition": "mean(validation RMSE across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    },
+    {
+      "epoch": 16,
+      "score": 1.0071147794406896,
+      "ssl_train_loss": 4.851444106818238,
+      "checkpoint_path": "./models/GDZ_GAT_MASKING_IMPLICIT_H/checkpoints/checkpoint_online_eval_epoch_16.pth",
+      "metric_higher_is_better": false,
+      "metric_definition": "mean(validation RMSE across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    }
+  ],
+  "generated_at": "2026-04-15T11:04:48.348574"
+}

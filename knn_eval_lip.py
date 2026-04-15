@@ -32,7 +32,7 @@ LIPO_SPLITTER = "random"
 LIPO_DATA_DIR = "data/MoleculeNet_LIPO_custom"
 
 SSL_MODEL_NAME = "GDZ_5000Epochs"
-CHECKPOINT_PATH = f"models/{SSL_MODEL_NAME}/checkpoints/best_model.pth"
+CHECKPOINT_PATH = f"models/{SSL_MODEL_NAME}/checkpoints/best_online_eval_model.pth"
 
 FP_RADIUS = 2
 FP_NBITS = 2048

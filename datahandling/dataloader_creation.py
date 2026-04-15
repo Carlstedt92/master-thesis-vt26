@@ -8,6 +8,8 @@ from torch.utils.data import DataLoader
 from typing import List, Optional
 import os
 import time
+import random
+import random
 
 
 class DataLoaderCreator:
@@ -35,6 +37,9 @@ class DataLoaderCreator:
             node_mask_ratio=node_mask_ratio,
             feature_mask_ratio=feature_mask_ratio,
         )
+
+        if local_augmentation_mode == "masking" and self._use_batched_mask_collate():
+            return self._build_batched_mask_collate_fn()
 
         def _normalize_dtypes(data: Data) -> Data:
             """Enforce stable tensor dtypes expected by PyG batching and model code."""
@@ -106,6 +111,138 @@ class DataLoaderCreator:
 
     def _loader_debug(self) -> bool:
         return bool(getattr(self.config, "loader_debug", False))
+
+    def _use_batched_mask_collate(self) -> bool:
+        return bool(getattr(self.config, "use_batched_mask_collate", False))
+
+    def _explicit_hydrogens(self) -> bool:
+        return bool(getattr(self.config, "explicit_hydrogens", True))
+
+    def _encode_hydrogen_count(self) -> bool:
+        return bool(getattr(self.config, "encode_hydrogen_count", False))
+
+    def _concat_view_batches(self, view_batches: List[Batch]) -> Batch:
+        """Concatenate full-batch view copies into one final PyG Batch."""
+        if not view_batches:
+            return None
+
+        combined = Batch()
+        x_parts = []
+        edge_index_parts = []
+        edge_attr_parts = []
+        batch_parts = []
+        graph_idx_parts = []
+        view_parts = []
+
+        node_offset = 0
+        graphs_per_view = view_batches[0].num_graphs
+
+        for view_offset, view_batch in enumerate(view_batches):
+            x_parts.append(view_batch.x)
+
+            if view_batch.edge_index is not None:
+                edge_index_parts.append(view_batch.edge_index + node_offset)
+            if view_batch.edge_attr is not None:
+                edge_attr_parts.append(view_batch.edge_attr)
+
+            batch_parts.append(view_batch.batch + (view_offset * graphs_per_view))
+            graph_idx_parts.append(view_batch.graph_idx)
+            view_parts.append(view_batch['view'])
+
+            node_offset += view_batch.x.size(0)
+
+        combined.x = torch.cat(x_parts, dim=0)
+        combined.edge_index = torch.cat(edge_index_parts, dim=1) if edge_index_parts else None
+        combined.edge_attr = torch.cat(edge_attr_parts, dim=0) if edge_attr_parts else None
+        combined.batch = torch.cat(batch_parts, dim=0)
+        combined.graph_idx = torch.cat(graph_idx_parts, dim=0)
+        combined['view'] = torch.cat(view_parts, dim=0)
+        combined._num_graphs = graphs_per_view * len(view_batches)
+        return combined
+
+    def _build_batched_mask_collate_fn(self):
+        """Fast-path collate for masking mode that batches once then masks tensors."""
+        local_views = getattr(self.config, 'local_views', 4)
+        node_mask_ratio = getattr(self.config, 'node_mask_ratio', 0.15)
+        feature_mask_ratio = getattr(self.config, 'feature_mask_ratio', 0.15)
+
+        def _sample_count(total_items: int, ratio: float) -> int:
+            if total_items <= 0 or ratio <= 0:
+                return 0
+            return min(total_items, max(1, int(round(total_items * ratio))))
+
+        def _mask_batched_local_view(base_batch: Batch) -> Batch:
+            masked = base_batch.clone()
+            if masked.x is None:
+                masked['view'] = torch.zeros(masked.num_graphs, dtype=torch.long)
+                return masked
+
+            x = masked.x.clone()
+            ptr = masked.ptr
+            num_graphs = masked.num_graphs
+            num_features = x.size(1) if x.dim() > 1 else 0
+
+            for graph_idx in range(num_graphs):
+                start = int(ptr[graph_idx].item())
+                end = int(ptr[graph_idx + 1].item())
+                num_nodes = end - start
+
+                num_node_mask = _sample_count(num_nodes, node_mask_ratio)
+                if num_node_mask > 0:
+                    mask_nodes = random.sample(range(start, end), num_node_mask)
+                    x[mask_nodes] = 0
+
+                num_feature_mask = _sample_count(num_features, feature_mask_ratio)
+                if num_feature_mask > 0:
+                    feature_mask_indices = random.sample(range(num_features), num_feature_mask)
+                    x[start:end, feature_mask_indices] = 0
+
+            masked.x = x
+            masked['view'] = torch.zeros(masked.num_graphs, dtype=torch.long)
+            return masked
+
+        def collate_fn(batch: List[Optional[Data]]):
+            profile_enabled = self._loader_debug() or bool(getattr(self.config, "profile_timing", False))
+            profile = {}
+            collate_start = time.time() if profile_enabled else None
+
+            filter_start = time.time() if profile_enabled else None
+            valid_batch = [data for data in batch if data is not None]
+            if profile_enabled:
+                profile["filter_invalid"] = time.time() - filter_start
+            if not valid_batch:
+                return None
+
+            base_batch_start = time.time() if profile_enabled else None
+            base_batch = Batch.from_data_list(valid_batch)
+            if profile_enabled:
+                profile["base_batch_from_data_list"] = time.time() - base_batch_start
+
+            global_batches: List[Batch] = []
+            global_start = time.time() if profile_enabled else None
+            for _ in range(2):
+                global_batch = base_batch.clone()
+                global_batch['view'] = torch.ones(global_batch.num_graphs, dtype=torch.long)
+                global_batches.append(global_batch)
+            if profile_enabled:
+                profile["global_clone"] = time.time() - global_start
+
+            local_batches: List[Batch] = []
+            local_start = time.time() if profile_enabled else None
+            for _ in range(local_views):
+                local_batches.append(_mask_batched_local_view(base_batch))
+            if profile_enabled:
+                profile["local_masking"] = time.time() - local_start
+
+            combine_start = time.time() if profile_enabled else None
+            result = self._concat_view_batches(global_batches + local_batches)
+            if profile_enabled:
+                profile["combine_views"] = time.time() - combine_start
+                profile["collate_total"] = time.time() - collate_start
+                result.profile_timing = profile
+            return result
+
+        return collate_fn
     
     def create_dataloader(self) -> DataLoader:
         """Create DataLoader for a single CSV file using stored config.
@@ -119,6 +256,8 @@ class DataLoaderCreator:
             self.config.data_path,
             smiles_col="smiles",
             cache_in_memory=self._cache_in_memory(),
+            explicit_hydrogens=self._explicit_hydrogens(),
+            encode_hydrogen_count=self._encode_hydrogen_count(),
         )
         return DataLoader(
             dataset,
@@ -176,6 +315,8 @@ class DataLoaderCreator:
             smiles_col="smiles",
             pattern=pattern,
             cache_in_memory=self._cache_in_memory(),
+            explicit_hydrogens=self._explicit_hydrogens(),
+            encode_hydrogen_count=self._encode_hydrogen_count(),
         )
         return DataLoader(
             dataset,

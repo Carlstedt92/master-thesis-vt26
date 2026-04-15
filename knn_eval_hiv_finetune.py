@@ -37,7 +37,7 @@ HIV_SPLITTER = "scaffold"
 HIV_DATA_DIR = "data/MoleculeNet_HIV_custom"
 
 SSL_MODEL_NAME = "GINE_DINO_ZINC_2.5"
-CHECKPOINT_PATH = f"models/{SSL_MODEL_NAME}/checkpoints/best_model.pth"
+CHECKPOINT_PATH = f"models/{SSL_MODEL_NAME}/checkpoints/best_online_eval_model.pth"
 
 # Fine-tuning hyperparameters
 FT_EPOCHS = 30

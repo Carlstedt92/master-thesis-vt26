@@ -27,12 +27,16 @@ class SmilesCsvDataset(Dataset):
     def __init__(self, csv_path: str, smiles_col: str = "smiles",
                  target: Union[str, Sequence[str], None] = None,
                  task: str = "regression",
-                 cache_in_memory: bool = False) -> None:
+                 cache_in_memory: bool = False,
+                 explicit_hydrogens: bool = True,
+                 encode_hydrogen_count: bool = False) -> None:
         self.csv_path = csv_path
         self.smiles_col = smiles_col
         self.target = target
         self.task = task
         self.cache_in_memory = cache_in_memory
+        self.explicit_hydrogens = explicit_hydrogens
+        self.encode_hydrogen_count = encode_hydrogen_count
         self._index = self._build_index()
         self._fieldnames = self._get_fieldnames()
         self._rows_cache: Optional[List[dict]] = None
@@ -80,7 +84,11 @@ class SmilesCsvDataset(Dataset):
                 handle.seek(self._index[idx])
                 reader = csv.DictReader(handle, fieldnames=self._fieldnames)
                 row = next(reader)
-        data = smiles_to_pygdata(row[self.smiles_col])
+        data = smiles_to_pygdata(
+            row[self.smiles_col],
+            explicit_hydrogens=self.explicit_hydrogens,
+            encode_hydrogen_count=self.encode_hydrogen_count,
+        )
         if data is None:
             return None
 
@@ -113,7 +121,9 @@ class MultiFileSmilesDataset(Dataset):
 
     def __init__(self, data_dir: str, smiles_col: str = "smiles",
                  pattern: str = "*.smi",
-                 cache_in_memory: bool = False) -> None:
+                 cache_in_memory: bool = False,
+                 explicit_hydrogens: bool = True,
+                 encode_hydrogen_count: bool = False) -> None:
         """
         Args:
             data_dir: Directory containing .smi files
@@ -124,6 +134,8 @@ class MultiFileSmilesDataset(Dataset):
         self.smiles_col = smiles_col
         self.pattern = pattern
         self.cache_in_memory = cache_in_memory
+        self.explicit_hydrogens = explicit_hydrogens
+        self.encode_hydrogen_count = encode_hydrogen_count
         self._rows_cache: Optional[List[dict]] = [] if cache_in_memory else None
         
         # Discover all matching files
@@ -188,7 +200,11 @@ class MultiFileSmilesDataset(Dataset):
             values = line.split()
             row = dict(zip(fieldnames, values))
         smiles = row[self.smiles_col]
-        data = smiles_to_pygdata(smiles)
+        data = smiles_to_pygdata(
+            smiles,
+            explicit_hydrogens=self.explicit_hydrogens,
+            encode_hydrogen_count=self.encode_hydrogen_count,
+        )
         if data is None:
             return None
 

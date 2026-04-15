@@ -5,7 +5,11 @@ import torch
 import numpy as np
 from typing import Optional
 
-def smiles_to_pygdata(smiles: str) -> Optional[Data]:
+def smiles_to_pygdata(
+    smiles: str,
+    explicit_hydrogens: bool = True,
+    encode_hydrogen_count: bool = False,
+) -> Optional[Data]:
     """Convert a SMILES string to a graph representation suitable for GNNs.
 
     Args:
@@ -27,7 +31,8 @@ def smiles_to_pygdata(smiles: str) -> Optional[Data]:
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         return None
-    mol = Chem.AddHs(mol)
+    if explicit_hydrogens:
+        mol = Chem.AddHs(mol)
     
     # Assign stereochemistry (important for GetChiralTag and GetStereo)
     Chem.AssignStereochemistry(mol, cleanIt=True, force=True)
@@ -91,13 +96,16 @@ def smiles_to_pygdata(smiles: str) -> Optional[Data]:
         chiral_tag_onehot = [1 if atom.GetChiralTag() == c else 0 for c in chiral_tags]
 
         features = atom_type_onehot + features + hybridization_onehot + chiral_tag_onehot
+        if encode_hydrogen_count:
+            features.append(float(atom.GetTotalNumHs()))
         node_features.append(features)
 
     # Keep node features as float for stable collation across all molecules.
+    node_dim = 24 + (1 if encode_hydrogen_count else 0)
     if node_features:
         node_features = torch.tensor(node_features, dtype=torch.float)
     else:
-        node_features = torch.empty((0, 24), dtype=torch.float)
+        node_features = torch.empty((0, node_dim), dtype=torch.float)
 
     # Extract bond information
     edge_index = []
