@@ -631,6 +631,14 @@
       "student_entropy": 0.31582062499226154,
       "embedding_std": 0.018212077133687197,
       "collapse_warning": false
+    },
+    {
+      "epoch": 80,
+      "train_loss": 0.14335460344125334,
+      "teacher_entropy": 0.0708913130927869,
+      "student_entropy": 0.29048365041096247,
+      "embedding_std": 0.01769712283050957,
+      "collapse_warning": false
     }
   ],
   "Evaluation_Loss": {
@@ -4485,6 +4493,55 @@
                     "r2": 0.015860307359532255,
                     "rmse": 1.2402656019122782,
                     "mae": 1.0017746052439198
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 80,
+        "ssl_train_loss": 0.14335460344125334,
+        "saved_checkpoint_path": null,
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.2311557244899543,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.2311557244899543,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": 0.030264425466402956,
+                    "rmse": 1.2311557244899543,
+                    "mae": 0.9977851235645046
                   }
                 }
               },
