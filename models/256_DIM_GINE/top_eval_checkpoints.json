@@ -23,6 +23,17 @@
       ]
     },
     {
+      "epoch": 16,
+      "score": 1.1082335081895283,
+      "ssl_train_loss": 5.544612059236391,
+      "checkpoint_path": "./models/256_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_16.pth",
+      "metric_higher_is_better": false,
+      "metric_definition": "mean(validation RMSE across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    },
+    {
       "epoch": 15,
       "score": 1.1309987613231671,
       "ssl_train_loss": 5.545161773586907,
@@ -43,18 +54,7 @@
       "datasets": [
         "lipo"
       ]
-    },
-    {
-      "epoch": 13,
-      "score": 1.1548017346060246,
-      "ssl_train_loss": 5.54517430654604,
-      "checkpoint_path": "./models/256_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_13.pth",
-      "metric_higher_is_better": false,
-      "metric_definition": "mean(validation RMSE across datasets)",
-      "datasets": [
-        "lipo"
-      ]
     }
   ],
-  "generated_at": "2026-04-29T13:22:36.491252"
+  "generated_at": "2026-04-29T14:48:38.991743"
 }

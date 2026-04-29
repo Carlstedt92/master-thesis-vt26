@@ -15,4 +15,4 @@ source ~/my_venvs/my_torch_venv/bin/activate
 
 
 # Tune shard-size based on RAM and desired file sizes.
-uv run train.py --config configs/TEST.json
+uv run train.py

@@ -41,7 +41,7 @@ class ModelConfig:
     epsilon: float = 0.0                # GINE epsilon parameter
 
     # Augmentation mode
-    local_augmentation_mode: str = "k_hop"   # "k_hop" or "masking"
+    local_augmentation_mode: str = "k_hop"   # "k_hop", "masking", "functional_group_masking", or "functional_group_k_hop"
     node_mask_ratio: float = 0.15             # Fraction of nodes to mask in masking mode
     feature_mask_ratio: float = 0.15          # Fraction of node features to mask in masking mode
     

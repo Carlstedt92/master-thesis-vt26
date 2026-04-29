@@ -1,9 +1,9 @@
 """ Main Entry point for training and evaluation"""
 
 import argparse
-import json
 from pathlib import Path
 
+import json5
 import torch
 import pandas as pd
 
@@ -11,6 +11,9 @@ from model.config import ModelConfig
 from plotting.loss_plot import load_loss_data, plot_train_val_loss_curves, plot_ssl_and_online_knn
 from training.dino_training import dino_train
 from utils.seed import set_seed
+
+
+DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent / "configs" / "default.json5"
 
 
 def build_default_config() -> ModelConfig:
@@ -36,7 +39,7 @@ def build_default_config() -> ModelConfig:
 
         # Multi-view augmentation setup
         local_views=4,  # Number of local views per graph
-        local_augmentation_mode="masking",  # "k_hop" or "masking"
+        local_augmentation_mode="masking",  # "k_hop", "masking", "functional_group_masking", or "functional_group_k_hop"
         k_hops=2,  # k-hop size when local_augmentation_mode="k_hop"
         node_mask_ratio=0.15,  # Node masking ratio when mode="masking"
         feature_mask_ratio=0.15,  # Feature masking ratio when mode="masking"
@@ -91,22 +94,22 @@ def build_default_config() -> ModelConfig:
 
 
 def load_config(config_path: str | None) -> ModelConfig:
-    if not config_path:
-        return build_default_config()
+    path = Path(config_path) if config_path else DEFAULT_CONFIG_PATH
+    if path.exists():
+        with path.open("r", encoding="utf-8") as f:
+            payload = json5.load(f)
+        return ModelConfig.from_dict(payload)
 
-    path = Path(config_path)
-    with path.open("r", encoding="utf-8") as f:
-        payload = json.load(f)
-    return ModelConfig.from_dict(payload)
+    return build_default_config()
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Train DINO model with optional JSON config.")
+    parser = argparse.ArgumentParser(description="Train DINO model with optional JSON5 config.")
     parser.add_argument(
         "--config",
         type=str,
         default=None,
-        help="Path to JSON config file. If omitted, uses defaults in train.py.",
+        help="Path to JSON5 config file. If omitted, uses configs/default.json5.",
     )
     return parser.parse_args()
 

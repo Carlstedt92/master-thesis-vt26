@@ -153,7 +153,8 @@ def smiles_to_pygdata(
         edge_index = torch.empty((2, 0), dtype=torch.long)
     edge_features = torch.tensor(edge_features, dtype=torch.float)
 
-    return Data(x= node_features, edge_index=edge_index, edge_attr=edge_features)
+    # Keep the raw input SMILES as lightweight metadata for chemistry-aware augmentations.
+    return Data(x=node_features, edge_index=edge_index, edge_attr=edge_features, smiles=smiles)
 
 
 # Example usage:

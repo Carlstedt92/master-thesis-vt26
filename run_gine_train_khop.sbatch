@@ -15,6 +15,4 @@ source ~/my_venvs/my_torch_venv/bin/activate
 
 
 # Tune shard-size based on RAM and desired file sizes.
-uv run train.py --config configs/GINE_KHOP_1.json
-uv run train.py --config configs/GINE_KHOP_2.json
-uv run train.py --config configs/GINE_KHOP_3.json
+uv run train.py
