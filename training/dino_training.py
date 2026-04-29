@@ -378,6 +378,15 @@ def dino_train(config: ModelConfig):
         manager.save_checkpoint(epoch, dino_ssl.student, optimizer, avg_loss, is_best=is_best)
     
     # Save final results
+    # Always save a final checkpoint for reproducibility
+    if manager.dino_loss_history:
+        last_epoch = len(manager.dino_loss_history) - 1
+        last_loss = manager.dino_loss_history[-1].get("train_loss")
+        try:
+            manager.save_final_checkpoint(last_epoch, dino_ssl.student, optimizer, loss=last_loss)
+        except Exception as exc:
+            print(f"Warning: failed to save final checkpoint: {exc}")
+
     manager.save_loss_history()
     manager.save_model_metadata()
     manager.save_dino_metadata()

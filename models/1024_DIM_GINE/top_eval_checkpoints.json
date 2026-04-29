@@ -1,0 +1,16 @@
+{
+  "top_eval_checkpoints": [
+    {
+      "epoch": 1,
+      "score": 1.2041070663789424,
+      "ssl_train_loss": 6.9215109495066685,
+      "checkpoint_path": "./models/1024_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_1.pth",
+      "metric_higher_is_better": false,
+      "metric_definition": "mean(validation RMSE across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    }
+  ],
+  "generated_at": "2026-04-29T04:44:03.501058"
+}

@@ -40,6 +40,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--smiles-file", default=None, help="Optional CSV file with a smiles column")
     parser.add_argument("--smiles-col", default="smiles", help="SMILES column name when using --smiles-file")
     parser.add_argument("--num-samples", type=int, default=12, help="How many molecules to explain")
+    parser.add_argument(
+        "--fixed-smiles-path",
+        default=None,
+        help=(
+            "Optional JSON file with a fixed SMILES list for reproducible comparisons. "
+            "If the file exists it is loaded; otherwise the selected list is saved there."
+        ),
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed for deterministic masking/sampling")
     parser.add_argument("--device", default=None, help="Override device (cpu/cuda). Default uses config device")
     return parser.parse_args()
@@ -72,6 +80,31 @@ def _iter_smiles_from_smi_dir(data_dir: Path) -> Iterable[str]:
 
 
 def _load_smiles(args: argparse.Namespace, config: ModelConfig) -> list[str]:
+    if args.fixed_smiles_path:
+        fixed_path = Path(args.fixed_smiles_path)
+        if fixed_path.exists():
+            with fixed_path.open("r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+
+            if isinstance(payload, dict):
+                smiles = payload.get("smiles", [])
+            elif isinstance(payload, list):
+                smiles = payload
+            else:
+                raise ValueError(f"Unsupported format in fixed smiles file: {fixed_path}")
+
+            if not isinstance(smiles, list) or not all(isinstance(item, str) for item in smiles):
+                raise ValueError(f"Invalid smiles list in fixed smiles file: {fixed_path}")
+
+            if args.num_samples > 0:
+                smiles = smiles[: args.num_samples]
+
+            if not smiles:
+                raise ValueError(f"Fixed smiles file is empty: {fixed_path}")
+
+            print(f"Loaded {len(smiles)} fixed SMILES from {fixed_path}")
+            return smiles
+
     if args.smiles_file:
         source = Path(args.smiles_file)
         smiles_iter = _iter_smiles_from_csv(source, args.smiles_col)
@@ -99,6 +132,14 @@ def _load_smiles(args: argparse.Namespace, config: ModelConfig) -> list[str]:
 
     if not smiles:
         raise ValueError("No valid SMILES found for explainability run")
+
+    if args.fixed_smiles_path:
+        fixed_path = Path(args.fixed_smiles_path)
+        fixed_path.parent.mkdir(parents=True, exist_ok=True)
+        with fixed_path.open("w", encoding="utf-8") as handle:
+            json.dump({"smiles": smiles}, handle, indent=2)
+        print(f"Saved {len(smiles)} fixed SMILES to {fixed_path}")
+
     return smiles
 
 
@@ -150,12 +191,18 @@ def _score_to_rgb(score: float) -> tuple[float, float, float]:
     return (r, g, b)
 
 
-def _draw_heatmap(smiles: str, atom_scores: list[float], out_path: Path) -> None:
+def _draw_heatmap(
+    smiles: str,
+    atom_scores: list[float],
+    out_path: Path,
+    explicit_hydrogens: bool,
+) -> None:
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         raise ValueError("Could not parse SMILES for rendering")
 
-    mol = Chem.AddHs(mol)
+    if explicit_hydrogens:
+        mol = Chem.AddHs(mol)
     AllChem.Compute2DCoords(mol)
 
     if len(atom_scores) != mol.GetNumAtoms():
@@ -340,7 +387,12 @@ def main() -> None:
             continue
 
         png_path = output_dir / f"heatmap_{idx:03d}.png"
-        _draw_heatmap(smiles=result["smiles"], atom_scores=result["atom_scores"], out_path=png_path)
+        _draw_heatmap(
+            smiles=result["smiles"],
+            atom_scores=result["atom_scores"],
+            out_path=png_path,
+            explicit_hydrogens=explicit_hydrogens,
+        )
 
         result["image_path"] = str(png_path)
         records.append(result)

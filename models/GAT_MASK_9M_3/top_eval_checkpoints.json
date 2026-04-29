@@ -1,0 +1,60 @@
+{
+  "top_eval_checkpoints": [
+    {
+      "epoch": 9,
+      "score": 0.9942144261756648,
+      "ssl_train_loss": 4.663592997383167,
+      "checkpoint_path": "./models/GAT_MASK_9M_3/checkpoints/checkpoint_online_eval_epoch_9.pth",
+      "metric_higher_is_better": false,
+      "metric_definition": "mean(validation RMSE across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    },
+    {
+      "epoch": 11,
+      "score": 1.0006775817250002,
+      "ssl_train_loss": 4.848305026630649,
+      "checkpoint_path": "./models/GAT_MASK_9M_3/checkpoints/checkpoint_online_eval_epoch_11.pth",
+      "metric_higher_is_better": false,
+      "metric_definition": "mean(validation RMSE across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    },
+    {
+      "epoch": 4,
+      "score": 1.0323379489693516,
+      "ssl_train_loss": 4.110240769468749,
+      "checkpoint_path": "./models/GAT_MASK_9M_3/checkpoints/checkpoint_online_eval_epoch_4.pth",
+      "metric_higher_is_better": false,
+      "metric_definition": "mean(validation RMSE across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    },
+    {
+      "epoch": 7,
+      "score": 1.0340232418558473,
+      "ssl_train_loss": 4.851412667470061,
+      "checkpoint_path": "./models/GAT_MASK_9M_3/checkpoints/checkpoint_online_eval_epoch_7.pth",
+      "metric_higher_is_better": false,
+      "metric_definition": "mean(validation RMSE across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    },
+    {
+      "epoch": 8,
+      "score": 1.0408550133083414,
+      "ssl_train_loss": 4.824719422990884,
+      "checkpoint_path": "./models/GAT_MASK_9M_3/checkpoints/checkpoint_online_eval_epoch_8.pth",
+      "metric_higher_is_better": false,
+      "metric_definition": "mean(validation RMSE across datasets)",
+      "datasets": [
+        "lipo"
+      ]
+    }
+  ],
+  "generated_at": "2026-04-22T16:42:09.077564"
+}

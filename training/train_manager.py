@@ -181,6 +181,29 @@ class TrainingManager:
             else:
                 print(f"  ✓ Best model saved")
 
+    def save_final_checkpoint(self, epoch: int, model, optimizer, loss: float = None):
+        """Always save a final checkpoint for the completed run.
+
+        Writes two files into the checkpoints directory:
+        - final_model.pth (stable filename pointing to the final weights)
+        - final_checkpoint_epoch_{N}.pth (epoch-specific archive)
+        """
+        checkpoint = {
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'loss': loss if loss is not None else 0.0,
+            'config': self.config.to_dict(),
+        }
+
+        final_path = os.path.join(self.checkpoint_dir, "final_model.pth")
+        epoched_path = os.path.join(self.checkpoint_dir, f"final_checkpoint_epoch_{epoch + 1}.pth")
+
+        torch.save(checkpoint, final_path)
+        torch.save(checkpoint, epoched_path)
+        print(f"  ✓ Final checkpoint saved: {final_path}")
+        print(f"  ✓ Final epoch archive saved: {epoched_path}")
+
     def _to_json_safe(self, value: Any):
         """Recursively convert values to JSON-serializable Python scalars/containers."""
         if isinstance(value, dict):

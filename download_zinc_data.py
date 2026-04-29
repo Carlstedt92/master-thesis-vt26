@@ -1,6 +1,6 @@
 import os
-path_to_url = "data/zinc/ZINC-downloader-2D-smi.uri"
-DOWNLOAD_DIR = "data/zinc/zinc_data"
+path_to_url = "data/zinc/ZINC-downloader-2D-93M-smi.uri"
+DOWNLOAD_DIR = "data/zinc/zinc_full_data"
 
 with open(path_to_url, "r") as f:
     for url in f:

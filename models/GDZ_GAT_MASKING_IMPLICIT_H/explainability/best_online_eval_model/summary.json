@@ -1,0 +1,223 @@
+{
+  "model_name": "GDZ_GAT_MASKING_IMPLICIT_H",
+  "checkpoint": "best_online_eval_model.pth",
+  "checkpoint_epoch": 17,
+  "num_requested": 12,
+  "num_rendered": 12,
+  "explicit_hydrogens": false,
+  "encode_hydrogen_count": true,
+  "node_mask_ratio": 0.15,
+  "feature_mask_ratio": 0.0,
+  "records": [
+    {
+      "smiles": "CO[C@H]1OC[C@@H](O)[C@H](O)[C@H]1O",
+      "score": 0.9999890327453613,
+      "atom_scores": [
+        1.0,
+        0.07771564275026321,
+        0.38858649134635925,
+        0.0028721196576952934,
+        0.12400411814451218,
+        0.020650343969464302,
+        0.0,
+        0.09316400438547134,
+        0.16016507148742676,
+        0.024583538994193077,
+        0.04470841959118843
+      ],
+      "image_path": "models/GDZ_GAT_MASKING_IMPLICIT_H/explainability/best_online_eval_model/heatmap_000.png"
+    },
+    {
+      "smiles": "C[S@@](=O)CC(N)=O",
+      "score": 0.9999983310699463,
+      "atom_scores": [
+        0.6845190525054932,
+        1.0,
+        0.31918713450431824,
+        0.7532867789268494,
+        0.0,
+        0.2002285271883011,
+        0.26800960302352905
+      ],
+      "image_path": "models/GDZ_GAT_MASKING_IMPLICIT_H/explainability/best_online_eval_model/heatmap_001.png"
+    },
+    {
+      "smiles": "NC(=O)N[C@@H]1NC(=O)NC1=O",
+      "score": 0.9999801516532898,
+      "atom_scores": [
+        0.2514846622943878,
+        0.25029775500297546,
+        0.3624878227710724,
+        0.025019122287631035,
+        0.0,
+        1.0,
+        0.30015307664871216,
+        0.464884489774704,
+        0.28895559906959534,
+        0.17991703748703003,
+        0.5340338349342346
+      ],
+      "image_path": "models/GDZ_GAT_MASKING_IMPLICIT_H/explainability/best_online_eval_model/heatmap_002.png"
+    },
+    {
+      "smiles": "O=c1[nH]c(O)c(O)c(=O)[nH]1",
+      "score": 0.9999821782112122,
+      "atom_scores": [
+        0.0,
+        0.5541394352912903,
+        1.0,
+        0.15102405846118927,
+        0.18478700518608093,
+        0.7252680659294128,
+        0.0969659835100174,
+        0.2738947570323944,
+        0.22038088738918304,
+        0.3782625198364258
+      ],
+      "image_path": "models/GDZ_GAT_MASKING_IMPLICIT_H/explainability/best_online_eval_model/heatmap_003.png"
+    },
+    {
+      "smiles": "NC(=O)CN1CCC(N)CC1",
+      "score": 0.9999984502792358,
+      "atom_scores": [
+        1.0,
+        0.3883674740791321,
+        0.6738332509994507,
+        0.14265869557857513,
+        0.0,
+        0.25195637345314026,
+        0.28612014651298523,
+        0.17943048477172852,
+        0.41164064407348633,
+        0.2861199676990509,
+        0.2519565224647522
+      ],
+      "image_path": "models/GDZ_GAT_MASKING_IMPLICIT_H/explainability/best_online_eval_model/heatmap_004.png"
+    },
+    {
+      "smiles": "CNC(=O)c1n[nH]c(N)n1",
+      "score": 0.9999969005584717,
+      "atom_scores": [
+        0.17159582674503326,
+        0.043458737432956696,
+        0.0,
+        0.04732900112867355,
+        0.1431276649236679,
+        0.5766486525535583,
+        1.0,
+        0.1869845986366272,
+        0.073692187666893,
+        0.5156313180923462
+      ],
+      "image_path": "models/GDZ_GAT_MASKING_IMPLICIT_H/explainability/best_online_eval_model/heatmap_005.png"
+    },
+    {
+      "smiles": "NCc1cc(=O)[nH]c(O)n1",
+      "score": 0.9999919533729553,
+      "atom_scores": [
+        0.7078781723976135,
+        1.0,
+        0.18658365309238434,
+        0.4550029933452606,
+        0.08365096151828766,
+        0.0,
+        0.6034132242202759,
+        0.20819689333438873,
+        0.14383068680763245,
+        0.5227159261703491
+      ],
+      "image_path": "models/GDZ_GAT_MASKING_IMPLICIT_H/explainability/best_online_eval_model/heatmap_006.png"
+    },
+    {
+      "smiles": "CS(=O)(=O)CCCNN",
+      "score": 0.9999991655349731,
+      "atom_scores": [
+        0.7494921088218689,
+        0.35439035296440125,
+        1.0,
+        1.0,
+        0.1850690394639969,
+        0.050097476691007614,
+        0.045981962233781815,
+        0.0,
+        0.10524091869592667
+      ],
+      "image_path": "models/GDZ_GAT_MASKING_IMPLICIT_H/explainability/best_online_eval_model/heatmap_007.png"
+    },
+    {
+      "smiles": "NC(=O)[C@H]1[C@H]2C=C[C@@H](O2)[C@@H]1N",
+      "score": 0.9999732971191406,
+      "atom_scores": [
+        0.461649090051651,
+        0.0,
+        0.8036264777183533,
+        0.13582269847393036,
+        0.48643308877944946,
+        0.5451199412345886,
+        0.526483416557312,
+        0.7030066847801208,
+        0.27698931097984314,
+        1.0,
+        0.2675885856151581
+      ],
+      "image_path": "models/GDZ_GAT_MASKING_IMPLICIT_H/explainability/best_online_eval_model/heatmap_008.png"
+    },
+    {
+      "smiles": "N[C@@H](CO)C(=O)NCCO",
+      "score": 0.9999880790710449,
+      "atom_scores": [
+        1.0,
+        0.10953356325626373,
+        0.4864672124385834,
+        0.14482907950878143,
+        0.0,
+        0.02863493748009205,
+        0.15164411067962646,
+        0.7491062879562378,
+        0.6035019159317017,
+        0.19670124351978302
+      ],
+      "image_path": "models/GDZ_GAT_MASKING_IMPLICIT_H/explainability/best_online_eval_model/heatmap_009.png"
+    },
+    {
+      "smiles": "CNS(=O)(=O)C[C@@H]1CNCCO1",
+      "score": 1.0,
+      "atom_scores": [
+        0.0014538908144459128,
+        0.028397416695952415,
+        1.0,
+        0.06068611890077591,
+        0.16131894290447235,
+        0.14583000540733337,
+        0.01569978892803192,
+        0.11436200886964798,
+        0.05148537829518318,
+        0.12346133589744568,
+        0.07773241400718689,
+        0.0
+      ],
+      "image_path": "models/GDZ_GAT_MASKING_IMPLICIT_H/explainability/best_online_eval_model/heatmap_010.png"
+    },
+    {
+      "smiles": "O=c1[nH]cc(N2CCOCC2)c(=O)[nH]1",
+      "score": 0.9999889731407166,
+      "atom_scores": [
+        0.043609246611595154,
+        0.17548218369483948,
+        0.6656641960144043,
+        1.0,
+        0.04108787700533867,
+        0.0,
+        0.42764362692832947,
+        0.055066123604774475,
+        0.013692587614059448,
+        0.584745466709137,
+        0.7810459733009338,
+        0.28046467900276184,
+        0.5970673561096191,
+        0.4463376998901367
+      ],
+      "image_path": "models/GDZ_GAT_MASKING_IMPLICIT_H/explainability/best_online_eval_model/heatmap_011.png"
+    }
+  ]
+}

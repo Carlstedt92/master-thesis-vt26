@@ -1,6 +1,10 @@
 # Ignore files in data folder
 data/*
 
+# Ignore logs
+*.err
+*.out
+
 # Ignore model checkpoints
 models/*/checkpoints/*
 
