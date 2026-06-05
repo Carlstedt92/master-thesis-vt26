@@ -35,6 +35,7 @@ class ModelConfig:
     
     # Encoder architecture
     encoder_type: str = "GINE"          # Encoder type: "GINE", "GAT"
+    global_pooling: str | None = None   # Global pooling: "add", "mean", or None for encoder default
     hidden_dim: int = 128               # Hidden dimension for GINE layers
     num_layers: int = 5                 # Number of GINE convolutional layers
     dropout: float = 0.0                # Dropout rate (0 for GIN paper - no dropout for molecule graphs)
@@ -48,6 +49,7 @@ class ModelConfig:
     # Projection head
     projection_hidden_dim: int = 256    # MLP hidden dimension (reduced for molecular graphs)
     projection_output_dim: int = 128    # Output embedding dimension
+    projection_bottleneck_dim: int = 256  # Bottleneck dimension before final projection layer
     projection_layers: int = 2          # Number of projection head layers
     
     # Training parameters
@@ -72,6 +74,10 @@ class ModelConfig:
     # Learning rate schedule
     warmup_epochs: int = 10             # Warmup epochs before cosine annealing
     final_learning_rate: float = 1e-6   # Final learning rate after schedule
+
+    # SSL validation split
+    validation_enabled: bool = True     # Hold out a validation split for SSL monitoring
+    validation_split: float = 0.1       # Fraction of data reserved for validation
 
     # Online downstream evaluation during SSL training
     online_eval_enabled: bool = False          # Run downstream eval during SSL training

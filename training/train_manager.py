@@ -31,6 +31,8 @@ class TrainingManager:
         self.online_eval_history: List[Dict[str, Any]] = []
         self.top_eval_checkpoints: List[Dict[str, Any]] = []
         self.start_time = datetime.now()
+        self.best_val_loss = float('inf')
+        self.best_val_epoch = None
         
         # Save config
         self._save_config()
@@ -91,7 +93,14 @@ class TrainingManager:
         metadata[section_name] = section_data
         self._write_metadata(metadata)
     
-    def record_loss(self, epoch: int, train_loss: float, diagnostics: Dict[str, Any] | None = None):
+    def record_loss(
+        self,
+        epoch: int,
+        train_loss: float,
+        diagnostics: Dict[str, Any] | None = None,
+        val_loss: float | None = None,
+        val_diagnostics: Dict[str, Any] | None = None,
+    ):
         """Record DINO SSL training loss for an epoch.
         
         Args:
@@ -102,13 +111,51 @@ class TrainingManager:
             "epoch": epoch + 1,
             "train_loss": float(train_loss),
         }
+        if val_loss is not None:
+            record["val_loss"] = float(val_loss)
         if diagnostics is not None:
             record.update(diagnostics)
+        if val_diagnostics is not None:
+            record.update({f"val_{k}": v for k, v in val_diagnostics.items()})
 
-        self.dino_loss_history.append(record)
-        
-        if train_loss < self.best_loss:
-            self.best_loss = train_loss
+        # Determine insertion index (epoch is 0-based; stored epoch is 1-based)
+        insert_idx = int(epoch)
+
+        # If we are resuming from an earlier epoch, overwrite the existing record
+        # at that index and truncate any future entries so the history reflects
+        # the new run from this point onward.
+        if insert_idx < len(self.dino_loss_history):
+            self.dino_loss_history[insert_idx] = record
+            # truncate entries after the current epoch (they will be rewritten)
+            self.dino_loss_history = self.dino_loss_history[: insert_idx + 1]
+        elif insert_idx == len(self.dino_loss_history):
+            # normal append at the end
+            self.dino_loss_history.append(record)
+        else:
+            # If there's a gap (unexpected), pad with None-like placeholders up to insert_idx
+            # then append the record. This keeps the epoch alignment consistent.
+            for pad_idx in range(len(self.dino_loss_history), insert_idx):
+                self.dino_loss_history.append({"epoch": pad_idx + 1, "train_loss": None})
+            self.dino_loss_history.append(record)
+
+        # Recompute best loss/val loss from the current (possibly truncated) history
+        train_losses = [r.get("train_loss") for r in self.dino_loss_history if r.get("train_loss") is not None]
+        if train_losses:
+            self.best_loss = float(min(train_losses))
+        else:
+            self.best_loss = float('inf')
+
+        val_losses = [r.get("val_loss") for r in self.dino_loss_history if r.get("val_loss") is not None]
+        if val_losses:
+            self.best_val_loss = float(min(val_losses))
+            # find corresponding epoch
+            for r in self.dino_loss_history:
+                if r.get("val_loss") == self.best_val_loss:
+                    self.best_val_epoch = int(r.get("epoch"))
+                    break
+        else:
+            self.best_val_loss = float('inf')
+            self.best_val_epoch = None
     
     def record_eval_metrics(self, method_name: str, epoch: int, **metrics):
         """Record evaluation metrics for downstream tasks and track best metric.
@@ -375,6 +422,10 @@ class TrainingManager:
             'collapse_warning_epochs': warning_epochs,
             'collapse_warning_count': len(warning_epochs),
         }
+
+        if self.best_val_epoch is not None and self.best_val_loss != float('inf'):
+            dino_data['best_val_loss'] = float(self.best_val_loss)
+            dino_data['best_val_epoch'] = int(self.best_val_epoch)
 
         if warning_epochs:
             dino_data['first_collapse_warning_epoch'] = int(warning_epochs[0])

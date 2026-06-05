@@ -128,6 +128,8 @@ def plot_ssl_and_online_knn(loss_history_path, output_path, model_name="Model", 
     if not dino_epochs or not dino_train_losses:
         raise ValueError("No train_loss entries found in DINO_Loss")
 
+    val_epochs, val_losses = _extract_series(dino_loss, "epoch", "val_loss")
+
     # Extract online kNN metrics
     eval_rows = []
     metric_label = "online_val_metric"
@@ -144,6 +146,8 @@ def plot_ssl_and_online_knn(loss_history_path, output_path, model_name="Model", 
 
     # Plot SSL loss on left axis
     ax1.plot(dino_epochs, dino_train_losses, color="#1f77b4", label="ssl_train_loss", linewidth=2)
+    if val_epochs and val_losses:
+        ax1.plot(val_epochs, val_losses, color="#2ca02c", label="ssl_val_loss", linewidth=2, linestyle="--")
     ax1.set_xlabel("Epoch")
     ax1.set_ylabel("SSL Train Loss", color="#1f77b4")
     ax1.tick_params(axis="y", labelcolor="#1f77b4")
@@ -175,7 +179,7 @@ def plot_ssl_and_online_knn(loss_history_path, output_path, model_name="Model", 
     plt.close(fig)
 if __name__ == "__main__":
     # Example usage
-    model = "GDZ_GINE_KHOP"
+    model = "LOWER_PARAMS"
     path = f"models/{model}/loss_history.json"
     loss_data = load_loss_data(path)
     

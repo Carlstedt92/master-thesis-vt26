@@ -3,9 +3,12 @@
 Supports modular training with configurable models saved to models/{model_name}/
 """
 
+import json
+import os
 import torch
 import torch.optim as optim
 import math
+from pathlib import Path
 from model.gnn_model import GNNModel
 from model.dino_ssl import DINOGraphSSL, cosine_scheduler
 from datahandling.dataloader_creation import DataLoaderCreator
@@ -16,7 +19,126 @@ import time
 from collections import defaultdict
 
 
-def dino_train(config: ModelConfig):
+SCHEDULE_STATE_FILENAME = "schedule_state.pt"
+
+
+def _build_schedule_bundle(config: ModelConfig, train_loader_len: int) -> dict:
+    """Build all per-iteration schedules used by DINO training."""
+    if getattr(config, "auto_scale_lr", False):
+        scaled_learning_rate = config.lr_scale_base * (
+            config.batch_size / config.lr_scale_reference_batch_size
+        )
+    else:
+        scaled_learning_rate = config.learning_rate
+
+    lr_schedule = torch.from_numpy(
+        cosine_scheduler(
+            base_value=scaled_learning_rate,
+            final_value=config.final_learning_rate,
+            epochs=config.num_epochs,
+            niter_per_ep=train_loader_len,
+            warmup_epochs=config.warmup_epochs,
+            start_warmup_value=0.0,
+        ).astype("float32")
+    )
+
+    wd_schedule = torch.from_numpy(
+        cosine_scheduler(
+            base_value=config.weight_decay_start,
+            final_value=config.weight_decay_end,
+            epochs=config.num_epochs,
+            niter_per_ep=train_loader_len,
+            warmup_epochs=0,
+            start_warmup_value=config.weight_decay_start,
+        ).astype("float32")
+    )
+
+    momentum_schedule = torch.from_numpy(
+        cosine_scheduler(
+            base_value=config.teacher_momentum,
+            final_value=1.0,
+            epochs=config.num_epochs,
+            niter_per_ep=train_loader_len,
+        ).astype("float32")
+    )
+
+    warmup_epochs = max(0, min(int(config.teacher_temp_warmup_epochs), int(config.num_epochs)))
+    warmup_iters = int(warmup_epochs * train_loader_len)
+    total_iters = int(config.num_epochs * train_loader_len)
+    if warmup_iters > 0:
+        warmup_temp = torch.linspace(config.teacher_temp, config.teacher_temp_final, warmup_iters)
+    else:
+        warmup_temp = torch.tensor([], dtype=torch.float32)
+    remain_iters = max(total_iters - warmup_iters, 0)
+    hold_temp = torch.full((remain_iters,), float(config.teacher_temp_final), dtype=torch.float32)
+    teacher_temp_schedule = torch.cat((warmup_temp.float(), hold_temp))
+
+    return {
+        "meta": {
+            "num_epochs": int(config.num_epochs),
+            "niter_per_ep": int(train_loader_len),
+            "warmup_epochs": int(min(max(int(config.warmup_epochs), 0), int(config.num_epochs))),
+            "teacher_temp_warmup_epochs": int(warmup_epochs),
+        },
+        "lr_schedule": lr_schedule,
+        "wd_schedule": wd_schedule,
+        "momentum_schedule": momentum_schedule,
+        "teacher_temp_schedule": teacher_temp_schedule,
+    }
+
+
+def _load_schedule_bundle(schedule_path: Path) -> dict | None:
+    if not schedule_path.exists():
+        return None
+    bundle = torch.load(schedule_path, map_location="cpu", weights_only=False)
+    return bundle if isinstance(bundle, dict) else None
+
+
+def _pad_or_trim_schedule(schedule: torch.Tensor, required_length: int) -> torch.Tensor:
+    if schedule.numel() >= required_length:
+        return schedule[:required_length].clone()
+    if schedule.numel() == 0:
+        return torch.zeros(required_length, dtype=torch.float32)
+    pad_length = required_length - schedule.numel()
+    pad_value = schedule[-1].detach().clone().reshape(1)
+    pad = pad_value.repeat(pad_length)
+    return torch.cat((schedule, pad), dim=0)
+
+
+def _prepare_schedule_bundle(config: ModelConfig, train_loader_len: int, schedule_path: Path) -> dict:
+    required_length = int(config.num_epochs * train_loader_len)
+    bundle = _load_schedule_bundle(schedule_path)
+
+    if bundle is None:
+        bundle = _build_schedule_bundle(config, train_loader_len)
+        torch.save(bundle, schedule_path)
+        print(f"✓ Schedule state saved: {schedule_path}")
+        return bundle
+
+    loaded_niter = int(bundle.get("meta", {}).get("niter_per_ep", train_loader_len))
+    if loaded_niter != train_loader_len:
+        print(
+            "Warning: loaded schedule state was built with a different batch count; "
+            "rebuilding schedules for the current dataloader."
+        )
+        bundle = _build_schedule_bundle(config, train_loader_len)
+        torch.save(bundle, schedule_path)
+        print(f"✓ Schedule state saved: {schedule_path}")
+        return bundle
+
+    for key in ["lr_schedule", "wd_schedule", "momentum_schedule", "teacher_temp_schedule"]:
+        bundle[key] = _pad_or_trim_schedule(bundle[key].float(), required_length)
+
+    if int(bundle.get("meta", {}).get("num_epochs", 0)) < int(config.num_epochs):
+        bundle.setdefault("meta", {})["num_epochs"] = int(config.num_epochs)
+        bundle["meta"]["niter_per_ep"] = int(train_loader_len)
+        torch.save(bundle, schedule_path)
+        print(f"✓ Schedule state extended and saved: {schedule_path}")
+
+    return bundle
+
+
+def dino_train(config: ModelConfig, resume_checkpoint_path: str | None = None):
     """
     Train GNN with DINO using ModelConfig for modular training.
     
@@ -42,6 +164,8 @@ def dino_train(config: ModelConfig):
     effective_batch_size = config.batch_size * (2 + local_views)
     print(f"  Effective batch size: {effective_batch_size} views")
     print()
+    if resume_checkpoint_path:
+        print(f"  Resume checkpoint: {resume_checkpoint_path}")
 
     # Optional DINO-style linear LR scaling rule: lr = base * (batch_size / reference_batch_size)
     if getattr(config, "auto_scale_lr", False):
@@ -79,6 +203,33 @@ def dino_train(config: ModelConfig):
     # Initialize training manager
     manager = TrainingManager(config)
 
+    # If resuming, restore existing loss/eval history so new epochs append cleanly.
+    history_path = os.path.join(manager.model_dir, "loss_history.json")
+    if resume_checkpoint_path and os.path.exists(history_path):
+        try:
+            with open(history_path, "r") as f:
+                history_payload = json.load(f)
+            dino_hist = history_payload.get("DINO_Loss", [])
+            eval_hist = history_payload.get("Evaluation_Loss", {})
+            if isinstance(dino_hist, list):
+                manager.dino_loss_history = dino_hist
+                if dino_hist:
+                    manager.best_loss = min(float(item.get("train_loss", float("inf"))) for item in dino_hist)
+                    val_losses = [float(item["val_loss"]) for item in dino_hist if item.get("val_loss") is not None]
+                    if val_losses:
+                        manager.best_val_loss = min(val_losses)
+                        for item in dino_hist:
+                            if item.get("val_loss") == manager.best_val_loss:
+                                manager.best_val_epoch = int(item.get("epoch", 0))
+                                break
+            if isinstance(eval_hist, dict):
+                manager.eval_loss_history = eval_hist
+                online_hist = eval_hist.get("online_eval", [])
+                if isinstance(online_hist, list):
+                    manager.online_eval_history = online_hist
+        except Exception as exc:
+            print(f"Warning: failed to restore existing loss history ({exc}). Continuing with fresh history.")
+
     online_evaluator = None
     if online_eval_enabled:
         online_evaluator = OnlineDownstreamEvaluator(
@@ -88,10 +239,17 @@ def dino_train(config: ModelConfig):
             fingerprint_nbits=2048,
         )
     
-    # Create dataloader - everything comes from config
+    # Create dataloaders - everything comes from config
     creator = DataLoaderCreator(config)
-    train_loader = creator.create_dataloader_auto()
+    validation_enabled = bool(getattr(config, "validation_enabled", False)) and float(getattr(config, "validation_split", 0.0)) > 0.0
+    if validation_enabled:
+        train_loader, val_loader = creator.create_train_val_dataloaders_auto()
+    else:
+        train_loader = creator.create_dataloader_auto()
+        val_loader = None
     print(f"✓ DataLoader created with {len(train_loader)} batches\n")
+    if val_loader is not None:
+        print(f"✓ Validation DataLoader created with {len(val_loader)} batches\n")
     
     # Initialize GNN student model
     student_model = GNNModel.from_config(config)
@@ -113,56 +271,39 @@ def dino_train(config: ModelConfig):
         weight_decay=config.weight_decay_start
     )
     
-    # Learning rate scheduler
-    lr_schedule = cosine_scheduler(
-        base_value=scaled_learning_rate,
-        final_value=config.final_learning_rate,
-        epochs=config.num_epochs,
-        niter_per_ep=len(train_loader),
-        warmup_epochs=config.warmup_epochs,
-        start_warmup_value=0.0
-    )
-
-    # Weight decay cosine schedule (paper-style: 0.04 -> 0.4)
-    wd_schedule = cosine_scheduler(
-        base_value=config.weight_decay_start,
-        final_value=config.weight_decay_end,
-        epochs=config.num_epochs,
-        niter_per_ep=len(train_loader),
-        warmup_epochs=0,
-        start_warmup_value=config.weight_decay_start,
-    )
-    
-    # Teacher momentum scheduler
-    momentum_schedule = cosine_scheduler(
-        base_value=config.teacher_momentum,
-        final_value=1.0,
-        epochs=config.num_epochs,
-        niter_per_ep=len(train_loader)
-    )
-
-    # Teacher temperature schedule: linear warmup then hold final value.
-    warmup_iters = int(config.teacher_temp_warmup_epochs * len(train_loader))
-    total_iters = int(config.num_epochs * len(train_loader))
-    if warmup_iters > 0:
-        warmup_temp = torch.linspace(config.teacher_temp, config.teacher_temp_final, warmup_iters)
-    else:
-        warmup_temp = torch.tensor([], dtype=torch.float32)
-    remain_iters = max(total_iters - warmup_iters, 0)
-    hold_temp = torch.full((remain_iters,), float(config.teacher_temp_final), dtype=torch.float32)
-    teacher_temp_schedule = torch.cat((warmup_temp, hold_temp)).numpy()
+    schedule_path = Path(manager.model_dir) / SCHEDULE_STATE_FILENAME
+    schedule_bundle = _prepare_schedule_bundle(config, len(train_loader), schedule_path)
+    lr_schedule = schedule_bundle["lr_schedule"]
+    wd_schedule = schedule_bundle["wd_schedule"]
+    momentum_schedule = schedule_bundle["momentum_schedule"]
+    teacher_temp_schedule = schedule_bundle["teacher_temp_schedule"]
     
     print("Starting training...\n")
     
     # Training loop
+    start_epoch = 0
     iteration = 0
+
+    if resume_checkpoint_path:
+        checkpoint = torch.load(resume_checkpoint_path, map_location=torch.device(config.device), weights_only=False)
+        dino_ssl.student.load_state_dict(checkpoint["model_state_dict"])
+        dino_ssl.teacher.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        start_epoch = int(checkpoint.get("epoch", -1)) + 1
+        iteration = start_epoch * len(train_loader)
+        print(f"✓ Resumed from checkpoint epoch {start_epoch} (next epoch to run)")
+        if start_epoch >= config.num_epochs:
+            raise ValueError(
+                f"Checkpoint epoch {start_epoch} is >= target num_epochs ({config.num_epochs}). "
+                "Increase num_epochs to continue training."
+            )
     
     # Training time tracking
     start_time = time.time()
 
     collapse_loss_ref = math.log(float(config.projection_output_dim))
 
-    for epoch in range(config.num_epochs):
+    for epoch in range(start_epoch, config.num_epochs):
         print(f"\n{'='*70}")
         print(f"Epoch {epoch+1}/{config.num_epochs} started at {time.strftime('%H:%M:%S')}")
         print(f"{'='*70}")
@@ -173,6 +314,7 @@ def dino_train(config: ModelConfig):
             "teacher_entropy": 0.0,
             "student_entropy": 0.0,
             "embedding_std": 0.0,
+            "encoder_embedding_std": 0.0,
         }
         epoch_timing_sums = defaultdict(float)
         epoch_timing_sums["batch_load"] = 0.0
@@ -192,6 +334,12 @@ def dino_train(config: ModelConfig):
                 # All samples in this worker batch were invalid SMILES.
                 batch_load_start = time.time()
                 continue
+
+            if iteration >= len(lr_schedule):
+                raise RuntimeError(
+                    f"Schedule exhausted at iteration {iteration}; "
+                    f"schedule length is {len(lr_schedule)}."
+                )
 
             num_unique_graphs = len(torch.unique(batch['graph_idx']))
             epoch_trained_graphs += num_unique_graphs
@@ -235,39 +383,7 @@ def dino_train(config: ModelConfig):
             if collate_timing:
                 epoch_timing_sums["loader_wait_minus_collate"] += float(max(batch_load_time - collate_timing.get("collate_total", 0.0), 0.0))
             
-            # Print progress every 100 batches
-            should_print_batch = batch_idx % 100 == 0 or (profile_timing and batch_idx < 10)
-            if should_print_batch:
-                current_lr = lr_schedule[iteration-1]
-                current_momentum = momentum_schedule[iteration-1]
-                current_wd = wd_schedule[iteration-1]
-                current_teacher_temp = teacher_temp_schedule[iteration-1]
-                
-                # Count views in batch for reporting
-                num_global = (batch['view'] == 1).sum().item()
-                num_local = (batch['view'] == 0).sum().item()
-                # GPU memory usage
-                gpu_mem_allocated = torch.cuda.memory_allocated() / 1e9  # GB
-                gpu_mem_reserved = torch.cuda.memory_reserved() / 1e9  # GB
-                
-                elapsed_time_min = (time.time() - start_time) / 60
-                print(f"  Batch [{batch_idx+1:4d}/{len(train_loader)}] Loss: {loss:.4f} | "
-                      f"LR: {current_lr:.2e} | GPU Mem: {gpu_mem_allocated:.1f}/{gpu_mem_reserved:.1f}GB | "
-                      f"Elapsed: {elapsed_time_min:.1f}min")
-                if profile_timing and step_timing:
-                    print(
-                        "    Timing (s): "
-                        f"load={batch_load_time:.3f}, "
-                        f"collate={collate_timing.get('collate_total', 0.0):.3f}, "
-                        f"to_device={step_timing.get('to_device', 0.0):.3f}, "
-                        f"student_fwd={step_timing.get('student_forward', 0.0):.3f}, "
-                        f"teacher_fwd={step_timing.get('teacher_forward', 0.0):.3f}, "
-                        f"loss={step_timing.get('loss_compute', 0.0):.3f}, "
-                        f"backward={step_timing.get('backward_step', 0.0):.3f}, "
-                        f"ema={step_timing.get('ema_and_center', 0.0):.3f}, "
-                        f"step_total={step_timing.get('train_step_total', 0.0):.3f}, "
-                        f"batch_total={total_batch_time:.3f}"
-                    )
+            # Batch-level per-batch printing disabled; only epoch summaries printed below
             
             # Start timing for next batch load (at end of every iteration)
             batch_load_start = time.time()
@@ -275,6 +391,29 @@ def dino_train(config: ModelConfig):
         # Epoch summary
         if num_batches == 0:
             raise RuntimeError("No valid batches produced. Check dataset for invalid SMILES.")
+
+        val_loss = None
+        val_num_batches = 0
+        val_diag_sums = {
+            "teacher_entropy": 0.0,
+            "student_entropy": 0.0,
+            "embedding_std": 0.0,
+            "encoder_embedding_std": 0.0,
+        }
+        if val_loader is not None:
+            val_loss_total = 0.0
+            for val_batch in val_loader:
+                if val_batch is None:
+                    continue
+                val_step = dino_ssl.eval_step(val_batch)
+                val_loss_total += float(val_step["loss"])
+                val_num_batches += 1
+                for key in val_diag_sums:
+                    val_diag_sums[key] += float(val_step["metrics"].get(key, 0.0))
+            if val_num_batches > 0:
+                val_loss = val_loss_total / val_num_batches
+            else:
+                print("Warning: validation loader produced no valid batches.")
 
         total_graphs_in_epoch = len(train_loader.dataset)
         epoch_invalid_graphs = total_graphs_in_epoch - epoch_trained_graphs
@@ -284,6 +423,17 @@ def dino_train(config: ModelConfig):
         avg_teacher_entropy = epoch_diag_sums["teacher_entropy"] / num_batches
         avg_student_entropy = epoch_diag_sums["student_entropy"] / num_batches
         avg_embedding_std = epoch_diag_sums["embedding_std"] / num_batches
+        avg_encoder_embedding_std = epoch_diag_sums["encoder_embedding_std"] / num_batches
+
+        val_teacher_entropy = None
+        val_student_entropy = None
+        val_embedding_std = None
+        val_encoder_embedding_std = None
+        if val_num_batches > 0:
+            val_teacher_entropy = val_diag_sums["teacher_entropy"] / val_num_batches
+            val_student_entropy = val_diag_sums["student_entropy"] / val_num_batches
+            val_embedding_std = val_diag_sums["embedding_std"] / val_num_batches
+            val_encoder_embedding_std = val_diag_sums["encoder_embedding_std"] / val_num_batches
 
         collapse_warning = (
             abs(avg_loss - collapse_loss_ref) < 0.03
@@ -295,11 +445,28 @@ def dino_train(config: ModelConfig):
             "teacher_entropy": avg_teacher_entropy,
             "student_entropy": avg_student_entropy,
             "embedding_std": avg_embedding_std,
+            "encoder_embedding_std": avg_encoder_embedding_std,
             "collapse_warning": collapse_warning,
         }
 
-        is_best = avg_loss < manager.best_loss
-        manager.record_loss(epoch, avg_loss, diagnostics=epoch_diagnostics)
+        val_diagnostics = None
+        if val_num_batches > 0:
+            val_diagnostics = {
+                "teacher_entropy": val_teacher_entropy,
+                "student_entropy": val_student_entropy,
+                "embedding_std": val_embedding_std,
+                "encoder_embedding_std": val_encoder_embedding_std,
+            }
+
+        best_metric = val_loss if val_loss is not None else avg_loss
+        is_best = best_metric < (manager.best_val_loss if val_loss is not None else manager.best_loss)
+        manager.record_loss(
+            epoch,
+            avg_loss,
+            diagnostics=epoch_diagnostics,
+            val_loss=val_loss,
+            val_diagnostics=val_diagnostics,
+        )
         # Persist after each epoch so interrupted runs keep partial history.
         manager.save_loss_history(verbose=False)
         
@@ -307,14 +474,24 @@ def dino_train(config: ModelConfig):
         print(f"\n{'='*70}")
         print(f"Epoch {epoch+1}/{config.num_epochs} Complete at {time.strftime('%H:%M:%S')}")
         print(f"Average Loss: {avg_loss:.6f}")
+        if val_loss is not None:
+            print(f"Validation Loss: {val_loss:.6f}")
         print(f"Graphs trained: {epoch_trained_graphs}/{total_graphs_in_epoch} ({valid_pct:.2f}% valid)")
         print(f"Invalid SMILES skipped: {epoch_invalid_graphs}")
         print(
             f"Diagnostics: teacher_entropy={avg_teacher_entropy:.4f}, "
             f"student_entropy={avg_student_entropy:.4f}, "
             f"embedding_std={avg_embedding_std:.4f}, "
+            f"encoder_embedding_std={avg_encoder_embedding_std:.4f}, "
             f"collapse={collapse_warning}"
         )
+        if val_loss is not None:
+            print(
+                f"Validation diagnostics: teacher_entropy={val_teacher_entropy:.4f}, "
+                f"student_entropy={val_student_entropy:.4f}, "
+                f"embedding_std={val_embedding_std:.4f}, "
+                f"encoder_embedding_std={val_encoder_embedding_std:.4f}"
+            )
         if profile_timing and num_batches > 0:
             print("Timing summary (avg seconds/batch):")
             print(f"  batch_load: {epoch_timing_sums['batch_load'] / num_batches:.3f}")
@@ -375,7 +552,14 @@ def dino_train(config: ModelConfig):
             manager.save_loss_history(verbose=False)
         
         # Save checkpoints
-        manager.save_checkpoint(epoch, dino_ssl.student, optimizer, avg_loss, is_best=is_best)
+        manager.save_checkpoint(
+            epoch,
+            dino_ssl.student,
+            optimizer,
+            avg_loss,
+            is_best=is_best,
+            metric_value=val_loss,
+        )
     
     # Save final results
     # Always save a final checkpoint for reproducibility

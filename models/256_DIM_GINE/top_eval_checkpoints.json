@@ -45,10 +45,10 @@
       ]
     },
     {
-      "epoch": 11,
-      "score": 1.1410918394357954,
-      "ssl_train_loss": 5.544665207544478,
-      "checkpoint_path": "./models/256_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_11.pth",
+      "epoch": 25,
+      "score": 1.1336375694235439,
+      "ssl_train_loss": 5.545169866055189,
+      "checkpoint_path": "./models/256_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_25.pth",
       "metric_higher_is_better": false,
       "metric_definition": "mean(validation RMSE across datasets)",
       "datasets": [
@@ -56,5 +56,5 @@
       ]
     }
   ],
-  "generated_at": "2026-04-29T14:48:38.991743"
+  "generated_at": "2026-04-30T03:38:38.034220"
 }

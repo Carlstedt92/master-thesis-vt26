@@ -1,0 +1,23 @@
+{
+  "BACE": {
+    "model": "256_DIM_GINE",
+    "metric_split": "test",
+    "primary_metric": "roc_auc",
+    "embeddings": 0.6461050724637681,
+    "fingerprints": 0.8539855072463768
+  },
+  "LIPO": {
+    "model": "256_DIM_GINE",
+    "metric_split": "test",
+    "primary_metric": "rmse",
+    "embeddings": 1.212578759363949,
+    "fingerprints": 0.8084684936228909
+  },
+  "Tox21": {
+    "model": "256_DIM_GINE",
+    "metric_split": "test",
+    "primary_metric": "roc_auc_mean_tasks",
+    "embeddings": 0.622222278371157,
+    "fingerprints": 0.7947238757394617
+  }
+}

@@ -4,7 +4,7 @@ from torch_geometric.data import Data, Batch
 from .graph_augmentation import GraphAugmentation
 from .dataset_creation import SmilesCsvDataset, MultiFileSmilesDataset, PrecomputedGraphDataset
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 from typing import List, Optional
 import os
 import time
@@ -93,6 +93,36 @@ class DataLoaderCreator:
         generator = torch.Generator()
         generator.manual_seed(self.config.seed)
         return generator
+
+    def _split_validation_dataset(self, dataset):
+        validation_enabled = bool(getattr(self.config, "validation_enabled", False))
+        validation_split = float(getattr(self.config, "validation_split", 0.0))
+
+        if not validation_enabled or validation_split <= 0.0:
+            return dataset, None
+
+        total_items = len(dataset)
+        if total_items < 2:
+            return dataset, None
+
+        val_size = int(round(total_items * validation_split))
+        val_size = max(1, min(val_size, total_items - 1))
+        train_size = total_items - val_size
+
+        generator = self._build_generator()
+        train_dataset, val_dataset = random_split(dataset, [train_size, val_size], generator=generator)
+        return train_dataset, val_dataset
+
+    def _build_loader(self, dataset, shuffle: bool) -> DataLoader:
+        return DataLoader(
+            dataset,
+            batch_size=self.config.batch_size,
+            shuffle=shuffle,
+            collate_fn=self._get_collate_fn(),
+            generator=self._build_generator(),
+            num_workers=self.config.num_workers,
+            persistent_workers=self.config.num_workers > 0,
+        )
 
     def _cache_in_memory(self) -> bool:
         return bool(getattr(self.config, "cache_data_in_memory", False))
@@ -259,15 +289,21 @@ class DataLoaderCreator:
             explicit_hydrogens=self._explicit_hydrogens(),
             encode_hydrogen_count=self._encode_hydrogen_count(),
         )
-        return DataLoader(
-            dataset,
-            batch_size=self.config.batch_size,
-            shuffle=True,
-            collate_fn=self._get_collate_fn(),
-            generator=self._build_generator(),
-            num_workers=self.config.num_workers,
-            persistent_workers=self.config.num_workers > 0
+        return self._build_loader(dataset, shuffle=True)
+
+    def create_train_val_dataloaders(self):
+        """Create train and validation dataloaders for a single CSV file."""
+        dataset = SmilesCsvDataset(
+            self.config.data_path,
+            smiles_col="smiles",
+            cache_in_memory=self._cache_in_memory(),
+            explicit_hydrogens=self._explicit_hydrogens(),
+            encode_hydrogen_count=self._encode_hydrogen_count(),
         )
+        train_dataset, val_dataset = self._split_validation_dataset(dataset)
+        train_loader = self._build_loader(train_dataset, shuffle=True)
+        val_loader = self._build_loader(val_dataset, shuffle=False) if val_dataset is not None else None
+        return train_loader, val_loader
 
     def create_dataloader_auto(self) -> DataLoader:
         """Create dataloader based on config mode.
@@ -318,15 +354,22 @@ class DataLoaderCreator:
             explicit_hydrogens=self._explicit_hydrogens(),
             encode_hydrogen_count=self._encode_hydrogen_count(),
         )
-        return DataLoader(
-            dataset,
-            batch_size=self.config.batch_size,
-            shuffle=True,
-            collate_fn=self._get_collate_fn(),
-            generator=self._build_generator(),
-            num_workers=self.config.num_workers,
-            persistent_workers=self.config.num_workers > 0  # Keep workers alive between epochs
+        return self._build_loader(dataset, shuffle=True)
+
+    def create_multifile_train_val_dataloaders(self, pattern: str = "*.smi"):
+        """Create train and validation loaders for multiple SMILES files."""
+        dataset = MultiFileSmilesDataset(
+            self.config.data_path,
+            smiles_col="smiles",
+            pattern=pattern,
+            cache_in_memory=self._cache_in_memory(),
+            explicit_hydrogens=self._explicit_hydrogens(),
+            encode_hydrogen_count=self._encode_hydrogen_count(),
         )
+        train_dataset, val_dataset = self._split_validation_dataset(dataset)
+        train_loader = self._build_loader(train_dataset, shuffle=True)
+        val_loader = self._build_loader(val_dataset, shuffle=False) if val_dataset is not None else None
+        return train_loader, val_loader
 
     def create_precomputed_dataloader(self, precomputed_path: str, pattern: str = "shard_*.pt") -> DataLoader:
         """Create DataLoader for precomputed PyG graph shards.
@@ -350,12 +393,39 @@ class DataLoaderCreator:
         )
         if self._loader_debug():
             print(f"[DataLoaderCreator] Dataset built in {time.time() - build_start:.2f}s")
-        return DataLoader(
-            dataset,
-            batch_size=self.config.batch_size,
-            shuffle=True,
-            collate_fn=self._get_collate_fn(),
-            generator=self._build_generator(),
-            num_workers=self.config.num_workers,
-            persistent_workers=self.config.num_workers > 0,
+        return self._build_loader(dataset, shuffle=True)
+
+    def create_precomputed_train_val_dataloaders(self, precomputed_path: str, pattern: str = "shard_*.pt"):
+        """Create train and validation loaders for precomputed graph shards."""
+        dataset = PrecomputedGraphDataset(
+            precomputed_path,
+            pattern=pattern,
+            cache_in_memory=self._precomputed_cache_in_memory(),
+            max_cached_shards=self._precomputed_max_cached_shards(),
+            debug=self._loader_debug(),
         )
+        train_dataset, val_dataset = self._split_validation_dataset(dataset)
+        train_loader = self._build_loader(train_dataset, shuffle=True)
+        val_loader = self._build_loader(val_dataset, shuffle=False) if val_dataset is not None else None
+        return train_loader, val_loader
+
+    def create_train_val_dataloaders_auto(self):
+        """Create train and validation dataloaders based on config mode."""
+        if bool(getattr(self.config, "use_precomputed", False)):
+            precomputed_path = str(getattr(self.config, "precomputed_data_path", "")).strip()
+            if not precomputed_path:
+                raise ValueError(
+                    "use_precomputed=True but precomputed_data_path is empty in config"
+                )
+            print(f"✓ Precomputed mode enabled: loading from {precomputed_path}")
+            return self.create_precomputed_train_val_dataloaders(precomputed_path)
+
+        data_path = self.config.data_path
+        if os.path.isdir(data_path):
+            print(f"✓ Detected directory mode: loading from {data_path}")
+            return self.create_multifile_train_val_dataloaders()
+        elif os.path.isfile(data_path):
+            print(f"✓ Detected single file mode: loading from {data_path}")
+            return self.create_train_val_dataloaders()
+        else:
+            raise ValueError(f"data_path must be either a file or directory, got: {data_path}")

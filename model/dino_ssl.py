@@ -227,7 +227,13 @@ class DINOGraphSSL:
             student_probs = F.softmax(student_out_all / self.loss_fn.student_temp, dim=-1)
             teacher_entropy = (-teacher_probs * torch.log(teacher_probs.clamp_min(1e-12))).sum(dim=-1).mean()
             student_entropy = (-student_probs * torch.log(student_probs.clamp_min(1e-12))).sum(dim=-1).mean()
+            
+            # Embedding std on projection head output
             embedding_std = student_out_all.detach().std(dim=0, unbiased=False).mean()
+            
+            # Encoder embedding std (before projection head)
+            encoder_embeddings = self.student.get_embeddings(batch.x, batch.edge_index, batch.edge_attr, batch.batch)
+            encoder_embedding_std = encoder_embeddings.detach().std(dim=0, unbiased=False).mean()
         
         # Backward pass
         backward_start = time.perf_counter()
@@ -253,8 +259,93 @@ class DINOGraphSSL:
                 "teacher_entropy": float(teacher_entropy.item()),
                 "student_entropy": float(student_entropy.item()),
                 "embedding_std": float(embedding_std.item()),
+                "encoder_embedding_std": float(encoder_embedding_std.item()),
             },
             "timing": timing,
+        }
+
+    @torch.no_grad()
+    def eval_step(self, batch):
+        """Compute the SSL loss and diagnostics without updating weights or center."""
+        self.student.eval()
+        self.teacher.eval()
+
+        batch = batch.to(self.device)
+
+        num_graphs = batch.num_graphs
+        global_mask = (batch['view'] == 1).squeeze()
+        if global_mask.dim() == 0:
+            global_mask = global_mask.unsqueeze(0)
+
+        global_indices = torch.where(global_mask)[0]
+
+        student_out_all = self.student(batch.x, batch.edge_index, batch.edge_attr, batch.batch)
+
+        global_graph_mask = torch.isin(batch.batch, global_indices)
+        global_node_indices = torch.where(global_graph_mask)[0]
+
+        edge_mask = global_graph_mask[batch.edge_index[0]] & global_graph_mask[batch.edge_index[1]]
+        global_edge_index = batch.edge_index[:, edge_mask]
+
+        node_mapping = torch.full((batch.x.size(0),), -1, dtype=torch.long, device=self.device)
+        node_mapping[global_node_indices] = torch.arange(len(global_node_indices), device=self.device)
+        global_edge_index = node_mapping[global_edge_index]
+
+        global_edge_attr = batch.edge_attr[edge_mask] if batch.edge_attr is not None else None
+
+        global_batch_raw = batch.batch[global_node_indices]
+        unique_global_graphs = global_indices
+        graph_mapping = torch.full((num_graphs,), -1, dtype=torch.long, device=self.device)
+        graph_mapping[unique_global_graphs] = torch.arange(len(unique_global_graphs), device=self.device)
+        global_batch = graph_mapping[global_batch_raw]
+
+        teacher_out = self.teacher(
+            batch.x[global_node_indices],
+            global_edge_index,
+            global_edge_attr,
+            global_batch,
+        )
+
+        student_graph_idx = batch['graph_idx'].squeeze()
+        if student_graph_idx.dim() == 0:
+            student_graph_idx = student_graph_idx.unsqueeze(0)
+
+        teacher_graph_idx = student_graph_idx[global_indices]
+
+        student_log_probs = F.log_softmax(student_out_all / self.loss_fn.student_temp, dim=-1)
+        teacher_probs = F.softmax(
+            (teacher_out - self.loss_fn.center) / self.loss_fn.teacher_temp,
+            dim=-1,
+        ).detach()
+        pair_loss = -torch.matmul(teacher_probs, student_log_probs.T)
+
+        match_mask = teacher_graph_idx.unsqueeze(1) == student_graph_idx.unsqueeze(0)
+        num_matches = match_mask.sum()
+
+        if num_matches > 0:
+            loss = pair_loss[match_mask].mean()
+        else:
+            loss = torch.tensor(0.0, device=self.device)
+
+        student_probs = F.softmax(student_out_all / self.loss_fn.student_temp, dim=-1)
+        teacher_entropy = (-teacher_probs * torch.log(teacher_probs.clamp_min(1e-12))).sum(dim=-1).mean()
+        student_entropy = (-student_probs * torch.log(student_probs.clamp_min(1e-12))).sum(dim=-1).mean()
+        
+        # Embedding std on projection head output
+        embedding_std = student_out_all.detach().std(dim=0, unbiased=False).mean()
+        
+        # Encoder embedding std (before projection head)
+        encoder_embeddings = self.student.get_embeddings(batch.x, batch.edge_index, batch.edge_attr, batch.batch)
+        encoder_embedding_std = encoder_embeddings.detach().std(dim=0, unbiased=False).mean()
+
+        return {
+            "loss": float(loss.item()),
+            "metrics": {
+                "teacher_entropy": float(teacher_entropy.item()),
+                "student_entropy": float(student_entropy.item()),
+                "embedding_std": float(embedding_std.item()),
+                "encoder_embedding_std": float(encoder_embedding_std.item()),
+            },
         }
     
     def get_embeddings(self, data):
@@ -271,12 +362,15 @@ class DINOGraphSSL:
 def cosine_scheduler(base_value, final_value, epochs, niter_per_ep, 
                      warmup_epochs=0, start_warmup_value=0.0):
     """Cosine learning rate schedule with warmup."""
-    warmup_schedule = torch.linspace(start_warmup_value, base_value, 
-                                      warmup_epochs * niter_per_ep)
+    warmup_epochs = max(0, min(int(warmup_epochs), int(epochs)))
+    warmup_iters = warmup_epochs * niter_per_ep
+    total_iters = epochs * niter_per_ep
+
+    warmup_schedule = torch.linspace(start_warmup_value, base_value, warmup_iters)
     
-    iters = torch.arange(epochs * niter_per_ep - warmup_epochs * niter_per_ep)
+    iters = torch.arange(max(total_iters - warmup_iters, 0))
     schedule = final_value + 0.5 * (base_value - final_value) * (
-        1 + torch.cos(torch.pi * iters / len(iters))
+        1 + torch.cos(torch.pi * iters / len(iters)) if len(iters) > 0 else torch.tensor([], dtype=torch.float32)
     )
     
     schedule = torch.cat((warmup_schedule, schedule))

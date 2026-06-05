@@ -1,0 +1,49 @@
+{
+  "result": {
+    "dataset": "Tox21",
+    "splitter": "random",
+    "split_seed": 4,
+    "embeddings": {
+      "test_metrics": {
+        "roc_auc_mean_tasks": 0.7839767885267778,
+        "roc_auc_std_tasks": 0.06146745784830384
+      },
+      "validation_metrics": {
+        "roc_auc_mean_tasks": 0.7898693499854043,
+        "roc_auc_std_tasks": 0.05766889085868786
+      }
+    },
+    "fingerprints": {
+      "test_metrics": {
+        "roc_auc_mean_tasks": 0.699850800964414,
+        "roc_auc_std_tasks": 0.10287749168345652
+      },
+      "validation_metrics": {
+        "roc_auc_mean_tasks": 0.7409673052126013,
+        "roc_auc_std_tasks": 0.0579314737479573
+      }
+    }
+  },
+  "metadata": {
+    "splitter": "random",
+    "split_seed": 4,
+    "n_tasks": 12,
+    "task_names": [
+      "NR-AR",
+      "NR-AR-LBD",
+      "NR-AhR",
+      "NR-Aromatase",
+      "NR-ER",
+      "NR-ER-LBD",
+      "NR-PPAR-gamma",
+      "SR-ARE",
+      "SR-ATAD5",
+      "SR-HSE",
+      "SR-MMP",
+      "SR-p53"
+    ],
+    "n_train_deepchem": 6258,
+    "n_val_deepchem": 782,
+    "n_test_deepchem": 783
+  }
+}

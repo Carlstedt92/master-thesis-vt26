@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import csv
+import gzip
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -20,6 +22,22 @@ def iter_smiles(shard_dir: Path):
                     continue
                 # Format is: "<smiles> <zinc_id>"
                 smiles = line.split()[0]
+                yield smiles
+
+
+def iter_smiles_from_csv(csv_path: Path, smiles_col: str):
+    """Yield SMILES strings from a CSV or CSV.GZ file."""
+    opener = gzip.open if csv_path.suffix == ".gz" else open
+    with opener(csv_path, "rt", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        if reader.fieldnames is None or smiles_col not in reader.fieldnames:
+            raise ValueError(
+                f"SMILES column '{smiles_col}' not found in {csv_path}. "
+                f"Available columns: {reader.fieldnames}"
+            )
+        for row in reader:
+            smiles = (row.get(smiles_col) or "").strip()
+            if smiles:
                 yield smiles
 
 
@@ -73,12 +91,26 @@ def plot_distribution(atom_counts: list[int], output_path: Path, title: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Plot atom-count distribution for ZINC dataset.")
+    parser = argparse.ArgumentParser(
+        description="Plot atom-count distribution from ZINC shards or CSV/CSV.GZ datasets."
+    )
     parser.add_argument(
         "--zinc-dir",
         type=Path,
         default=Path("data/zinc/zinc_data"),
-        help="Directory containing ZINC .smi shard files.",
+        help="Directory containing ZINC .smi shard files (legacy mode).",
+    )
+    parser.add_argument(
+        "--input",
+        type=Path,
+        default=None,
+        help="Input path: either a directory of .smi shards or a CSV/CSV.GZ file.",
+    )
+    parser.add_argument(
+        "--smiles-col",
+        type=str,
+        default="smiles",
+        help="SMILES column name when --input points to CSV/CSV.GZ.",
     )
     parser.add_argument(
         "--output",
@@ -93,14 +125,28 @@ def main():
     )
     args = parser.parse_args()
 
-    if not args.zinc_dir.exists():
-        raise FileNotFoundError(f"ZINC directory not found: {args.zinc_dir}")
+    input_path = args.input if args.input is not None else args.zinc_dir
+    if not input_path.exists():
+        raise FileNotFoundError(f"Input path not found: {input_path}")
+
+    if input_path.is_dir():
+        smiles_iter = iter_smiles(input_path)
+        source_name = input_path.name
+    else:
+        suffixes = "".join(input_path.suffixes[-2:])
+        if input_path.suffix == ".csv" or suffixes == ".csv.gz":
+            smiles_iter = iter_smiles_from_csv(input_path, args.smiles_col)
+            source_name = input_path.stem.replace(".csv", "")
+        else:
+            raise ValueError(
+                f"Unsupported input file type: {input_path}. Expected directory, .csv, or .csv.gz"
+            )
 
     atom_counts: list[int] = []
     invalid = 0
     total = 0
 
-    for smiles in iter_smiles(args.zinc_dir):
+    for smiles in smiles_iter:
         total += 1
         count = count_atoms(smiles, include_hydrogens=args.include_hydrogens)
         if count is None:
@@ -110,7 +156,7 @@ def main():
 
     stats = summarize(atom_counts)
     title_suffix = "(with H)" if args.include_hydrogens else "(heavy atoms)"
-    plot_distribution(atom_counts, args.output, f"ZINC Atom Count Distribution {title_suffix}")
+    plot_distribution(atom_counts, args.output, f"{source_name} Atom Count Distribution {title_suffix}")
 
     print(f"Processed molecules: {total}")
     print(f"Valid molecules: {len(atom_counts)}")

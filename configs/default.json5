@@ -3,7 +3,7 @@
   // Identity
   // ---------------------------------------------------------------------------
   // Run name used for model folders and checkpoint paths.
-  name: "FUNCTIONAL_GROUP_MASKING_GINE",
+  name: "RKHOP_128ED_800EP_GINE",
 
   // Self-supervised objective type.
   head_type: "dino",
@@ -11,11 +11,15 @@
   // Backbone encoder family.
   encoder_type: "GINE",
 
+  // Global graph pooling for the encoder readout.
+  // Set to "add" or "mean"; null keeps the encoder's default behavior.
+  global_pooling: "add",
+
   // ---------------------------------------------------------------------------
   // Data loading
   // ---------------------------------------------------------------------------
   // Path to the training data. Can be a CSV file or a directory of .smi files.
-  data_path: "data/zinc/zinc_9M_data",
+  data_path: "data/zinc/zinc_half_data",
 
   // Load precomputed graph shards instead of parsing SMILES on the fly.
   use_precomputed: false,
@@ -45,7 +49,7 @@
   local_views: 2,
 
   // Local view strategy: k_hop, masking, functional_group_masking, or functional_group_k_hop.
-  local_augmentation_mode: "functional_group_masking",
+  local_augmentation_mode: "k_hop",
 
   // Number of hops for k-hop local subgraph extraction.
   k_hops: 2,
@@ -96,13 +100,15 @@
   num_layers: 3,
 
   // Dropout rate inside the encoder.
-  dropout: 0.2,
+  dropout: 0.0,
 
   // GINE epsilon parameter.
   epsilon: 0.0,
 
   // Projection head hidden dimension.
-  projection_hidden_dim: 256,
+  projection_hidden_dim: 128,
+    // Projection head bottleneck dimension before final output layer.
+    projection_bottleneck_dim: 128,
 
   // Projection head output dimension.
   projection_output_dim: 128,
@@ -114,7 +120,7 @@
   // Training and optimization
   // ---------------------------------------------------------------------------
   // Total training epochs.
-  num_epochs: 200,
+  num_epochs: 800,
 
   // Batch size in graphs.
   batch_size: 128,
@@ -123,7 +129,7 @@
   auto_scale_lr: true,
 
   // Base learning rate for the scaling rule.
-  lr_scale_base: 0.0001,
+  lr_scale_base: 0.00005,
 
   // Reference batch size used by the scaling rule.
   lr_scale_reference_batch_size: 256,
@@ -141,10 +147,10 @@
   weight_decay_end: 0.2,
 
   // Initial teacher temperature.
-  teacher_temp: 0.04,
+  teacher_temp: 0.07,
 
   // Final teacher temperature after warmup.
-  teacher_temp_final: 0.05,
+  teacher_temp_final: 0.01,
 
   // Number of warmup epochs for the teacher temperature.
   teacher_temp_warmup_epochs: 20,
@@ -153,16 +159,22 @@
   student_temp: 0.1,
 
   // EMA momentum for the teacher network.
-  teacher_momentum: 0.998,
+  teacher_momentum: 0.99,
 
   // Momentum for the DINO center update.
   center_momentum: 0.9,
 
   // Warmup epochs before cosine annealing.
-  warmup_epochs: 10,
+  warmup_epochs: 20,
 
   // Final learning rate after the schedule.
   final_learning_rate: 0.00001,
+
+  // Enable a held-out validation split for SSL monitoring.
+  validation_enabled: true,
+
+  // Fraction of the dataset reserved for validation.
+  validation_split: 0.1,
 
   // ---------------------------------------------------------------------------
   // Online evaluation

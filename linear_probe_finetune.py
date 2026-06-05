@@ -178,7 +178,7 @@ def main():
         device = torch.device(args.device)
 
     if args.dataset == 'lipo':
-        from knn_eval_lip import resolve_checkpoint_path, load_lipo_splits_from_deepchem, build_fingerprint_features, infer_graph_featurization
+        from evaluation.knn_lipo import resolve_checkpoint_path, load_lipo_splits_from_deepchem, build_fingerprint_features, infer_graph_featurization
         splits, stats = load_lipo_splits_from_deepchem('data/MoleculeNet_LIPO_custom', 'random')
         rows_train = splits['train']
         rows_val = splits['val']
@@ -230,7 +230,7 @@ def main():
         }
 
     elif args.dataset == 'bace':
-        from knn_eval_bace import resolve_checkpoint_path, load_bace_splits_from_deepchem, build_fingerprint_features, infer_graph_featurization
+        from evaluation.knn_bace import resolve_checkpoint_path, load_bace_splits_from_deepchem, build_fingerprint_features, infer_graph_featurization
         splits, stats = load_bace_splits_from_deepchem('data/MoleculeNet_BACE_custom', 'scaffold')
         rows_train = splits['train']
         rows_val = splits['val']
@@ -281,7 +281,7 @@ def main():
 
     elif args.dataset == 'tox21':
         # Multi-task head with one logit per task
-        from knn_eval_tox21 import resolve_checkpoint_path, load_tox21_splits_from_deepchem, build_fingerprint_features, infer_graph_featurization
+        from evaluation.knn_tox21 import resolve_checkpoint_path, load_tox21_splits_from_deepchem, build_fingerprint_features, infer_graph_featurization
         splits, stats = load_tox21_splits_from_deepchem('data/MoleculeNet_Tox21_custom', 'random')
         checkpoint = resolve_checkpoint_path(args.model, args.checkpoint)
         model, config = load_checkpoint_model(checkpoint, device)
@@ -324,9 +324,9 @@ def main():
         for epoch in range(args.epochs):
             model.train()
             total_loss = 0.0
-            for i in range(0, len(train_data[0]), args.batch_size):
-                batch_list = train_data[0][i:i+args.batch_size]
-                batch_labels = train_data[1][i:i+args.batch_size]
+            for i in range(0, len(train_data), args.batch_size):
+                batch_list = train_data[i:i+args.batch_size]
+                batch_labels = train_labels[i:i+args.batch_size]
                 batch = Batch.from_data_list(batch_list).to(device)
                 optimizer.zero_grad()
                 out = model(batch.x, batch.edge_index, batch.edge_attr, batch.batch)
@@ -345,7 +345,7 @@ def main():
             model.eval()
             val_preds = []
             with torch.no_grad():
-                for data in val_data[0]:
+                for data in val_data:
                     d = data.to(device)
                     b = Batch.from_data_list([d])
                     p = model(b.x, b.edge_index, b.edge_attr, b.batch).cpu().numpy()
@@ -354,7 +354,7 @@ def main():
             per_task_aucs = []
             from sklearn.metrics import roc_auc_score
             for t in range(num_tasks):
-                lab = val_data[1][:, t]
+                lab = val_labels[:, t]
                 finite_mask = np.isfinite(lab)
                 if finite_mask.sum() < 2:
                     continue
@@ -376,7 +376,7 @@ def main():
         model.eval()
         test_preds = []
         with torch.no_grad():
-            for data in test_data[0]:
+            for data in test_data:
                 d = data.to(device)
                 b = Batch.from_data_list([d])
                 p = model(b.x, b.edge_index, b.edge_attr, b.batch).cpu().numpy()
@@ -385,7 +385,7 @@ def main():
         per_task_aucs = []
         from sklearn.metrics import roc_auc_score
         for t in range(num_tasks):
-            lab = test_data[1][:, t]
+            lab = test_labels[:, t]
             finite_mask = np.isfinite(lab)
             if finite_mask.sum() < 2:
                 continue

@@ -1,0 +1,94 @@
+{
+  "Model data": {
+    "name": "FG_MASK_512ED",
+    "seed": 1,
+    "head_type": "dino",
+    "training_time_seconds": 27012.413191,
+    "training_time_hours": 7.503448108611111,
+    "timestamp": "2026-05-05T18:52:47.629354"
+  },
+  "DINO_data": {
+    "data_path": "data/zinc/zinc_half_data",
+    "best_loss": 0.12385869433847611,
+    "best_epoch": 198,
+    "final_loss": 0.1248631542509786,
+    "total_epochs": 200,
+    "collapse_warning_epochs": [
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "collapse_warning_count": 5,
+    "best_val_loss": 0.11028483643391986,
+    "best_val_epoch": 190,
+    "first_collapse_warning_epoch": 3
+  },
+  "Online_eval_data": {
+    "total_evaluated_epochs": 200,
+    "top_k_retained": 5,
+    "fixed_k": 21,
+    "every_n_epochs": 1,
+    "top_eval_checkpoints": [
+      {
+        "epoch": 69,
+        "score": 0.9675422869040855,
+        "ssl_train_loss": 2.5454807729562345,
+        "checkpoint_path": "./models/FG_MASK_512ED/checkpoints/checkpoint_online_eval_epoch_69.pth",
+        "metric_higher_is_better": false,
+        "metric_definition": "mean(validation RMSE across datasets)",
+        "datasets": [
+          "lipo"
+        ]
+      },
+      {
+        "epoch": 19,
+        "score": 0.9694666292687867,
+        "ssl_train_loss": 1.9961555544777816,
+        "checkpoint_path": "./models/FG_MASK_512ED/checkpoints/checkpoint_online_eval_epoch_19.pth",
+        "metric_higher_is_better": false,
+        "metric_definition": "mean(validation RMSE across datasets)",
+        "datasets": [
+          "lipo"
+        ]
+      },
+      {
+        "epoch": 20,
+        "score": 0.9704379541064803,
+        "ssl_train_loss": 1.4913581737863537,
+        "checkpoint_path": "./models/FG_MASK_512ED/checkpoints/checkpoint_online_eval_epoch_20.pth",
+        "metric_higher_is_better": false,
+        "metric_definition": "mean(validation RMSE across datasets)",
+        "datasets": [
+          "lipo"
+        ]
+      },
+      {
+        "epoch": 78,
+        "score": 0.9708471679256626,
+        "ssl_train_loss": 3.04363817150153,
+        "checkpoint_path": "./models/FG_MASK_512ED/checkpoints/checkpoint_online_eval_epoch_78.pth",
+        "metric_higher_is_better": false,
+        "metric_definition": "mean(validation RMSE across datasets)",
+        "datasets": [
+          "lipo"
+        ]
+      },
+      {
+        "epoch": 70,
+        "score": 0.9713980738577889,
+        "ssl_train_loss": 2.5200026804134352,
+        "checkpoint_path": "./models/FG_MASK_512ED/checkpoints/checkpoint_online_eval_epoch_70.pth",
+        "metric_higher_is_better": false,
+        "metric_definition": "mean(validation RMSE across datasets)",
+        "datasets": [
+          "lipo"
+        ]
+      }
+    ],
+    "best_epoch": 69,
+    "best_aggregate_primary_score": 0.9675422869040855,
+    "best_aggregate_primary_score_higher_is_better": false
+  }
+}

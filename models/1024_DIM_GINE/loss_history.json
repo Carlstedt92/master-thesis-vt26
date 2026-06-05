@@ -7,6 +7,142 @@
       "student_entropy": 6.915266197060606,
       "embedding_std": 0.013932852130009664,
       "collapse_warning": true
+    },
+    {
+      "epoch": 2,
+      "train_loss": 6.931018259499296,
+      "teacher_entropy": 6.9310061940083205,
+      "student_entropy": 6.931036565492126,
+      "embedding_std": 0.0026172663215709613,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 3,
+      "train_loss": 6.931188519342106,
+      "teacher_entropy": 6.9311828945907,
+      "student_entropy": 6.931198596077818,
+      "embedding_std": 0.002051432946406934,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 4,
+      "train_loss": 6.3707602810237836,
+      "teacher_entropy": 6.357758290711126,
+      "student_entropy": 6.423296224642267,
+      "embedding_std": 0.00666372299809734,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 5,
+      "train_loss": 6.177531901855895,
+      "teacher_entropy": 6.159170400153002,
+      "student_entropy": 6.260428147110255,
+      "embedding_std": 0.004167038077274886,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 6,
+      "train_loss": 6.931471751264458,
+      "teacher_entropy": 6.931471760945211,
+      "student_entropy": 6.931471758893489,
+      "embedding_std": 3.6421058861714625e-05,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 7,
+      "train_loss": 6.9314718246395035,
+      "teacher_entropy": 6.93147182460704,
+      "student_entropy": 6.9314718246395035,
+      "embedding_std": 2.0235102367968837e-05,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 8,
+      "train_loss": 6.929300569348166,
+      "teacher_entropy": 6.929043953407142,
+      "student_entropy": 6.929894199672084,
+      "embedding_std": 0.0006079028009790008,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 9,
+      "train_loss": 6.9304022319897225,
+      "teacher_entropy": 6.930382899044922,
+      "student_entropy": 6.9304780071154815,
+      "embedding_std": 0.002281979912852479,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 10,
+      "train_loss": 6.898721432186232,
+      "teacher_entropy": 6.897698354442529,
+      "student_entropy": 6.901773517157549,
+      "embedding_std": 0.0013474812269322987,
+      "collapse_warning": false
+    },
+    {
+      "epoch": 11,
+      "train_loss": 6.930652970492851,
+      "teacher_entropy": 6.9306500590209055,
+      "student_entropy": 6.930653794019145,
+      "embedding_std": 0.002250896056852789,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 12,
+      "train_loss": 6.92980130024169,
+      "teacher_entropy": 6.929797517495455,
+      "student_entropy": 6.929800864873996,
+      "embedding_std": 0.004646731778092934,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 13,
+      "train_loss": 6.92968614123388,
+      "teacher_entropy": 6.929682752528716,
+      "student_entropy": 6.92968598183583,
+      "embedding_std": 0.002529785150205673,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 14,
+      "train_loss": 6.930048895746393,
+      "teacher_entropy": 6.93004544542463,
+      "student_entropy": 6.930048854783366,
+      "embedding_std": 0.0025430326153339402,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 15,
+      "train_loss": 6.930241092968295,
+      "teacher_entropy": 6.930236756406356,
+      "student_entropy": 6.930240840333747,
+      "embedding_std": 0.002128075834257836,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 16,
+      "train_loss": 6.929973977532867,
+      "teacher_entropy": 6.929968254720818,
+      "student_entropy": 6.929974081988909,
+      "embedding_std": 0.0017158303848618852,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 17,
+      "train_loss": 6.928890909813398,
+      "teacher_entropy": 6.9288803728101325,
+      "student_entropy": 6.928892244231546,
+      "embedding_std": 0.0012403589879729003,
+      "collapse_warning": true
+    },
+    {
+      "epoch": 18,
+      "train_loss": 6.927505437300078,
+      "teacher_entropy": 6.927489084663806,
+      "student_entropy": 6.927510991520281,
+      "embedding_std": 0.0008065883702195072,
+      "collapse_warning": true
     }
   ],
   "Evaluation_Loss": {
@@ -39,6 +175,839 @@
                     "r2": 0.07240679083063561,
                     "rmse": 1.2041070663789424,
                     "mae": 0.9506123979180431
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 2,
+        "ssl_train_loss": 6.931018259499296,
+        "saved_checkpoint_path": "./models/1024_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_2.pth",
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.1572800976933935,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.1572800976933935,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": 0.14315095070591044,
+                    "rmse": 1.1572800976933935,
+                    "mae": 0.9305412800566585
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 3,
+        "ssl_train_loss": 6.931188519342106,
+        "saved_checkpoint_path": "./models/1024_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_3.pth",
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.1966838948035685,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.1966838948035685,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": 0.08380853248721731,
+                    "rmse": 1.1966838948035685,
+                    "mae": 0.9503963400635362
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 4,
+        "ssl_train_loss": 6.3707602810237836,
+        "saved_checkpoint_path": "./models/1024_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_4.pth",
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.1464798682430934,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.1464798682430934,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": 0.15906928274917342,
+                    "rmse": 1.1464798682430934,
+                    "mae": 0.897412391297852
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 5,
+        "ssl_train_loss": 6.177531901855895,
+        "saved_checkpoint_path": "./models/1024_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_5.pth",
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.1429708327668575,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.1429708327668575,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": 0.16420908494475295,
+                    "rmse": 1.1429708327668575,
+                    "mae": 0.9249214704350398
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 6,
+        "ssl_train_loss": 6.931471751264458,
+        "saved_checkpoint_path": "./models/1024_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_6.pth",
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.1570829441143053,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.1570829441143053,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": 0.14344287047133464,
+                    "rmse": 1.1570829441143053,
+                    "mae": 0.9403779608868877
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 7,
+        "ssl_train_loss": 6.9314718246395035,
+        "saved_checkpoint_path": "./models/1024_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_7.pth",
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.1474890650901708,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.1474890650901708,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": 0.15758816097209316,
+                    "rmse": 1.1474890650901708,
+                    "mae": 0.9223535046688679
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 8,
+        "ssl_train_loss": 6.929300569348166,
+        "saved_checkpoint_path": "./models/1024_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_8.pth",
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.1101278678676691,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.1101278678676691,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": 0.2115514471340636,
+                    "rmse": 1.1101278678676691,
+                    "mae": 0.896086469714055
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 9,
+        "ssl_train_loss": 6.9304022319897225,
+        "saved_checkpoint_path": "./models/1024_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_9.pth",
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.1255211479298677,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.1255211479298677,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": 0.18953424426477206,
+                    "rmse": 1.1255211479298677,
+                    "mae": 0.8928459438694735
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 10,
+        "ssl_train_loss": 6.898721432186232,
+        "saved_checkpoint_path": "./models/1024_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_10.pth",
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.27446035734516,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.27446035734516,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": -0.0391542366055444,
+                    "rmse": 1.27446035734516,
+                    "mae": 0.9834741524702412
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 11,
+        "ssl_train_loss": 6.930652970492851,
+        "saved_checkpoint_path": "./models/1024_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_11.pth",
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.219329023624868,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.219329023624868,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": 0.04880584438957625,
+                    "rmse": 1.219329023624868,
+                    "mae": 0.9673462307796016
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 12,
+        "ssl_train_loss": 6.92980130024169,
+        "saved_checkpoint_path": "./models/1024_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_12.pth",
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.2070540213904544,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.2070540213904544,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": 0.06786081541757139,
+                    "rmse": 1.2070540213904544,
+                    "mae": 0.9396847299928152
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 13,
+        "ssl_train_loss": 6.92968614123388,
+        "saved_checkpoint_path": "./models/1024_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_13.pth",
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.2110289482442627,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.2110289482442627,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": 0.06171148697311912,
+                    "rmse": 1.2110289482442627,
+                    "mae": 0.9575943884518947
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 14,
+        "ssl_train_loss": 6.930048895746393,
+        "saved_checkpoint_path": "./models/1024_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_14.pth",
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.1853754291666851,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.1853754291666851,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": 0.10104243397911694,
+                    "rmse": 1.1853754291666851,
+                    "mae": 0.914184684053751
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 15,
+        "ssl_train_loss": 6.930241092968295,
+        "saved_checkpoint_path": "./models/1024_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_15.pth",
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.224878351289683,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.224878351289683,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": 0.04012812166098956,
+                    "rmse": 1.224878351289683,
+                    "mae": 0.9381298311840066
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 16,
+        "ssl_train_loss": 6.929973977532867,
+        "saved_checkpoint_path": "./models/1024_DIM_GINE/checkpoints/checkpoint_online_eval_epoch_16.pth",
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.2099740205981402,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.2099740205981402,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": 0.06334546174275979,
+                    "rmse": 1.2099740205981402,
+                    "mae": 0.9375450861403019
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 17,
+        "ssl_train_loss": 6.928890909813398,
+        "saved_checkpoint_path": null,
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.23970336192658,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.23970336192658,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": 0.016752369945354784,
+                    "rmse": 1.23970336192658,
+                    "mae": 0.9610839992200109
+                  }
+                }
+              },
+              "dataset_stats": {
+                "dataset": "lipo",
+                "task": "exp",
+                "splitter": "random",
+                "n_train": 3360,
+                "n_train_skipped_non_finite": 0,
+                "n_train_skipped_non_binary": 0,
+                "n_val": 420,
+                "n_val_skipped_non_finite": 0,
+                "n_val_skipped_non_binary": 0,
+                "n_test": 420,
+                "n_test_skipped_non_finite": 0,
+                "n_test_skipped_non_binary": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "epoch": 18,
+        "ssl_train_loss": 6.927505437300078,
+        "saved_checkpoint_path": null,
+        "evaluation": {
+          "fixed_k": 21,
+          "dataset_names": [
+            "lipo"
+          ],
+          "aggregate_primary_score": 1.2246496529413438,
+          "aggregate_primary_score_definition": "mean(validation RMSE across datasets)",
+          "aggregate_primary_score_higher_is_better": false,
+          "datasets": {
+            "lipo": {
+              "task": "regression",
+              "primary_metric_name": "val_rmse",
+              "primary_metric_value": 1.2246496529413438,
+              "primary_metric_higher_is_better": false,
+              "fixed_k": 21,
+              "embeddings": {
+                "n_train_invalid_smiles": 0,
+                "n_val_invalid_smiles": 0,
+                "knn": {
+                  "best_k": 21,
+                  "validation_metrics": {
+                    "r2": 0.04048652561098409,
+                    "rmse": 1.2246496529413438,
+                    "mae": 0.9362166822217318
                   }
                 }
               },

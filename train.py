@@ -22,6 +22,7 @@ def build_default_config() -> ModelConfig:
         name="GDZ_GINE_MASKING",  # Model identifier (used for save paths/metadata)
         head_type="dino",  # SSL head type; keep as "dino" for DINO pretraining
         encoder_type="GINE",  # Backbone encoder: "GINE" or "GAT"
+        global_pooling=None,  # Global graph pooling: "add", "mean", or None for encoder default
 
         # Data source
         data_path="data/zinc/zinc_data",  # Directory of .smi files or path to single CSV
@@ -57,6 +58,7 @@ def build_default_config() -> ModelConfig:
         # Projection head used for SSL targets
         projection_hidden_dim=256,
         projection_output_dim=128,
+        projection_bottleneck_dim=256,
         projection_layers=2,
 
         # Training length and batching
@@ -83,6 +85,10 @@ def build_default_config() -> ModelConfig:
         # Learning-rate schedule
         warmup_epochs=10,
         final_learning_rate=1e-5,
+
+        # SSL validation split
+        validation_enabled=True,
+        validation_split=0.1,
 
         # Online downstream tracking (kNN-only)
         online_eval_enabled=True,

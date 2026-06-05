@@ -1,9 +1,0 @@
-{
-  "DINO_Loss": [
-    {
-      "epoch": 1,
-      "train_loss": 4.602675533294677
-    }
-  ],
-  "Evaluation_Loss": {}
-}

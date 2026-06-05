@@ -1,0 +1,49 @@
+{
+  "result": {
+    "dataset": "LIPO",
+    "splitter": "random",
+    "split_seed": 2,
+    "embeddings": {
+      "test_metrics": {
+        "r2": 0.5276458640287949,
+        "mse": 0.7128260266343928,
+        "rmse": 0.8442902502305666,
+        "mae": 0.6384762790686055
+      },
+      "validation_metrics": {
+        "r2": 0.4524456769415236,
+        "rmse": 0.8704843923275232,
+        "mae": 0.6312929321506466
+      },
+      "best_k": 5
+    },
+    "fingerprints": {
+      "test_metrics": {
+        "r2": 0.3452812886406661,
+        "mse": 0.9880310174947088,
+        "rmse": 0.9939974937064524,
+        "mae": 0.7721211816703175
+      },
+      "validation_metrics": {
+        "r2": 0.33325754379959727,
+        "rmse": 0.9605642914545781,
+        "mae": 0.7307642580972042
+      },
+      "best_k": 11
+    }
+  },
+  "metadata": {
+    "task": "exp",
+    "splitter": "random",
+    "split_seed": 2,
+    "n_train_deepchem": 3360,
+    "n_train_usable_labels": 3360,
+    "n_train_skipped_non_finite": 0,
+    "n_val_deepchem": 420,
+    "n_val_usable_labels": 420,
+    "n_val_skipped_non_finite": 0,
+    "n_test_deepchem": 420,
+    "n_test_usable_labels": 420,
+    "n_test_skipped_non_finite": 0
+  }
+}

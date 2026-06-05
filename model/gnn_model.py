@@ -7,11 +7,13 @@ class GINEEncoder(nn.Module):
     """GINE Encoder for graph representation learning."""
     
     def __init__(self, num_features: int, edge_features: int, hidden_dim: int = 64, 
-                 num_layers: int = 3, dropout: float = 0.5, epsilon: float = 0):
+                 num_layers: int = 3, dropout: float = 0.5, epsilon: float = 0,
+                 global_pooling: str | None = None):
         super(GINEEncoder, self).__init__()
         
         self.num_layers = num_layers
         self.dropout = dropout
+        self.global_pooling = global_pooling
         
         # Input projection
         self.node_encoder = nn.Linear(num_features, hidden_dim)
@@ -48,7 +50,12 @@ class GINEEncoder(nn.Module):
             x = F.dropout(x, p=self.dropout, training=self.training)
         
         # Global pooling
-        graph_embedding = global_mean_pool(x, batch)
+        if self.global_pooling == "add":
+            graph_embedding = global_add_pool(x, batch)
+        elif self.global_pooling in (None, "mean"):
+            graph_embedding = global_mean_pool(x, batch)
+        else:
+            raise ValueError(f"Unsupported global pooling type for GINE: {self.global_pooling}")
         
         return graph_embedding
 
@@ -56,11 +63,13 @@ class GATEncoder(nn.Module):
     """GAT Encoder for graph representation learning."""
     
     def __init__(self, num_features: int, edge_features: int, hidden_dim: int = 64, 
-                 num_layers: int = 3, dropout: float = 0.5):
+                 num_layers: int = 3, dropout: float = 0.5,
+                 global_pooling: str | None = None):
         super(GATEncoder, self).__init__()
         
         self.num_layers = num_layers
         self.dropout = dropout
+        self.global_pooling = global_pooling
         
         # Input projection
         self.node_encoder = nn.Linear(num_features, hidden_dim)
@@ -91,7 +100,12 @@ class GATEncoder(nn.Module):
             x = F.dropout(x, p=self.dropout, training=self.training)
         
         # Global pooling
-        graph_embedding = global_add_pool(x, batch)
+        if self.global_pooling == "mean":
+            graph_embedding = global_mean_pool(x, batch)
+        elif self.global_pooling in (None, "add"):
+            graph_embedding = global_add_pool(x, batch)
+        else:
+            raise ValueError(f"Unsupported global pooling type for GAT: {self.global_pooling}")
         
         return graph_embedding
 
@@ -167,7 +181,9 @@ class GNNModel(nn.Module):
     def __init__(self, num_features: int, edge_features: int, hidden_dim: int = 64, 
                  num_layers: int = 3, dropout: float = 0.5, epsilon: float = 0,
                  projection_hidden_dim: int = 2048, projection_output_dim: int = 256,
-                 projection_layers: int = 3, head_type: str = "dino", encoder: str = "GINE"):
+                 projection_bottleneck_dim: int = 256, projection_layers: int = 3,
+                 head_type: str = "dino", encoder: str = "GINE",
+                 global_pooling: str | None = None):
         super(GNNModel, self).__init__()
         
         # GINE encoder backbone
@@ -178,7 +194,8 @@ class GNNModel(nn.Module):
                 hidden_dim=hidden_dim,
                 num_layers=num_layers,
                 dropout=dropout,
-                epsilon=epsilon
+                epsilon=epsilon,
+                global_pooling=global_pooling,
             )
         elif encoder == "GAT":
             self.encoder = GATEncoder(
@@ -186,7 +203,8 @@ class GNNModel(nn.Module):
                 edge_features=edge_features,
                 hidden_dim=hidden_dim,
                 num_layers=num_layers,
-                dropout=dropout
+                dropout=dropout,
+                global_pooling=global_pooling,
             )
         else:
             raise ValueError(f"Unsupported encoder type: {encoder}")
@@ -197,7 +215,8 @@ class GNNModel(nn.Module):
                 input_dim=hidden_dim,
                 hidden_dim=projection_hidden_dim,
                 output_dim=projection_output_dim,
-                num_layers=projection_layers
+                num_layers=projection_layers,
+                bottleneck_dim=projection_bottleneck_dim,
             )
         elif head_type == "regression":
             # Regression head for downstream tasks
@@ -229,9 +248,11 @@ class GNNModel(nn.Module):
             epsilon=config.epsilon,
             projection_hidden_dim=config.projection_hidden_dim,
             projection_output_dim=config.projection_output_dim,
+            projection_bottleneck_dim=getattr(config, "projection_bottleneck_dim", 256),
             projection_layers=config.projection_layers,
             head_type=resolved_head_type,
-            encoder=config.encoder_type if hasattr(config, "encoder_type") else "GINE"
+            encoder=config.encoder_type if hasattr(config, "encoder_type") else "GINE",
+            global_pooling=getattr(config, "global_pooling", None),
         )
     
     def forward(self, x, edge_index, edge_attr, batch):

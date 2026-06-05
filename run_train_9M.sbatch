@@ -1,13 +1,13 @@
 #!/bin/bash
 
 #SBATCH -A uppmax2026-1-14
-#SBATCH -t 120:00:00
-#SBATCH -p haswell
+#SBATCH -t 6:00:00
+#SBATCH -p gpu
 #SBATCH -c 16
-#SBATCH --gpus=t4:1
-#SBATCH -J FUNCTIONAL_GROUP_MASKING_GINE_training
-#SBATCH -o FUNCTIONAL_GROUP_MASKING_GINE_training_%j.out
-#SBATCH -e FUNCTIONAL_GROUP_MASKING_GINE_training_%j.err
+#SBATCH --gpus=l40s:1
+#SBATCH -J RKHOP_128ED_800EP_GINE_training_%j
+#SBATCH -o logs/RKHOP_128ED_800EP_GINE_training_%j.out
+#SBATCH -e logs/RKHOP_128ED_800EP_GINE_training_%j.err
 
 set -euo pipefail
 

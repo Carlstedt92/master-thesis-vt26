@@ -1,0 +1,2833 @@
+{
+  "Model data": {
+    "name": "VAL_TESTING",
+    "seed": 1,
+    "head_type": "dino",
+    "training_time_seconds": 9738.143626,
+    "training_time_hours": 2.705039896111111,
+    "timestamp": "2026-05-06T09:25:15.103019"
+  },
+  "DINO_data": {
+    "data_path": "data/zinc/zinc_half_data",
+    "best_loss": 0.04134352277607842,
+    "best_epoch": 264,
+    "final_loss": 0.2072678901637477,
+    "total_epochs": 400,
+    "collapse_warning_epochs": [],
+    "collapse_warning_count": 0,
+    "best_val_loss": 0.03969298105364964,
+    "best_val_epoch": 262
+  },
+  "Online_eval_data": {
+    "total_evaluated_epochs": 400,
+    "top_k_retained": 5,
+    "fixed_k": 21,
+    "every_n_epochs": 1,
+    "top_eval_checkpoints": [
+      {
+        "epoch": 281,
+        "score": 0.925410148263466,
+        "ssl_train_loss": 0.7943303533384108,
+        "checkpoint_path": "./models/VAL_TESTING/checkpoints/checkpoint_online_eval_epoch_281.pth",
+        "metric_higher_is_better": false,
+        "metric_definition": "mean(validation RMSE across datasets)",
+        "datasets": [
+          "lipo"
+        ]
+      },
+      {
+        "epoch": 282,
+        "score": 0.9279880748772696,
+        "ssl_train_loss": 0.46832732527662746,
+        "checkpoint_path": "./models/VAL_TESTING/checkpoints/checkpoint_online_eval_epoch_282.pth",
+        "metric_higher_is_better": false,
+        "metric_definition": "mean(validation RMSE across datasets)",
+        "datasets": [
+          "lipo"
+        ]
+      },
+      {
+        "epoch": 321,
+        "score": 0.9361377978783311,
+        "ssl_train_loss": 0.19187501544099245,
+        "checkpoint_path": "./models/VAL_TESTING/checkpoints/checkpoint_online_eval_epoch_321.pth",
+        "metric_higher_is_better": false,
+        "metric_definition": "mean(validation RMSE across datasets)",
+        "datasets": [
+          "lipo"
+        ]
+      },
+      {
+        "epoch": 284,
+        "score": 0.938774428813181,
+        "ssl_train_loss": 0.3975598221223662,
+        "checkpoint_path": "./models/VAL_TESTING/checkpoints/checkpoint_online_eval_epoch_284.pth",
+        "metric_higher_is_better": false,
+        "metric_definition": "mean(validation RMSE across datasets)",
+        "datasets": [
+          "lipo"
+        ]
+      },
+      {
+        "epoch": 280,
+        "score": 0.9391435259115241,
+        "ssl_train_loss": 1.2760574415057442,
+        "checkpoint_path": "./models/VAL_TESTING/checkpoints/checkpoint_online_eval_epoch_280.pth",
+        "metric_higher_is_better": false,
+        "metric_definition": "mean(validation RMSE across datasets)",
+        "datasets": [
+          "lipo"
+        ]
+      }
+    ],
+    "best_epoch": 281,
+    "best_aggregate_primary_score": 0.925410148263466,
+    "best_aggregate_primary_score_higher_is_better": false
+  },
+  "KNN_eval_LIPO_seed0": {
+    "dataset": "LIPO",
+    "data_source": "deepchem.molnet.load_lipo",
+    "splitter": "random",
+    "split_seed": 0,
+    "task": "exp",
+    "k_values": [
+      3,
+      5,
+      11,
+      21,
+      31,
+      41,
+      51
+    ],
+    "evaluation_primary_metric": "rmse",
+    "fingerprint": {
+      "type": "Morgan",
+      "radius": 2,
+      "nbits": 2048
+    },
+    "embeddings_model": "VAL_TESTING",
+    "checkpoint_path": "models/VAL_TESTING/checkpoints/checkpoint_epoch_200.pth",
+    "embedding_featurization": {
+      "explicit_hydrogens": true,
+      "encode_hydrogen_count": false,
+      "num_features": 24
+    },
+    "embeddings": {
+      "best_k": 5,
+      "validation_metrics": {
+        "r2": 0.4197,
+        "rmse": 0.9039,
+        "mae": 0.6697
+      },
+      "test_metrics": {
+        "r2": 0.4695,
+        "mse": 0.7693,
+        "rmse": 0.8771,
+        "mae": 0.6584
+      },
+      "n_train": 3360,
+      "n_val": 420,
+      "n_test": 420,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "fingerprints": {
+      "best_k": 11,
+      "validation_metrics": {
+        "r2": 0.3481,
+        "rmse": 0.958,
+        "mae": 0.7286
+      },
+      "test_metrics": {
+        "r2": 0.3477,
+        "mse": 0.9461,
+        "rmse": 0.9727,
+        "mae": 0.7436
+      },
+      "n_train": 3360,
+      "n_val": 420,
+      "n_test": 420,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "plot_path": "models/VAL_TESTING/knn_lipo_embeddings_vs_fingerprints_seed0.png",
+    "timestamp": "2026-05-06T12:32:54.365063"
+  },
+  "KNN_eval_LIPO_seed1": {
+    "dataset": "LIPO",
+    "data_source": "deepchem.molnet.load_lipo",
+    "splitter": "random",
+    "split_seed": 1,
+    "task": "exp",
+    "k_values": [
+      3,
+      5,
+      11,
+      21,
+      31,
+      41,
+      51
+    ],
+    "evaluation_primary_metric": "rmse",
+    "fingerprint": {
+      "type": "Morgan",
+      "radius": 2,
+      "nbits": 2048
+    },
+    "embeddings_model": "VAL_TESTING",
+    "checkpoint_path": "models/VAL_TESTING/checkpoints/checkpoint_epoch_200.pth",
+    "embedding_featurization": {
+      "explicit_hydrogens": true,
+      "encode_hydrogen_count": false,
+      "num_features": 24
+    },
+    "embeddings": {
+      "best_k": 3,
+      "validation_metrics": {
+        "r2": 0.4018,
+        "rmse": 0.9034,
+        "mae": 0.6653
+      },
+      "test_metrics": {
+        "r2": 0.2986,
+        "mse": 1.1155,
+        "rmse": 1.0562,
+        "mae": 0.762
+      },
+      "n_train": 3360,
+      "n_val": 420,
+      "n_test": 420,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "fingerprints": {
+      "best_k": 11,
+      "validation_metrics": {
+        "r2": 0.3098,
+        "rmse": 0.9704,
+        "mae": 0.7306
+      },
+      "test_metrics": {
+        "r2": 0.2474,
+        "mse": 1.197,
+        "rmse": 1.0941,
+        "mae": 0.8106
+      },
+      "n_train": 3360,
+      "n_val": 420,
+      "n_test": 420,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "plot_path": "models/VAL_TESTING/knn_lipo_embeddings_vs_fingerprints_seed1.png",
+    "timestamp": "2026-05-06T12:33:40.099823"
+  },
+  "KNN_eval_LIPO_seed2": {
+    "dataset": "LIPO",
+    "data_source": "deepchem.molnet.load_lipo",
+    "splitter": "random",
+    "split_seed": 2,
+    "task": "exp",
+    "k_values": [
+      3,
+      5,
+      11,
+      21,
+      31,
+      41,
+      51
+    ],
+    "evaluation_primary_metric": "rmse",
+    "fingerprint": {
+      "type": "Morgan",
+      "radius": 2,
+      "nbits": 2048
+    },
+    "embeddings_model": "VAL_TESTING",
+    "checkpoint_path": "models/VAL_TESTING/checkpoints/checkpoint_epoch_200.pth",
+    "embedding_featurization": {
+      "explicit_hydrogens": true,
+      "encode_hydrogen_count": false,
+      "num_features": 24
+    },
+    "embeddings": {
+      "best_k": 11,
+      "validation_metrics": {
+        "r2": 0.4436,
+        "rmse": 0.8775,
+        "mae": 0.6658
+      },
+      "test_metrics": {
+        "r2": 0.4347,
+        "mse": 0.8531,
+        "rmse": 0.9236,
+        "mae": 0.6973
+      },
+      "n_train": 3360,
+      "n_val": 420,
+      "n_test": 420,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "fingerprints": {
+      "best_k": 11,
+      "validation_metrics": {
+        "r2": 0.3333,
+        "rmse": 0.9606,
+        "mae": 0.7308
+      },
+      "test_metrics": {
+        "r2": 0.3453,
+        "mse": 0.988,
+        "rmse": 0.994,
+        "mae": 0.7721
+      },
+      "n_train": 3360,
+      "n_val": 420,
+      "n_test": 420,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "plot_path": "models/VAL_TESTING/knn_lipo_embeddings_vs_fingerprints_seed2.png",
+    "timestamp": "2026-05-06T12:34:22.492435"
+  },
+  "KNN_eval_LIPO_seed3": {
+    "dataset": "LIPO",
+    "data_source": "deepchem.molnet.load_lipo",
+    "splitter": "random",
+    "split_seed": 3,
+    "task": "exp",
+    "k_values": [
+      3,
+      5,
+      11,
+      21,
+      31,
+      41,
+      51
+    ],
+    "evaluation_primary_metric": "rmse",
+    "fingerprint": {
+      "type": "Morgan",
+      "radius": 2,
+      "nbits": 2048
+    },
+    "embeddings_model": "VAL_TESTING",
+    "checkpoint_path": "models/VAL_TESTING/checkpoints/checkpoint_epoch_200.pth",
+    "embedding_featurization": {
+      "explicit_hydrogens": true,
+      "encode_hydrogen_count": false,
+      "num_features": 24
+    },
+    "embeddings": {
+      "best_k": 5,
+      "validation_metrics": {
+        "r2": 0.4083,
+        "rmse": 0.9296,
+        "mae": 0.6756
+      },
+      "test_metrics": {
+        "r2": 0.3397,
+        "mse": 1.0087,
+        "rmse": 1.0043,
+        "mae": 0.7202
+      },
+      "n_train": 3360,
+      "n_val": 420,
+      "n_test": 420,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "fingerprints": {
+      "best_k": 5,
+      "validation_metrics": {
+        "r2": 0.3551,
+        "rmse": 0.9704,
+        "mae": 0.7319
+      },
+      "test_metrics": {
+        "r2": 0.3244,
+        "mse": 1.032,
+        "rmse": 1.0159,
+        "mae": 0.7544
+      },
+      "n_train": 3360,
+      "n_val": 420,
+      "n_test": 420,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "plot_path": "models/VAL_TESTING/knn_lipo_embeddings_vs_fingerprints_seed3.png",
+    "timestamp": "2026-05-06T12:35:05.399032"
+  },
+  "KNN_eval_LIPO_seed4": {
+    "dataset": "LIPO",
+    "data_source": "deepchem.molnet.load_lipo",
+    "splitter": "random",
+    "split_seed": 4,
+    "task": "exp",
+    "k_values": [
+      3,
+      5,
+      11,
+      21,
+      31,
+      41,
+      51
+    ],
+    "evaluation_primary_metric": "rmse",
+    "fingerprint": {
+      "type": "Morgan",
+      "radius": 2,
+      "nbits": 2048
+    },
+    "embeddings_model": "VAL_TESTING",
+    "checkpoint_path": "models/VAL_TESTING/checkpoints/checkpoint_epoch_200.pth",
+    "embedding_featurization": {
+      "explicit_hydrogens": true,
+      "encode_hydrogen_count": false,
+      "num_features": 24
+    },
+    "embeddings": {
+      "best_k": 11,
+      "validation_metrics": {
+        "r2": 0.3629,
+        "rmse": 0.9211,
+        "mae": 0.6859
+      },
+      "test_metrics": {
+        "r2": 0.4164,
+        "mse": 0.84,
+        "rmse": 0.9165,
+        "mae": 0.6869
+      },
+      "n_train": 3360,
+      "n_val": 420,
+      "n_test": 420,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "fingerprints": {
+      "best_k": 5,
+      "validation_metrics": {
+        "r2": 0.3312,
+        "rmse": 0.9438,
+        "mae": 0.7024
+      },
+      "test_metrics": {
+        "r2": 0.2722,
+        "mse": 1.0476,
+        "rmse": 1.0235,
+        "mae": 0.7565
+      },
+      "n_train": 3360,
+      "n_val": 420,
+      "n_test": 420,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "plot_path": "models/VAL_TESTING/knn_lipo_embeddings_vs_fingerprints_seed4.png",
+    "timestamp": "2026-05-06T12:35:47.934632"
+  },
+  "KNN_eval_Tox21_seed0": {
+    "dataset": "Tox21",
+    "data_source": "deepchem.molnet.load_tox21",
+    "splitter": "random",
+    "split_seed": 0,
+    "n_tasks_total": 12,
+    "n_tasks_evaluated": 12,
+    "evaluation_primary_metric": "roc_auc_mean_tasks",
+    "k_values": [
+      3,
+      5,
+      11,
+      21,
+      31,
+      41,
+      51
+    ],
+    "fingerprint": {
+      "type": "Morgan",
+      "radius": 2,
+      "nbits": 2048
+    },
+    "embeddings_model": "VAL_TESTING",
+    "checkpoint_path": "models/VAL_TESTING/checkpoints/checkpoint_epoch_200.pth",
+    "embedding_featurization": {
+      "explicit_hydrogens": true,
+      "encode_hydrogen_count": false,
+      "num_features": 24
+    },
+    "aggregate": {
+      "embeddings": {
+        "validation_metrics": {
+          "roc_auc_mean_tasks": 0.7442,
+          "roc_auc_std_tasks": 0.0759
+        },
+        "test_metrics": {
+          "roc_auc_mean_tasks": 0.7329,
+          "roc_auc_std_tasks": 0.0833
+        }
+      },
+      "fingerprints": {
+        "validation_metrics": {
+          "roc_auc_mean_tasks": 0.7268,
+          "roc_auc_std_tasks": 0.0766
+        },
+        "test_metrics": {
+          "roc_auc_mean_tasks": 0.7348,
+          "roc_auc_std_tasks": 0.0689
+        }
+      }
+    },
+    "per_task": [
+      {
+        "task": "NR-AR",
+        "task_index": 0,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.8215311004784689,
+            "f1": 0.4864864864864865
+          },
+          "test_metrics": {
+            "roc_auc": 0.7290957177016159,
+            "f1": 0.4482758620689655,
+            "balanced_accuracy": 0.6703137453807695
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 5,
+          "validation_metrics": {
+            "roc_auc": 0.648444976076555,
+            "f1": 0.26666666666666666
+          },
+          "test_metrics": {
+            "roc_auc": 0.7045866241576698,
+            "f1": 0.4230769230769231,
+            "balanced_accuracy": 0.6459676835011956
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-AR-LBD",
+        "task_index": 1,
+        "embeddings": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.8110255928915586,
+            "f1": 0.5161290322580645
+          },
+          "test_metrics": {
+            "roc_auc": 0.8394512771996215,
+            "f1": 0.6086956521739131,
+            "balanced_accuracy": 0.7473509933774835
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.8281083786997059,
+            "f1": 0.25
+          },
+          "test_metrics": {
+            "roc_auc": 0.8229895931882687,
+            "f1": 0.0,
+            "balanced_accuracy": 0.49933774834437084
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-AhR",
+        "task_index": 2,
+        "embeddings": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.8456314528500268,
+            "f1": 0.13043478260869565
+          },
+          "test_metrics": {
+            "roc_auc": 0.8211023091184897,
+            "f1": 0.12631578947368421,
+            "balanced_accuracy": 0.5324287881341648
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 11,
+          "validation_metrics": {
+            "roc_auc": 0.795775376182843,
+            "f1": 0.1935483870967742
+          },
+          "test_metrics": {
+            "roc_auc": 0.8247682454070453,
+            "f1": 0.20202020202020202,
+            "balanced_accuracy": 0.5559581998988707
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-Aromatase",
+        "task_index": 3,
+        "embeddings": {
+          "best_k": 21,
+          "validation_metrics": {
+            "roc_auc": 0.6878731836195509,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.6362944714151149,
+            "f1": 0.0,
+            "balanced_accuracy": 0.49932975871313673
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.7554293262879788,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7008006666183608,
+            "f1": 0.14285714285714285,
+            "balanced_accuracy": 0.539200057966814
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-ER",
+        "task_index": 4,
+        "embeddings": {
+          "best_k": 11,
+          "validation_metrics": {
+            "roc_auc": 0.6743907148809887,
+            "f1": 0.2727272727272727
+          },
+          "test_metrics": {
+            "roc_auc": 0.7141934897254046,
+            "f1": 0.2777777777777778,
+            "balanced_accuracy": 0.5855155482815058
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.6315425737341708,
+            "f1": 0.05333333333333334
+          },
+          "test_metrics": {
+            "roc_auc": 0.6418621567557737,
+            "f1": 0.0,
+            "balanced_accuracy": 0.49645390070921985
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-ER-LBD",
+        "task_index": 5,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.6924457328225835,
+            "f1": 0.2222222222222222
+          },
+          "test_metrics": {
+            "roc_auc": 0.8322020202020203,
+            "f1": 0.16666666666666666,
+            "balanced_accuracy": 0.5454545454545454
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.6809883700866205,
+            "f1": 0.05
+          },
+          "test_metrics": {
+            "roc_auc": 0.8660808080808081,
+            "f1": 0.0,
+            "balanced_accuracy": 0.49866666666666665
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-PPAR-gamma",
+        "task_index": 6,
+        "embeddings": {
+          "best_k": 11,
+          "validation_metrics": {
+            "roc_auc": 0.634359155759934,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.6334965953888425,
+            "f1": 0.0,
+            "balanced_accuracy": 0.4980289093298292
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.8840349015446292,
+            "f1": 0.16666666666666666
+          },
+          "test_metrics": {
+            "roc_auc": 0.7013498984589656,
+            "f1": 0.08695652173913043,
+            "balanced_accuracy": 0.5227272727272727
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-ARE",
+        "task_index": 7,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.6837136717151041,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7004682143752962,
+            "f1": 0.0,
+            "balanced_accuracy": 0.4985228951255539
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.6728663528448628,
+            "f1": 0.04597701149425287
+          },
+          "test_metrics": {
+            "roc_auc": 0.7274462807614057,
+            "f1": 0.08620689655172414,
+            "balanced_accuracy": 0.5198921434742622
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-ATAD5",
+        "task_index": 8,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.8029903254177662,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7797937356760887,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.6818931398416885,
+            "f1": 0.08
+          },
+          "test_metrics": {
+            "roc_auc": 0.7228227654698243,
+            "f1": 0.0,
+            "balanced_accuracy": 0.49933155080213903
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-HSE",
+        "task_index": 9,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.6519180539383831,
+            "f1": 0.045454545454545456
+          },
+          "test_metrics": {
+            "roc_auc": 0.5658647375504711,
+            "f1": 0.0,
+            "balanced_accuracy": 0.4993270524899058
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.6850866979261729,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.6283815612382235,
+            "f1": 0.0,
+            "balanced_accuracy": 0.49730820995962316
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-MMP",
+        "task_index": 10,
+        "embeddings": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.8308380454046755,
+            "f1": 0.23300970873786409
+          },
+          "test_metrics": {
+            "roc_auc": 0.788072355622659,
+            "f1": 0.23333333333333334,
+            "balanced_accuracy": 0.5656412415435093
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.7828846316144823,
+            "f1": 0.0898876404494382
+          },
+          "test_metrics": {
+            "roc_auc": 0.7550448593246422,
+            "f1": 0.01904761904761905,
+            "balanced_accuracy": 0.5027510815597689
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-p53",
+        "task_index": 11,
+        "embeddings": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.7939716312056737,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.754652605459057,
+            "f1": 0.05,
+            "balanced_accuracy": 0.5128205128205128
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.6750221631205673,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7213950923628343,
+            "f1": 0.04878048780487805,
+            "balanced_accuracy": 0.5121484698097601
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      }
+    ],
+    "skipped_tasks": [],
+    "plot_path": "models/VAL_TESTING/knn_tox21_mean_rocauc_embeddings_vs_fingerprints_seed0.png",
+    "timestamp": "2026-05-06T12:37:27.848687"
+  },
+  "KNN_eval_Tox21_seed1": {
+    "dataset": "Tox21",
+    "data_source": "deepchem.molnet.load_tox21",
+    "splitter": "random",
+    "split_seed": 1,
+    "n_tasks_total": 12,
+    "n_tasks_evaluated": 12,
+    "evaluation_primary_metric": "roc_auc_mean_tasks",
+    "k_values": [
+      3,
+      5,
+      11,
+      21,
+      31,
+      41,
+      51
+    ],
+    "fingerprint": {
+      "type": "Morgan",
+      "radius": 2,
+      "nbits": 2048
+    },
+    "embeddings_model": "VAL_TESTING",
+    "checkpoint_path": "models/VAL_TESTING/checkpoints/checkpoint_epoch_200.pth",
+    "embedding_featurization": {
+      "explicit_hydrogens": true,
+      "encode_hydrogen_count": false,
+      "num_features": 24
+    },
+    "aggregate": {
+      "embeddings": {
+        "validation_metrics": {
+          "roc_auc_mean_tasks": 0.7245,
+          "roc_auc_std_tasks": 0.0617
+        },
+        "test_metrics": {
+          "roc_auc_mean_tasks": 0.7545,
+          "roc_auc_std_tasks": 0.0742
+        }
+      },
+      "fingerprints": {
+        "validation_metrics": {
+          "roc_auc_mean_tasks": 0.7113,
+          "roc_auc_std_tasks": 0.059
+        },
+        "test_metrics": {
+          "roc_auc_mean_tasks": 0.733,
+          "roc_auc_std_tasks": 0.0568
+        }
+      }
+    },
+    "per_task": [
+      {
+        "task": "NR-AR",
+        "task_index": 0,
+        "embeddings": {
+          "best_k": 21,
+          "validation_metrics": {
+            "roc_auc": 0.7223229991204925,
+            "f1": 0.3125
+          },
+          "test_metrics": {
+            "roc_auc": 0.7802424242424243,
+            "f1": 0.5490196078431373,
+            "balanced_accuracy": 0.7094545454545454
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.6426451187335093,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7608080808080808,
+            "f1": 0.0,
+            "balanced_accuracy": 0.498
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-AR-LBD",
+        "task_index": 1,
+        "embeddings": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.7475010864841374,
+            "f1": 0.36363636363636365
+          },
+          "test_metrics": {
+            "roc_auc": 0.8098273572377157,
+            "f1": 0.4,
+            "balanced_accuracy": 0.6460159362549801
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.746458061712299,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7930500221336875,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-AhR",
+        "task_index": 2,
+        "embeddings": {
+          "best_k": 21,
+          "validation_metrics": {
+            "roc_auc": 0.8115790012279984,
+            "f1": 0.16326530612244897
+          },
+          "test_metrics": {
+            "roc_auc": 0.8350213641398956,
+            "f1": 0.1411764705882353,
+            "balanced_accuracy": 0.5366355435986707
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 11,
+          "validation_metrics": {
+            "roc_auc": 0.77726326920453,
+            "f1": 0.10309278350515463
+          },
+          "test_metrics": {
+            "roc_auc": 0.7533628738724482,
+            "f1": 0.07792207792207792,
+            "balanced_accuracy": 0.5190200189903466
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-Aromatase",
+        "task_index": 3,
+        "embeddings": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.6399063899063899,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.8260995580030432,
+            "f1": 0.05263157894736842,
+            "balanced_accuracy": 0.5135135135135135
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.711462148962149,
+            "f1": 0.1875
+          },
+          "test_metrics": {
+            "roc_auc": 0.7428447213970002,
+            "f1": 0.05128205128205128,
+            "balanced_accuracy": 0.5128432722266503
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-ER",
+        "task_index": 4,
+        "embeddings": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.7149526613985389,
+            "f1": 0.14285714285714285
+          },
+          "test_metrics": {
+            "roc_auc": 0.7191415989379271,
+            "f1": 0.2616822429906542,
+            "balanced_accuracy": 0.575769841012855
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.6220273594751751,
+            "f1": 0.02564102564102564
+          },
+          "test_metrics": {
+            "roc_auc": 0.6636094291357706,
+            "f1": 0.021739130434782608,
+            "balanced_accuracy": 0.5041770553378881
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-ER-LBD",
+        "task_index": 5,
+        "embeddings": {
+          "best_k": 11,
+          "validation_metrics": {
+            "roc_auc": 0.754874504623514,
+            "f1": 0.30303030303030304
+          },
+          "test_metrics": {
+            "roc_auc": 0.7870121130551816,
+            "f1": 0.34615384615384615,
+            "balanced_accuracy": 0.6104811574697174
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.7836988110964334,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7909152086137281,
+            "f1": 0.04878048780487805,
+            "balanced_accuracy": 0.5125
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-PPAR-gamma",
+        "task_index": 6,
+        "embeddings": {
+          "best_k": 21,
+          "validation_metrics": {
+            "roc_auc": 0.6463300168950629,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7257105703139514,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.6861272761404167,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7536689578302063,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-ARE",
+        "task_index": 7,
+        "embeddings": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.7141868512110726,
+            "f1": 0.06382978723404255
+          },
+          "test_metrics": {
+            "roc_auc": 0.6511478044638526,
+            "f1": 0.04040404040404041,
+            "balanced_accuracy": 0.5096888646288209
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.7424845978563591,
+            "f1": 0.10989010989010989
+          },
+          "test_metrics": {
+            "roc_auc": 0.6942473313925279,
+            "f1": 0.06060606060606061,
+            "balanced_accuracy": 0.515625
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-ATAD5",
+        "task_index": 8,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.8203412073490813,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7735572374645222,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.7692257217847768,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7634342478713338,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-HSE",
+        "task_index": 9,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.6613541666666667,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.571388202048746,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.6021666666666666,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.6070823030731191,
+            "f1": 0.0,
+            "balanced_accuracy": 0.4993288590604027
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-MMP",
+        "task_index": 10,
+        "embeddings": {
+          "best_k": 21,
+          "validation_metrics": {
+            "roc_auc": 0.8011239563262685,
+            "f1": 0.2956521739130435
+          },
+          "test_metrics": {
+            "roc_auc": 0.809011290492772,
+            "f1": 0.2692307692307692,
+            "balanced_accuracy": 0.5800094966761633
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.748330122029544,
+            "f1": 0.08333333333333333
+          },
+          "test_metrics": {
+            "roc_auc": 0.7948190355597763,
+            "f1": 0.07142857142857142,
+            "balanced_accuracy": 0.5185185185185185
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-p53",
+        "task_index": 11,
+        "embeddings": {
+          "best_k": 21,
+          "validation_metrics": {
+            "roc_auc": 0.6596698113207548,
+            "f1": 0.04878048780487805
+          },
+          "test_metrics": {
+            "roc_auc": 0.7660543977393147,
+            "f1": 0.05128205128205128,
+            "balanced_accuracy": 0.5131578947368421
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.7042452830188677,
+            "f1": 0.04878048780487805
+          },
+          "test_metrics": {
+            "roc_auc": 0.6776580713528788,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      }
+    ],
+    "skipped_tasks": [],
+    "plot_path": "models/VAL_TESTING/knn_tox21_mean_rocauc_embeddings_vs_fingerprints_seed1.png",
+    "timestamp": "2026-05-06T12:53:14.739696"
+  },
+  "KNN_eval_Tox21_seed2": {
+    "dataset": "Tox21",
+    "data_source": "deepchem.molnet.load_tox21",
+    "splitter": "random",
+    "split_seed": 2,
+    "n_tasks_total": 12,
+    "n_tasks_evaluated": 12,
+    "evaluation_primary_metric": "roc_auc_mean_tasks",
+    "k_values": [
+      3,
+      5,
+      11,
+      21,
+      31,
+      41,
+      51
+    ],
+    "fingerprint": {
+      "type": "Morgan",
+      "radius": 2,
+      "nbits": 2048
+    },
+    "embeddings_model": "VAL_TESTING",
+    "checkpoint_path": "models/VAL_TESTING/checkpoints/checkpoint_epoch_200.pth",
+    "embedding_featurization": {
+      "explicit_hydrogens": true,
+      "encode_hydrogen_count": false,
+      "num_features": 24
+    },
+    "aggregate": {
+      "embeddings": {
+        "validation_metrics": {
+          "roc_auc_mean_tasks": 0.747,
+          "roc_auc_std_tasks": 0.0545
+        },
+        "test_metrics": {
+          "roc_auc_mean_tasks": 0.7599,
+          "roc_auc_std_tasks": 0.0968
+        }
+      },
+      "fingerprints": {
+        "validation_metrics": {
+          "roc_auc_mean_tasks": 0.7194,
+          "roc_auc_std_tasks": 0.0596
+        },
+        "test_metrics": {
+          "roc_auc_mean_tasks": 0.7283,
+          "roc_auc_std_tasks": 0.0909
+        }
+      }
+    },
+    "per_task": [
+      {
+        "task": "NR-AR",
+        "task_index": 0,
+        "embeddings": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.7994902293967716,
+            "f1": 0.4444444444444444
+          },
+          "test_metrics": {
+            "roc_auc": 0.824864525249352,
+            "f1": 0.576271186440678,
+            "balanced_accuracy": 0.7446595460614152
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 11,
+          "validation_metrics": {
+            "roc_auc": 0.732876158109803,
+            "f1": 0.32558139534883723
+          },
+          "test_metrics": {
+            "roc_auc": 0.7660409958375874,
+            "f1": 0.4583333333333333,
+            "balanced_accuracy": 0.6597620356553836
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-AR-LBD",
+        "task_index": 1,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.8335911095835482,
+            "f1": 0.3225806451612903
+          },
+          "test_metrics": {
+            "roc_auc": 0.9396323058629836,
+            "f1": 0.5777777777777777,
+            "balanced_accuracy": 0.7221485411140584
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.8671020221114738,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.921682063477545,
+            "f1": 0.12903225806451613,
+            "balanced_accuracy": 0.5344827586206896
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-AhR",
+        "task_index": 2,
+        "embeddings": {
+          "best_k": 21,
+          "validation_metrics": {
+            "roc_auc": 0.8146869983948635,
+            "f1": 0.16470588235294117
+          },
+          "test_metrics": {
+            "roc_auc": 0.8580206540447506,
+            "f1": 0.2549019607843137,
+            "balanced_accuracy": 0.5740275387263339
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.751645264847512,
+            "f1": 0.027777777777777776
+          },
+          "test_metrics": {
+            "roc_auc": 0.8099655765920826,
+            "f1": 0.047058823529411764,
+            "balanced_accuracy": 0.5120481927710844
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-Aromatase",
+        "task_index": 3,
+        "embeddings": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.8036301201864116,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.6894141145139814,
+            "f1": 0.06060606060606061,
+            "balanced_accuracy": 0.515625
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.6397841550159431,
+            "f1": 0.06896551724137931
+          },
+          "test_metrics": {
+            "roc_auc": 0.7195198069241011,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-ER",
+        "task_index": 4,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.6954855537720707,
+            "f1": 0.20253164556962025
+          },
+          "test_metrics": {
+            "roc_auc": 0.677607573149742,
+            "f1": 0.1836734693877551,
+            "balanced_accuracy": 0.5499311531841652
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.6679373996789728,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.607039586919105,
+            "f1": 0.06896551724137931,
+            "balanced_accuracy": 0.5173580034423407
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-ER-LBD",
+        "task_index": 5,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.7369743567716163,
+            "f1": 0.11428571428571428
+          },
+          "test_metrics": {
+            "roc_auc": 0.7829560585885486,
+            "f1": 0.2222222222222222,
+            "balanced_accuracy": 0.5625
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.6957604913878269,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7611934087882823,
+            "f1": 0.11428571428571428,
+            "balanced_accuracy": 0.5305842210386151
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-PPAR-gamma",
+        "task_index": 6,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.7191681210005817,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.5965289510059899,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.7759962187318207,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.5794808785132852,
+            "f1": 0.1111111111111111,
+            "balanced_accuracy": 0.5294117647058824
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-ARE",
+        "task_index": 7,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.726138985005767,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.6986384310945714,
+            "f1": 0.019801980198019802,
+            "balanced_accuracy": 0.5043195108984583
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.6710640138408305,
+            "f1": 0.05504587155963303
+          },
+          "test_metrics": {
+            "roc_auc": 0.6661867210112824,
+            "f1": 0.018867924528301886,
+            "balanced_accuracy": 0.5006645401382244
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-ATAD5",
+        "task_index": 8,
+        "embeddings": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.6922603258810156,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.8493313335833022,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 21,
+          "validation_metrics": {
+            "roc_auc": 0.729869268662372,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7900887389076365,
+            "f1": 0.0,
+            "balanced_accuracy": 0.49934383202099736
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-HSE",
+        "task_index": 9,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.6455833333333334,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.640077888061759,
+            "f1": 0.05,
+            "balanced_accuracy": 0.5128205128205128
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.6552291666666666,
+            "f1": 0.05405405405405406
+          },
+          "test_metrics": {
+            "roc_auc": 0.6675627240143369,
+            "f1": 0.0,
+            "balanced_accuracy": 0.4993279569892473
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-MMP",
+        "task_index": 10,
+        "embeddings": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.7618802378388502,
+            "f1": 0.13725490196078433
+          },
+          "test_metrics": {
+            "roc_auc": 0.794736676524256,
+            "f1": 0.18867924528301888,
+            "balanced_accuracy": 0.5514534700811679
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.7120651715904303,
+            "f1": 0.061855670103092786
+          },
+          "test_metrics": {
+            "roc_auc": 0.7725256402189643,
+            "f1": 0.021052631578947368,
+            "balanced_accuracy": 0.5039876046058013
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-p53",
+        "task_index": 11,
+        "embeddings": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.7349001020374577,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.766435319066898,
+            "f1": 0.0,
+            "balanced_accuracy": 0.4993252361673414
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.7337809815345117,
+            "f1": 0.047619047619047616
+          },
+          "test_metrics": {
+            "roc_auc": 0.6789088104877579,
+            "f1": 0.045454545454545456,
+            "balanced_accuracy": 0.5112299980721033
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      }
+    ],
+    "skipped_tasks": [],
+    "plot_path": "models/VAL_TESTING/knn_tox21_mean_rocauc_embeddings_vs_fingerprints_seed2.png",
+    "timestamp": "2026-05-06T13:08:51.842118"
+  },
+  "KNN_eval_Tox21_seed3": {
+    "dataset": "Tox21",
+    "data_source": "deepchem.molnet.load_tox21",
+    "splitter": "random",
+    "split_seed": 3,
+    "n_tasks_total": 12,
+    "n_tasks_evaluated": 12,
+    "evaluation_primary_metric": "roc_auc_mean_tasks",
+    "k_values": [
+      3,
+      5,
+      11,
+      21,
+      31,
+      41,
+      51
+    ],
+    "fingerprint": {
+      "type": "Morgan",
+      "radius": 2,
+      "nbits": 2048
+    },
+    "embeddings_model": "VAL_TESTING",
+    "checkpoint_path": "models/VAL_TESTING/checkpoints/checkpoint_epoch_200.pth",
+    "embedding_featurization": {
+      "explicit_hydrogens": true,
+      "encode_hydrogen_count": false,
+      "num_features": 24
+    },
+    "aggregate": {
+      "embeddings": {
+        "validation_metrics": {
+          "roc_auc_mean_tasks": 0.7669,
+          "roc_auc_std_tasks": 0.0592
+        },
+        "test_metrics": {
+          "roc_auc_mean_tasks": 0.7255,
+          "roc_auc_std_tasks": 0.0512
+        }
+      },
+      "fingerprints": {
+        "validation_metrics": {
+          "roc_auc_mean_tasks": 0.7405,
+          "roc_auc_std_tasks": 0.0618
+        },
+        "test_metrics": {
+          "roc_auc_mean_tasks": 0.7338,
+          "roc_auc_std_tasks": 0.0756
+        }
+      }
+    },
+    "per_task": [
+      {
+        "task": "NR-AR",
+        "task_index": 0,
+        "embeddings": {
+          "best_k": 11,
+          "validation_metrics": {
+            "roc_auc": 0.7145725760183591,
+            "f1": 0.44
+          },
+          "test_metrics": {
+            "roc_auc": 0.7090101010101011,
+            "f1": 0.2916666666666667,
+            "balanced_accuracy": 0.6007272727272727
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 11,
+          "validation_metrics": {
+            "roc_auc": 0.7139797284375597,
+            "f1": 0.3181818181818182
+          },
+          "test_metrics": {
+            "roc_auc": 0.7385252525252525,
+            "f1": 0.45454545454545453,
+            "balanced_accuracy": 0.6508484848484849
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-AR-LBD",
+        "task_index": 1,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.8712846505224955,
+            "f1": 0.3125
+          },
+          "test_metrics": {
+            "roc_auc": 0.804485488126649,
+            "f1": 0.4117647058823529,
+            "balanced_accuracy": 0.6386807387862796
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.8267317439459357,
+            "f1": 0.09090909090909091
+          },
+          "test_metrics": {
+            "roc_auc": 0.887071240105541,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-AhR",
+        "task_index": 2,
+        "embeddings": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.8369425087108014,
+            "f1": 0.17204301075268819
+          },
+          "test_metrics": {
+            "roc_auc": 0.7829442407871889,
+            "f1": 0.07058823529411765,
+            "balanced_accuracy": 0.5142099170364653
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.8091986062717769,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7740304842755162,
+            "f1": 0.02702702702702703,
+            "balanced_accuracy": 0.5068493150684932
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-Aromatase",
+        "task_index": 3,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.7860416666666667,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.756619068868065,
+            "f1": 0.05405405405405406,
+            "balanced_accuracy": 0.5138888888888888
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.7122291666666666,
+            "f1": 0.06060606060606061
+          },
+          "test_metrics": {
+            "roc_auc": 0.7066785661163172,
+            "f1": 0.14285714285714285,
+            "balanced_accuracy": 0.5396586345381525
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-ER",
+        "task_index": 4,
+        "embeddings": {
+          "best_k": 11,
+          "validation_metrics": {
+            "roc_auc": 0.7054828757088439,
+            "f1": 0.2653061224489796
+          },
+          "test_metrics": {
+            "roc_auc": 0.6655482815057283,
+            "f1": 0.1941747572815534,
+            "balanced_accuracy": 0.5534642662302236
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 5,
+          "validation_metrics": {
+            "roc_auc": 0.6386145440129617,
+            "f1": 0.2727272727272727
+          },
+          "test_metrics": {
+            "roc_auc": 0.6567739589016185,
+            "f1": 0.2803738317757009,
+            "balanced_accuracy": 0.5862247681396617
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-ER-LBD",
+        "task_index": 5,
+        "embeddings": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.8125582536178562,
+            "f1": 0.06896551724137931
+          },
+          "test_metrics": {
+            "roc_auc": 0.7346732215153269,
+            "f1": 0.13043478260869565,
+            "balanced_accuracy": 0.5350395218816272
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.8433161638459652,
+            "f1": 0.07142857142857142
+          },
+          "test_metrics": {
+            "roc_auc": 0.7526829895250948,
+            "f1": 0.044444444444444446,
+            "balanced_accuracy": 0.5105552342394447
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-PPAR-gamma",
+        "task_index": 6,
+        "embeddings": {
+          "best_k": 5,
+          "validation_metrics": {
+            "roc_auc": 0.7001488095238095,
+            "f1": 0.10526315789473684
+          },
+          "test_metrics": {
+            "roc_auc": 0.6365409622886866,
+            "f1": 0.0,
+            "balanced_accuracy": 0.4986996098829649
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.6900111607142857,
+            "f1": 0.13333333333333333
+          },
+          "test_metrics": {
+            "roc_auc": 0.5988296488946684,
+            "f1": 0.13333333333333333,
+            "balanced_accuracy": 0.5357142857142857
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-ARE",
+        "task_index": 7,
+        "embeddings": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.6870548433048433,
+            "f1": 0.06896551724137931
+          },
+          "test_metrics": {
+            "roc_auc": 0.673274115630357,
+            "f1": 0.04081632653061224,
+            "balanced_accuracy": 0.5085787751285648
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.68809650997151,
+            "f1": 0.04878048780487805
+          },
+          "test_metrics": {
+            "roc_auc": 0.7451768739286271,
+            "f1": 0.07920792079207921,
+            "balanced_accuracy": 0.5186068256194484
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-ATAD5",
+        "task_index": 8,
+        "embeddings": {
+          "best_k": 11,
+          "validation_metrics": {
+            "roc_auc": 0.7887491396032789,
+            "f1": 0.08695652173913043
+          },
+          "test_metrics": {
+            "roc_auc": 0.7192084432717679,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.7475752456041549,
+            "f1": 0.09090909090909091
+          },
+          "test_metrics": {
+            "roc_auc": 0.790976253298153,
+            "f1": 0.0,
+            "balanced_accuracy": 0.49934036939313986
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-HSE",
+        "task_index": 9,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.7310522442972773,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.6996944232238349,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.723325974981604,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.6221734148204736,
+            "f1": 0.0,
+            "balanced_accuracy": 0.49732620320855614
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-MMP",
+        "task_index": 10,
+        "embeddings": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.8299015959646077,
+            "f1": 0.16326530612244897
+          },
+          "test_metrics": {
+            "roc_auc": 0.8005282695602514,
+            "f1": 0.17391304347826086,
+            "balanced_accuracy": 0.5470731010850942
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.7990655751261059,
+            "f1": 0.08695652173913043
+          },
+          "test_metrics": {
+            "roc_auc": 0.7769060536836093,
+            "f1": 0.07407407407407407,
+            "balanced_accuracy": 0.5186821816105083
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-p53",
+        "task_index": 11,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.7390527256478998,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7229114971050455,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.6940907059874888,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7560828508409154,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      }
+    ],
+    "skipped_tasks": [],
+    "plot_path": "models/VAL_TESTING/knn_tox21_mean_rocauc_embeddings_vs_fingerprints_seed3.png",
+    "timestamp": "2026-05-06T13:25:08.752930"
+  },
+  "KNN_eval_Tox21_seed4": {
+    "dataset": "Tox21",
+    "data_source": "deepchem.molnet.load_tox21",
+    "splitter": "random",
+    "split_seed": 4,
+    "n_tasks_total": 12,
+    "n_tasks_evaluated": 12,
+    "evaluation_primary_metric": "roc_auc_mean_tasks",
+    "k_values": [
+      3,
+      5,
+      11,
+      21,
+      31,
+      41,
+      51
+    ],
+    "fingerprint": {
+      "type": "Morgan",
+      "radius": 2,
+      "nbits": 2048
+    },
+    "embeddings_model": "VAL_TESTING",
+    "checkpoint_path": "models/VAL_TESTING/checkpoints/checkpoint_epoch_200.pth",
+    "embedding_featurization": {
+      "explicit_hydrogens": true,
+      "encode_hydrogen_count": false,
+      "num_features": 24
+    },
+    "aggregate": {
+      "embeddings": {
+        "validation_metrics": {
+          "roc_auc_mean_tasks": 0.7483,
+          "roc_auc_std_tasks": 0.0705
+        },
+        "test_metrics": {
+          "roc_auc_mean_tasks": 0.7445,
+          "roc_auc_std_tasks": 0.0637
+        }
+      },
+      "fingerprints": {
+        "validation_metrics": {
+          "roc_auc_mean_tasks": 0.7419,
+          "roc_auc_std_tasks": 0.057
+        },
+        "test_metrics": {
+          "roc_auc_mean_tasks": 0.7005,
+          "roc_auc_std_tasks": 0.1026
+        }
+      }
+    },
+    "per_task": [
+      {
+        "task": "NR-AR",
+        "task_index": 0,
+        "embeddings": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.8008461835831795,
+            "f1": 0.5
+          },
+          "test_metrics": {
+            "roc_auc": 0.8144766997708175,
+            "f1": 0.6101694915254238,
+            "balanced_accuracy": 0.7531321619556913
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.7830634422919978,
+            "f1": 0.0625
+          },
+          "test_metrics": {
+            "roc_auc": 0.816348357524828,
+            "f1": 0.05405405405405406,
+            "balanced_accuracy": 0.5136172650878533
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-AR-LBD",
+        "task_index": 1,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.8616458333333333,
+            "f1": 0.43478260869565216
+          },
+          "test_metrics": {
+            "roc_auc": 0.847598944591029,
+            "f1": 0.5581395348837209,
+            "balanced_accuracy": 0.736042216358839
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.8124791666666666,
+            "f1": 0.06060606060606061
+          },
+          "test_metrics": {
+            "roc_auc": 0.844485488126649,
+            "f1": 0.14814814814814814,
+            "balanced_accuracy": 0.54
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-AhR",
+        "task_index": 2,
+        "embeddings": {
+          "best_k": 11,
+          "validation_metrics": {
+            "roc_auc": 0.8541401860550797,
+            "f1": 0.29906542056074764
+          },
+          "test_metrics": {
+            "roc_auc": 0.7733907056798623,
+            "f1": 0.2545454545454545,
+            "balanced_accuracy": 0.5750516351118761
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.806963249516441,
+            "f1": 0.02564102564102564
+          },
+          "test_metrics": {
+            "roc_auc": 0.7779345955249569,
+            "f1": 0.0,
+            "balanced_accuracy": 0.4992857142857143
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-Aromatase",
+        "task_index": 3,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.6566932394657832,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.654662471395881,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.7416054111881838,
+            "f1": 0.0975609756097561
+          },
+          "test_metrics": {
+            "roc_auc": 0.6203661327231121,
+            "f1": 0.07692307692307693,
+            "balanced_accuracy": 0.5204233409610984
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-ER",
+        "task_index": 4,
+        "embeddings": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.7194023741301678,
+            "f1": 0.1836734693877551
+          },
+          "test_metrics": {
+            "roc_auc": 0.7262055502796244,
+            "f1": 0.2268041237113402,
+            "balanced_accuracy": 0.5643399810066476
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.7194961795606495,
+            "f1": 0.06666666666666667
+          },
+          "test_metrics": {
+            "roc_auc": 0.6611709049980654,
+            "f1": 0.022988505747126436,
+            "balanced_accuracy": 0.5026115859449193
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-ER-LBD",
+        "task_index": 5,
+        "embeddings": {
+          "best_k": 11,
+          "validation_metrics": {
+            "roc_auc": 0.738080079230334,
+            "f1": 0.3333333333333333
+          },
+          "test_metrics": {
+            "roc_auc": 0.7499518025833815,
+            "f1": 0.4262295081967213,
+            "balanced_accuracy": 0.6507133217659533
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.7211021505376344,
+            "f1": 0.04878048780487805
+          },
+          "test_metrics": {
+            "roc_auc": 0.7694235588972431,
+            "f1": 0.09090909090909091,
+            "balanced_accuracy": 0.5238095238095238
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "NR-PPAR-gamma",
+        "task_index": 6,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.7016096694735636,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7388537989968419,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 3,
+          "validation_metrics": {
+            "roc_auc": 0.710832330870138,
+            "f1": 0.26666666666666666
+          },
+          "test_metrics": {
+            "roc_auc": 0.5966468511982165,
+            "f1": 0.13333333333333333,
+            "balanced_accuracy": 0.5357142857142857
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-ARE",
+        "task_index": 7,
+        "embeddings": {
+          "best_k": 21,
+          "validation_metrics": {
+            "roc_auc": 0.6951113144687362,
+            "f1": 0.13793103448275862
+          },
+          "test_metrics": {
+            "roc_auc": 0.7047619047619047,
+            "f1": 0.05172413793103448,
+            "balanced_accuracy": 0.508386009270965
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.7171096844302729,
+            "f1": 0.07339449541284404
+          },
+          "test_metrics": {
+            "roc_auc": 0.6623964039893244,
+            "f1": 0.07142857142857142,
+            "balanced_accuracy": 0.5168352296670881
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-ATAD5",
+        "task_index": 8,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.6890682685689256,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.8226010101010102,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.8172204492835242,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.7889218269653051,
+            "f1": 0.08,
+            "balanced_accuracy": 0.5208333333333334
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-HSE",
+        "task_index": 9,
+        "embeddings": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.6551786686014873,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.6296938088829072,
+            "f1": 0.0,
+            "balanced_accuracy": 0.4979811574697174
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 5,
+          "validation_metrics": {
+            "roc_auc": 0.6134772356248867,
+            "f1": 0.1
+          },
+          "test_metrics": {
+            "roc_auc": 0.5353970390309555,
+            "f1": 0.0,
+            "balanced_accuracy": 0.5
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-MMP",
+        "task_index": 10,
+        "embeddings": {
+          "best_k": 41,
+          "validation_metrics": {
+            "roc_auc": 0.8128134857024666,
+            "f1": 0.1956521739130435
+          },
+          "test_metrics": {
+            "roc_auc": 0.7734595084674416,
+            "f1": 0.21153846153846154,
+            "balanced_accuracy": 0.5589159084285853
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 31,
+          "validation_metrics": {
+            "roc_auc": 0.7690763052208834,
+            "f1": 0.06741573033707865
+          },
+          "test_metrics": {
+            "roc_auc": 0.7756289868212284,
+            "f1": 0.08421052631578947,
+            "balanced_accuracy": 0.5210309879221577
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      },
+      {
+        "task": "SR-p53",
+        "task_index": 11,
+        "embeddings": {
+          "best_k": 51,
+          "validation_metrics": {
+            "roc_auc": 0.7951003941857602,
+            "f1": 0.0
+          },
+          "test_metrics": {
+            "roc_auc": 0.6982872407291012,
+            "f1": 0.0,
+            "balanced_accuracy": 0.49932432432432433
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        },
+        "fingerprints": {
+          "best_k": 5,
+          "validation_metrics": {
+            "roc_auc": 0.6901022419315102,
+            "f1": 0.16666666666666666
+          },
+          "test_metrics": {
+            "roc_auc": 0.5569453174104337,
+            "f1": 0.04081632653061224,
+            "balanced_accuracy": 0.5082495285983658
+          },
+          "n_train": 6258,
+          "n_val": 782,
+          "n_test": 783
+        }
+      }
+    ],
+    "skipped_tasks": [],
+    "plot_path": "models/VAL_TESTING/knn_tox21_mean_rocauc_embeddings_vs_fingerprints_seed4.png",
+    "timestamp": "2026-05-06T13:40:21.093484"
+  },
+  "KNN_eval_BACE": {
+    "dataset": "BACE",
+    "data_source": "deepchem.molnet.load_bace_classification",
+    "splitter": "scaffold",
+    "task": "Class",
+    "k_values": [
+      3,
+      5,
+      11,
+      21,
+      31,
+      41,
+      51
+    ],
+    "evaluation_primary_metric": "roc_auc",
+    "fingerprint": {
+      "type": "Morgan",
+      "radius": 2,
+      "nbits": 2048
+    },
+    "embeddings_model": "VAL_TESTING",
+    "checkpoint_path": "models/VAL_TESTING/checkpoints/checkpoint_epoch_200.pth",
+    "embedding_featurization": {
+      "explicit_hydrogens": true,
+      "encode_hydrogen_count": false,
+      "num_features": 24
+    },
+    "embeddings": {
+      "best_k": 51,
+      "validation_metrics": {
+        "roc_auc": 0.7114,
+        "f1": 0.6545
+      },
+      "test_metrics": {
+        "roc_auc": 0.7837,
+        "f1": 0.7394,
+        "balanced_accuracy": 0.7315
+      },
+      "n_train": 1210,
+      "n_val": 151,
+      "n_test": 152,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "fingerprints": {
+      "best_k": 11,
+      "validation_metrics": {
+        "roc_auc": 0.6848,
+        "f1": 0.6225
+      },
+      "test_metrics": {
+        "roc_auc": 0.8225,
+        "f1": 0.5197,
+        "balanced_accuracy": 0.6627
+      },
+      "n_train": 1210,
+      "n_val": 151,
+      "n_test": 152,
+      "n_invalid_smiles_train": 0,
+      "n_invalid_smiles_val": 0,
+      "n_invalid_smiles_test": 0
+    },
+    "plot_path": "models/VAL_TESTING/knn_bace_embeddings_vs_fingerprints.png",
+    "timestamp": "2026-05-06T13:54:37.583546"
+  }
+}
