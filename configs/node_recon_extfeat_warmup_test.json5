@@ -1,0 +1,147 @@
+{
+  // ---------------------------------------------------------------------------
+  // Node-reconstruction loss (with warmup) + extended atom features (Gasteiger
+  // charge + eccentricity, eccentricity scaled), tested together. Fired
+  // directly, in parallel with NODE_RECON_WARMUP_TEST_60EP rather than
+  // sequenced after it, per explicit request -- the extended features are
+  // being tested on the hypothesis that they were only ever a shortcut under
+  // the graph-level pooled objective (a single dominant feature can hide
+  // inside a pooled aggregate) and might become genuinely useful signal under
+  // the node-level objective, which has no pooling step to hide inside --
+  // every masked position is graded individually.
+  //
+  // Two things changed vs. NODE_RECON_WARMUP_TEST_60EP: num_features 24 -> 26
+  // and use_extended_features/scale_eccentricity on. Everything else identical
+  // (mixed khop+masking augmentation, gat_heads=4, hidden_dim=1024, 60 epochs,
+  // node_reconstruction_loss_weight=1.0 with a 15-epoch warmup) -- deliberately
+  // NOT reusing extended_features_test.json5's own settings, since that was
+  // khop-only; this needs masking (the node loss requires it), and masking is
+  // also where the original extended-feature regression was worst
+  // (LIPO MLP R2 0.535 -> 0.068 unscaled, under 60% masking) -- exactly the
+  // regime this run is testing whether the node loss can fix.
+  //
+  // scale_eccentricity: true throughout -- eccentricity's raw, unbounded,
+  // molecule-size-dependent magnitude was an independent, already-confirmed
+  // contributing cause of the original regression (separate from shortcut
+  // learning), no reason to reintroduce that bug on top of a new experiment.
+  // Reuses the already-precomputed, already-scaled 26-feature shard set
+  // (/proj/pharmbio-qsar/users/x_emcar/precomputed_9M_data_extended_ecc_scaled,
+  // built for khop_extended_features_ecc_scaled_test.json5) -- shard content
+  // doesn't depend on which augmentation is applied downstream, so it's
+  // directly reusable here without recomputing.
+  //
+  // After this run: rerun check_shortcut_learning.py on the resulting
+  // checkpoint -- the direct, mechanistic test of whether the node loss
+  // actually killed the shortcut, not just whether downstream R²/ROC-AUC
+  // moved.
+  //
+  // New model, trained from scratch.
+  // ---------------------------------------------------------------------------
+  name: "NODE_RECON_EXTFEAT_WARMUP_TEST_60EP",
+
+  head_type: "dino",
+  encoder_type: "GAT",
+  global_pooling: "add",
+
+  // ---------------------------------------------------------------------------
+  // Data loading -- 26-feature (extended, eccentricity-scaled) shard set,
+  // staged to its own scratch path by run_node_recon_extfeat_warmup_test.sbatch.
+  // ---------------------------------------------------------------------------
+  data_path: "data/zinc/zinc_9M_data",
+  use_precomputed: true,
+  precomputed_data_path: "/scratch/local/precomputed_9M_data_extended_ecc_scaled_noderecon",
+  cache_data_in_memory: false,
+  precomputed_cache_in_memory: false,
+  precomputed_max_cached_shards: 3,
+  explicit_hydrogens: true,
+  encode_hydrogen_count: false,
+  use_extended_features: true,
+  scale_eccentricity: true,
+
+  // ---------------------------------------------------------------------------
+  // Augmentation -- mixed: view 0 = functional_group_k_hop (k_hops=2),
+  // view 1 = functional_group_masking (node_mask_ratio=0.60) -- identical to
+  // NODE_RECON_WARMUP_TEST_60EP. local_augmentation_mode is set but unused/
+  // overridden by local_view_modes -- kept as a valid, documented fallback
+  // value only.
+  // ---------------------------------------------------------------------------
+  local_views: 2,
+  local_augmentation_mode: "functional_group_k_hop",
+  local_view_modes: ["functional_group_k_hop", "functional_group_masking"],
+  k_hops: 2,
+  node_mask_ratio: 0.60,
+  feature_mask_ratio: 0,
+  use_batched_mask_collate: false,
+
+  // ---------------------------------------------------------------------------
+  // Masked-node reconstruction auxiliary loss -- identical settings to
+  // NODE_RECON_WARMUP_TEST_60EP (weight 1.0, 15-epoch linear warmup).
+  // ---------------------------------------------------------------------------
+  use_node_reconstruction_loss: true,
+  node_reconstruction_loss_weight: 1.0,
+  node_reconstruction_loss_warmup_epochs: 15,
+
+  // ---------------------------------------------------------------------------
+  // Runtime and logging
+  // ---------------------------------------------------------------------------
+  seed: 1,
+  device: "cuda",
+  num_workers: 6,
+  loader_debug: false,
+  profile_timing: true,
+  profile_log_every_n_batches: 200,
+
+  // ---------------------------------------------------------------------------
+  // Model dimensions -- 26 features (24 baseline + charge + eccentricity),
+  // hidden_dim=1024 (divides evenly by 4), otherwise identical to
+  // NODE_RECON_WARMUP_TEST_60EP.
+  // ---------------------------------------------------------------------------
+  num_features: 26,
+  edge_features: 12,
+  hidden_dim: 1024,
+  num_layers: 3,
+  gat_heads: 4,
+  dropout: 0.0,
+  epsilon: 0.0,
+  projection_hidden_dim: 1024,
+  projection_bottleneck_dim: 1024,
+  projection_output_dim: 1024,
+  projection_layers: 2,
+
+  // ---------------------------------------------------------------------------
+  // Training and optimization -- identical to weight_decay_fix_test.json5 /
+  // MIXED_GAT4HEADS_TEST_60EP / NODE_RECON_WARMUP_TEST_60EP.
+  // ---------------------------------------------------------------------------
+  num_epochs: 60,
+
+  batch_size: 128,
+
+  auto_scale_lr: false,
+  learning_rate: 0.000025,
+  use_data_parallel: false,
+  lr_scale_base: 0.00000625,
+  lr_scale_reference_batch_size: 256,
+  weight_decay: 0.04,
+  weight_decay_start: 0.04,
+  weight_decay_end: 0.2,
+
+  teacher_temp: 0.07,
+  teacher_temp_final: 0.01,
+  teacher_temp_warmup_epochs: 20,
+
+  student_temp: 0.1,
+  teacher_momentum: 0.99,
+  center_momentum: 0.9,
+  sync_teacher_batchnorm_buffers: true,
+  warmup_epochs: 20,
+  final_learning_rate: 0.00001,
+
+  validation_enabled: true,
+  validation_split: 0.1,
+
+  online_eval_enabled: false,
+  online_eval_every_n_epochs: 1,
+  online_eval_datasets: "lipo",
+  online_eval_fixed_k: 21,
+  online_eval_top_k_checkpoints: 5,
+}

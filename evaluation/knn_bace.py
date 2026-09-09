@@ -17,6 +17,7 @@ import json
 import deepchem as dc
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import torch
 from rdkit import Chem, DataStructs
 from rdkit.Chem import rdFingerprintGenerator
@@ -34,7 +35,11 @@ from model.config import ModelConfig
 from model.gnn_model import GNNModel
 
 
-BACE_SPLITTER = "scaffold"
+BACE_SPLITTER = "scaffold"  # briefly switched to "random" (5-seed variance, vs. scaffold's single fixed
+# split with no variance estimate) but reverted -- every existing BACE result in the project (every model
+# evaluated so far except NODE_RECON_TEST_60EP) was computed under scaffold, and switching the default
+# broke direct comparability against them. Pass splitter="random" explicitly for a real variance estimate
+# when that's worth more than comparability against prior results.
 BACE_DATA_DIR = "data/MoleculeNet_BACE_custom"
 
 SSL_MODEL_NAME = "GDZ_5000Epochs"
@@ -157,12 +162,78 @@ def load_bace_splits_from_deepchem(data_dir: str, splitter: str, split_seed: int
     return rows_by_split, stats
 
 
+_ADMET_BENCHMARK_SEEDS = (1, 2, 3, 4, 5)  # same official seeds as evaluation/tdc_datasets.py's
+# admet_benchmark protocol -- kept as the same tuple/name convention deliberately.
+
+_bace_fixed_test_cache = None
+
+
+def load_bace_admet_benchmark_splits(data_dir: str, split_seed: int):
+    """BACE, TDC-admet_benchmark-style: a FIXED test set (identical across all
+    5 seeds) plus a seeded scaffold reshuffle of the remaining train+val pool.
+
+    DeepChem's own ScaffoldSplitter accepts a `seed` argument but never
+    actually uses it anywhere in ScaffoldSplitter.split() (verified by
+    reading the source) -- calling load_bace_splits_from_deepchem with
+    different seeds silently returns the IDENTICAL split every time, which is
+    exactly why BACE has had zero seed variance all along. TDC's own scaffold
+    splitter (tdc.utils.split.create_scaffold_split) DOES use the seed --
+    random.shuffle on the scaffold groups -- so this reuses that actual
+    function (a real project dependency already, not reimplemented here)
+    instead of DeepChem's inert one.
+
+    The fixed test set is DeepChem's original scaffold-split test set --
+    reused as-is (cached process-wide, since it's deterministic and
+    seed-independent) so every BACE result already computed this session
+    stays comparable to whatever runs under this new protocol; only how
+    train/val get built changes.
+    """
+    if split_seed not in _ADMET_BENCHMARK_SEEDS:
+        raise ValueError(
+            f"BACE admet_benchmark splitter requires split_seed in {_ADMET_BENCHMARK_SEEDS} "
+            f"(matching the TDC datasets' official leaderboard seeds), got {split_seed}."
+        )
+
+    global _bace_fixed_test_cache
+    if _bace_fixed_test_cache is None:
+        fixed_rows, _ = load_bace_splits_from_deepchem(data_dir, "scaffold", split_seed=None)
+        _bace_fixed_test_cache = fixed_rows["test"]
+        _bace_pool_rows = fixed_rows["train"] + fixed_rows["val"]
+        globals()["_bace_pool_rows_cache"] = _bace_pool_rows
+    fixed_test = _bace_fixed_test_cache
+    pool_rows = globals()["_bace_pool_rows_cache"]
+
+    from tdc.utils.split import create_scaffold_split
+    pool_df = pd.DataFrame(pool_rows, columns=["Drug", "Y"])
+    split = create_scaffold_split(pool_df, seed=split_seed, frac=[0.875, 0.125, 0.0], entity="Drug")
+
+    def _rows_from_df(df):
+        return [(str(row.Drug), int(row.Y)) for row in df.itertuples(index=False)]
+
+    rows_by_split = {
+        "train": _rows_from_df(split["train"]),
+        "val": _rows_from_df(split["valid"]),
+        "test": fixed_test,
+    }
+    stats = {
+        "task": "Class",
+        "splitter": "admet_benchmark",
+        "split_seed": split_seed,
+        "n_train": len(rows_by_split["train"]),
+        "n_val": len(rows_by_split["val"]),
+        "n_test": len(rows_by_split["test"]),
+    }
+    return rows_by_split, stats
+
+
 def build_embedding_features(
     rows,
     model,
     device,
     explicit_hydrogens: bool = True,
     encode_hydrogen_count: bool = False,
+    use_extended_features: bool = False,
+    scale_eccentricity: bool = False,
 ):
     """Convert split rows into embeddings and labels, skipping invalid graphs."""
     features = []
@@ -175,6 +246,8 @@ def build_embedding_features(
                 smiles,
                 explicit_hydrogens=explicit_hydrogens,
                 encode_hydrogen_count=encode_hydrogen_count,
+                use_extended_features=use_extended_features,
+                scale_eccentricity=scale_eccentricity,
             )
             if data is None or data.num_nodes == 0:
                 invalid_smiles += 1

@@ -1,0 +1,208 @@
+{
+  // ---------------------------------------------------------------------------
+  // Identity
+  // ---------------------------------------------------------------------------
+  // Run name used for model folders and checkpoint paths.
+  name: "GRID_B1024_H512_GAT_9M_ZINC",
+
+  // Self-supervised objective type.
+  head_type: "dino",
+
+  // Backbone encoder family.
+  encoder_type: "GAT",
+
+  // Global graph pooling for the encoder readout.
+  // Set to "add" or "mean"; null keeps the encoder's default behavior.
+  global_pooling: "add",
+
+  // ---------------------------------------------------------------------------
+  // Data loading
+  // ---------------------------------------------------------------------------
+  // Path to the training data. Can be a CSV file or a directory of .smi files.
+  data_path: "data/zinc/zinc_9M_data",
+
+  // Load precomputed graph shards instead of parsing SMILES on the fly.
+  use_precomputed: true,
+
+  // Directory containing precomputed shard_*.pt files.
+  precomputed_data_path: "/scratch/local/precomputed_9M_data",
+
+  // Cache source rows/graphs in RAM after first read.
+  cache_data_in_memory: false,
+
+  // Cache all precomputed graphs in memory per worker process.
+  precomputed_cache_in_memory: false,
+
+  // LRU cache size for precomputed shard files when not caching everything.
+  precomputed_max_cached_shards: 3,
+
+  // Add explicit hydrogen atoms as graph nodes.
+  explicit_hydrogens: true,
+
+  // Append total hydrogen count as an extra atom feature.
+  encode_hydrogen_count: false,
+
+  // ---------------------------------------------------------------------------
+  // Augmentation
+  // ---------------------------------------------------------------------------
+  // Number of local augmented views per graph.
+  local_views: 2,
+
+  // Local view strategy: k_hop, masking, functional_group_masking, or functional_group_k_hop.
+  local_augmentation_mode: "functional_group_k_hop",
+
+  // Number of hops for k-hop local subgraph extraction.
+  k_hops: 2,
+
+  // Fraction of nodes to mask in masking-based local views.
+  node_mask_ratio: 0.05,
+
+  // Fraction of feature dimensions to mask in masking-based local views.
+  feature_mask_ratio: 0,
+
+  // Fast path for masking: batch first, then mask the batched tensors.
+  use_batched_mask_collate: true,
+
+  // ---------------------------------------------------------------------------
+  // Runtime and logging
+  // ---------------------------------------------------------------------------
+  // Random seed for reproducibility.
+  seed: 1,
+
+  // Training device.
+  device: "cuda",
+
+  // Number of dataloader workers.
+  num_workers: 6,
+
+  // Verbose startup and cache debugging for the dataloader.
+  loader_debug: false,
+
+  // Emit detailed timing for loader and train-step components.
+  profile_timing: true,
+
+  // Print timing summaries every N batches when profiling is enabled.
+  profile_log_every_n_batches: 25,
+
+  // ---------------------------------------------------------------------------
+  // Model dimensions
+  // ---------------------------------------------------------------------------
+  // Node feature dimension expected by the model.
+  num_features: 24,
+
+  // Edge feature dimension expected by the model.
+  edge_features: 12,
+
+  // Encoder hidden dimension.
+  hidden_dim: 512,
+
+  // Number of GNN layers.
+  num_layers: 3,
+
+  // Dropout rate inside the encoder.
+  dropout: 0.0,
+
+  // GINE epsilon parameter.
+  epsilon: 0.0,
+
+  // Projection head hidden dimension.
+  projection_hidden_dim: 512,
+
+  // Projection head bottleneck dimension before final output layer.
+  projection_bottleneck_dim: 512,
+
+  // Projection head output dimension.
+  projection_output_dim: 512,
+
+  // Number of layers in the projection head.
+  projection_layers: 2,
+
+  // ---------------------------------------------------------------------------
+  // Training and optimization
+  // ---------------------------------------------------------------------------
+  // Total training epochs.
+  num_epochs: 1,
+
+  // Batch size in graphs.
+  batch_size: 1024,
+
+  // Enable linear LR scaling from the effective batch size.
+  auto_scale_lr: true,
+
+  // Enable graph-aware DataParallel when multiple CUDA GPUs are available.
+  use_data_parallel: true,
+
+  // Base learning rate for the scaling rule.
+  lr_scale_base: 0.00005,
+
+  // Reference batch size used by the scaling rule.
+  lr_scale_reference_batch_size: 256,
+
+  // Base learning rate when auto scaling is disabled.
+  learning_rate: 0.001,
+
+  // Backward-compatible weight decay field.
+  weight_decay: 0.04,
+
+  // Starting value for the weight decay schedule.
+  weight_decay_start: 0.04,
+
+  // Ending value for the weight decay schedule.
+  weight_decay_end: 0.2,
+
+  // Initial teacher temperature.
+  teacher_temp: 0.07,
+
+  // Final teacher temperature after warmup.
+  teacher_temp_final: 0.01,
+
+  // Number of warmup epochs for the teacher temperature.
+  teacher_temp_warmup_epochs: 20,
+
+  // Student temperature.
+  student_temp: 0.1,
+
+  // EMA momentum for the teacher network.
+  teacher_momentum: 0.99,
+
+  // Momentum for the DINO center update.
+  center_momentum: 0.9,
+
+  // Copy student BatchNorm running_mean/running_var/num_batches_tracked to the
+  // teacher every step (these are buffers, not parameters, so the EMA update
+  // above never touches them -- without this the teacher's BatchNorm stays
+  // frozen at its initial values for the whole run). Set false to revert.
+  sync_teacher_batchnorm_buffers: true,
+
+  // Warmup epochs before cosine annealing.
+  warmup_epochs: 20,
+
+  // Final learning rate after the schedule.
+  final_learning_rate: 0.00001,
+
+  // Enable a held-out validation split for SSL monitoring.
+  // Disabled for this throughput grid to isolate main-loop timing from eval cost.
+  validation_enabled: false,
+
+  // Fraction of the dataset reserved for validation.
+  validation_split: 0.1,
+
+  // ---------------------------------------------------------------------------
+  // Online evaluation
+  // ---------------------------------------------------------------------------
+  // Enable downstream kNN evaluation during SSL training.
+  // Disabled for this throughput grid to isolate main-loop timing from eval cost.
+  online_eval_enabled: false,
+
+  // Run online evaluation every N epochs.
+  online_eval_every_n_epochs: 1,
+
+  // Comma-separated downstream datasets for online evaluation.
+  online_eval_datasets: "lipo",
+
+  // Fixed k for online kNN speed during training.
+  online_eval_fixed_k: 21,
+
+  // Keep the top-K checkpoints according to the online eval score.
+  online_eval_top_k_checkpoints: 5,
+}

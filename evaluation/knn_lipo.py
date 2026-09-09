@@ -152,6 +152,8 @@ def build_embedding_features(
     device,
     explicit_hydrogens: bool = True,
     encode_hydrogen_count: bool = False,
+    use_extended_features: bool = False,
+    scale_eccentricity: bool = False,
 ):
     """Build SSL embeddings and labels from SMILES rows."""
     features = []
@@ -164,6 +166,8 @@ def build_embedding_features(
                 smiles,
                 explicit_hydrogens=explicit_hydrogens,
                 encode_hydrogen_count=encode_hydrogen_count,
+                use_extended_features=use_extended_features,
+                scale_eccentricity=scale_eccentricity,
             )
             if data is None or data.num_nodes == 0:
                 invalid_smiles += 1

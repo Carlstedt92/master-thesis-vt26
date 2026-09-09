@@ -14,7 +14,14 @@ def _set_plot_style():
 
 
 def _extract_online_knn_validation_metric(online_eval_entry: dict, dataset: str):
-    datasets = online_eval_entry.get("evaluation", {}).get("datasets", {})
+    return _extract_online_knn_validation_metric_from_evaluation(
+        online_eval_entry.get("evaluation", {}),
+        dataset,
+    )
+
+
+def _extract_online_knn_validation_metric_from_evaluation(evaluation: dict, dataset: str):
+    datasets = evaluation.get("datasets", {})
     dataset_payload = datasets.get(dataset)
     if dataset_payload is None:
         return None, None
@@ -48,16 +55,31 @@ def plot_ssl_and_online_knn(loss_history_path: Path, output_path: Path, dataset:
         raise ValueError("No DINO_Loss entries found in loss_history.json")
 
     eval_rows = []
+    teacher_eval_rows = []
     metric_label = "online_val_metric"
+    teacher_metric_label = "teacher_online_val_metric"
     for entry in online_eval:
         value, detected_label = _extract_online_knn_validation_metric(entry, dataset)
         if value is None:
-            continue
-        if detected_label is not None:
-            metric_label = detected_label
-        eval_rows.append({"epoch": int(entry["epoch"]), "online_metric": float(value)})
+            pass
+        else:
+            if detected_label is not None:
+                metric_label = detected_label
+            eval_rows.append({"epoch": int(entry["epoch"]), "online_metric": float(value)})
+
+        teacher_entry = entry.get("teacher_evaluation")
+        if teacher_entry is not None:
+            teacher_value, detected_teacher_label = _extract_online_knn_validation_metric_from_evaluation(
+                teacher_entry,
+                dataset,
+            )
+            if teacher_value is not None:
+                if detected_teacher_label is not None:
+                    teacher_metric_label = f"teacher_{detected_teacher_label}"
+                teacher_eval_rows.append({"epoch": int(entry["epoch"]), "online_metric": float(teacher_value)})
 
     eval_df = pd.DataFrame(eval_rows)
+    teacher_eval_df = pd.DataFrame(teacher_eval_rows)
 
     _set_plot_style()
     fig, ax1 = plt.subplots(figsize=(11, 6))
@@ -102,6 +124,15 @@ def plot_ssl_and_online_knn(loss_history_path: Path, output_path: Path, dataset:
             label=metric_label,
             linewidth=2,
         )
+        if not teacher_eval_df.empty:
+            ax2.plot(
+                teacher_eval_df["epoch"],
+                teacher_eval_df["online_metric"],
+                color="#9467bd",
+                label=teacher_metric_label,
+                linewidth=2,
+                linestyle="--",
+            )
         ax2.set_ylabel(metric_label, color="#d62728")
         ax2.tick_params(axis="y", labelcolor="#d62728")
         for line in ax2.get_lines():

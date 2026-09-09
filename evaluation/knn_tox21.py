@@ -153,6 +153,8 @@ def build_embedding_features(
     device,
     explicit_hydrogens: bool = True,
     encode_hydrogen_count: bool = False,
+    use_extended_features: bool = False,
+    scale_eccentricity: bool = False,
 ):
     """Build embeddings and return kept row indices into the source array."""
     features = []
@@ -163,6 +165,8 @@ def build_embedding_features(
         for idx, smiles in enumerate(smiles_array):
             data = smiles_to_pygdata(
                 str(smiles),
+                use_extended_features=use_extended_features,
+                scale_eccentricity=scale_eccentricity,
                 explicit_hydrogens=explicit_hydrogens,
                 encode_hydrogen_count=encode_hydrogen_count,
             )

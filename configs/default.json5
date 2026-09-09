@@ -3,13 +3,13 @@
   // Identity
   // ---------------------------------------------------------------------------
   // Run name used for model folders and checkpoint paths.
-  name: "RKHOP_128ED_800EP_GINE",
+  name: "1_FGKHOP_128ED_200EP_GAT_9M_ZINC",
 
   // Self-supervised objective type.
   head_type: "dino",
 
   // Backbone encoder family.
-  encoder_type: "GINE",
+  encoder_type: "GAT",
 
   // Global graph pooling for the encoder readout.
   // Set to "add" or "mean"; null keeps the encoder's default behavior.
@@ -19,13 +19,13 @@
   // Data loading
   // ---------------------------------------------------------------------------
   // Path to the training data. Can be a CSV file or a directory of .smi files.
-  data_path: "data/zinc/zinc_half_data",
+  data_path: "data/zinc/zinc_9M_data",
 
   // Load precomputed graph shards instead of parsing SMILES on the fly.
-  use_precomputed: false,
+  use_precomputed: true,
 
   // Directory containing precomputed shard_*.pt files.
-  precomputed_data_path: "data/zinc/precomputed_9M_data",
+  precomputed_data_path: "/scratch/local/precomputed_9M_data",
 
   // Cache source rows/graphs in RAM after first read.
   cache_data_in_memory: false,
@@ -34,7 +34,7 @@
   precomputed_cache_in_memory: false,
 
   // LRU cache size for precomputed shard files when not caching everything.
-  precomputed_max_cached_shards: 4,
+  precomputed_max_cached_shards: 3,
 
   // Add explicit hydrogen atoms as graph nodes.
   explicit_hydrogens: true,
@@ -49,7 +49,7 @@
   local_views: 2,
 
   // Local view strategy: k_hop, masking, functional_group_masking, or functional_group_k_hop.
-  local_augmentation_mode: "k_hop",
+  local_augmentation_mode: "functional_group_k_hop",
 
   // Number of hops for k-hop local subgraph extraction.
   k_hops: 2,
@@ -73,13 +73,13 @@
   device: "cuda",
 
   // Number of dataloader workers.
-  num_workers: 16,
+  num_workers: 6,
 
   // Verbose startup and cache debugging for the dataloader.
-  loader_debug: false,
+  loader_debug: true,
 
   // Emit detailed timing for loader and train-step components.
-  profile_timing: false,
+  profile_timing: true,
 
   // Print timing summaries every N batches when profiling is enabled.
   profile_log_every_n_batches: 25,
@@ -120,13 +120,16 @@
   // Training and optimization
   // ---------------------------------------------------------------------------
   // Total training epochs.
-  num_epochs: 800,
+  num_epochs: 1,
 
   // Batch size in graphs.
-  batch_size: 128,
+  batch_size: 512,
 
   // Enable linear LR scaling from the effective batch size.
   auto_scale_lr: true,
+
+  // Enable graph-aware DataParallel when multiple CUDA GPUs are available.
+  use_data_parallel: true,
 
   // Base learning rate for the scaling rule.
   lr_scale_base: 0.00005,
@@ -163,6 +166,12 @@
 
   // Momentum for the DINO center update.
   center_momentum: 0.9,
+
+  // Copy student BatchNorm running_mean/running_var/num_batches_tracked to the
+  // teacher every step (these are buffers, not parameters, so the EMA update
+  // above never touches them -- without this the teacher's BatchNorm stays
+  // frozen at its initial values for the whole run). Set false to revert.
+  sync_teacher_batchnorm_buffers: true,
 
   // Warmup epochs before cosine annealing.
   warmup_epochs: 20,

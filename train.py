@@ -5,7 +5,6 @@ from pathlib import Path
 
 import json5
 import torch
-import pandas as pd
 
 from model.config import ModelConfig
 from plotting.loss_plot import load_loss_data, plot_train_val_loss_curves, plot_ssl_and_online_knn
@@ -129,7 +128,13 @@ if __name__ == "__main__":
     set_seed(config.seed)
     if config.head_type == "dino":
         dino_train(config)
-        
+
+        # Under torchrun, every process runs this whole script independently;
+        # dino_train() mutates config.ddp_rank in place, so only rank 0 (the
+        # one that actually wrote loss_history.json) generates plots here.
+        if int(getattr(config, "ddp_rank", 0)) != 0:
+            raise SystemExit(0)
+
         # Plot results
         loss_history_path = f"models/{config.name}/loss_history.json"
         loss_history = load_loss_data(loss_history_path)
@@ -150,14 +155,13 @@ if __name__ == "__main__":
             except (ValueError, KeyError) as e:
                 # Fall back to simple plot if online eval data is missing
                 print(f"⚠ Could not generate dual-axis plot: {e}")
-                if isinstance(loss_history, dict) and "DINO_Loss" in loss_history:
-                    loss_data = pd.DataFrame(loss_history["DINO_Loss"])
-                    plot_train_val_loss_curves(loss_data, f"models/{config.name}/loss_curves.png", model_name=config.name)
+                plot_train_val_loss_curves(loss_history, f"models/{config.name}/loss_curves.png", model_name=config.name)
         else:
-            # Plot standard train/val loss curves for non-online-eval or old runs
-            if isinstance(loss_history, dict) and "DINO_Loss" in loss_history:
-                loss_data = pd.DataFrame(loss_history["DINO_Loss"])
-            else:
-                loss_data = loss_history if isinstance(loss_history, pd.DataFrame) else pd.DataFrame(loss_history)
-            plot_train_val_loss_curves(loss_data, f"models/{config.name}/loss_curves.png", model_name=config.name)
+            # Plot standard train/val loss curves for non-online-eval or old runs.
+            # plot_train_val_loss_curves already unwraps a {"DINO_Loss": [...]} dict
+            # internally -- wrapping it in a DataFrame first (as this used to do) broke
+            # that unwrapping, since iterating a DataFrame yields column names, not
+            # rows, so every row silently failed the isinstance(row, dict) check in
+            # _extract_series and the plot came out blank with no error.
+            plot_train_val_loss_curves(loss_history, f"models/{config.name}/loss_curves.png", model_name=config.name)
             print(f"✓ Standard plot saved: models/{config.name}/loss_curves.png")

@@ -246,6 +246,8 @@ def _build_embeddings_from_model(
     device: torch.device,
     explicit_hydrogens: bool,
     encode_hydrogen_count: bool,
+    use_extended_features: bool = False,
+    scale_eccentricity: bool = False,
 ):
     arrays = {}
     for split_name, rows in rows_by_split.items():
@@ -259,6 +261,8 @@ def _build_embeddings_from_model(
                     smiles,
                     explicit_hydrogens=explicit_hydrogens,
                     encode_hydrogen_count=encode_hydrogen_count,
+                    use_extended_features=use_extended_features,
+                    scale_eccentricity=scale_eccentricity,
                 )
                 if data is None or data.num_nodes == 0:
                     invalid_smiles += 1
@@ -304,6 +308,8 @@ def _build_embeddings(rows_by_split, checkpoint_path: Path, device: torch.device
         device,
         explicit_hydrogens=bool(getattr(config, "explicit_hydrogens", True)),
         encode_hydrogen_count=bool(getattr(config, "encode_hydrogen_count", False)),
+        use_extended_features=bool(getattr(config, "use_extended_features", False)),
+        scale_eccentricity=bool(getattr(config, "scale_eccentricity", False)),
     )
 
 

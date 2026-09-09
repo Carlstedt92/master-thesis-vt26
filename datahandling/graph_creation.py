@@ -1,27 +1,67 @@
 """From GNN for CHemists repo"""
+import math
+import os
 from rdkit import Chem
+from rdkit.Chem import rdPartialCharges
 from torch_geometric.data import Data
 import torch
 import numpy as np
 from typing import Optional
 
+_ECCENTRICITY_SCALER_PATH = os.path.join(os.path.dirname(__file__), "eccentricity_scaler.joblib")
+_eccentricity_scaler = None
+
+
+def _get_eccentricity_scaler():
+    """Lazily load the sklearn StandardScaler fit on the ZINC SSL-training
+    distribution (see fit_eccentricity_scaler.py) -- eccentricity is the only
+    extended feature with unbounded, molecule-size-dependent raw magnitude
+    (unlike the other 25 features, all binary or small bounded values), so it
+    gets scaled the same way for both ZINC precompute and live SMILES
+    featurization (online eval, knn eval, downstream datasets)."""
+    global _eccentricity_scaler
+    if _eccentricity_scaler is None:
+        import joblib
+        _eccentricity_scaler = joblib.load(_ECCENTRICITY_SCALER_PATH)
+    return _eccentricity_scaler
+
+
 def smiles_to_pygdata(
     smiles: str,
     explicit_hydrogens: bool = True,
     encode_hydrogen_count: bool = False,
+    use_extended_features: bool = False,
+    scale_eccentricity: bool = False,
 ) -> Optional[Data]:
     """Convert a SMILES string to a graph representation suitable for GNNs.
 
     Args:
         smiles (str): The SMILES string representing the molecule.
+        use_extended_features: append 2 additional node features -- Gasteiger
+            partial charge and topological eccentricity (see below). Opt-in
+            and off by default so existing 24-feature models/configs are
+            unaffected; a model trained with this on needs num_features=26
+            (or 27 with encode_hydrogen_count) and cannot load 24-feature
+            checkpoints (the first Linear layer's shape depends on it).
 
     Returns:
         Data: A PyTorch Geometric Data object with:
-            - 24 node features per atom:
+            - 24 node features per atom (26 with use_extended_features):
                 - 11 atom-type flags: C, O, N, H, F, P, S, Cl, Br, I, other
                 - 5 atom properties: degree, formal charge, aromaticity, radical electrons, ring membership
                 - 4 hybridization flags: SP, SP2, SP3, other
                 - 4 chirality flags: unspecified, tetrahedral CCW, tetrahedral CW, other
+                - [extended] Gasteiger partial charge: empirical estimate of real
+                  (fractional) electron distribution -- unlike formal charge
+                  (almost always 0), this varies continuously with each atom's
+                  electronegative environment and is relevant to polarity/
+                  reactivity-driven properties (lipophilicity, binding, toxicity).
+                - [extended] topological eccentricity: this atom's longest
+                  shortest-path (bond-count) distance to any other atom in the
+                  molecule -- a cheap proxy for "how peripheral vs. central is
+                  this atom", giving every atom some awareness of overall
+                  molecular size/shape without requiring more message-passing
+                  hops than the encoder's fixed depth allows.
             - 12 edge features per bond direction:
                 - 4 bond-type flags: single, double, triple, aromatic
                 - 2 bond properties: conjugated, in ring
@@ -33,9 +73,20 @@ def smiles_to_pygdata(
         return None
     if explicit_hydrogens:
         mol = Chem.AddHs(mol)
-    
+
     # Assign stereochemistry (important for GetChiralTag and GetStereo)
     Chem.AssignStereochemistry(mol, cleanIt=True, force=True)
+
+    if use_extended_features:
+        # Computed once per molecule (not per atom) -- both are O(atoms) or
+        # O(atoms^2) whole-molecule operations.
+        rdPartialCharges.ComputeGasteigerCharges(mol)
+        # Bond-count shortest-path distance between every atom pair. Disconnected
+        # fragments (salts, e.g. "CCO.Cl") get RDKit's large sentinel distance
+        # rather than inf; the isfinite guards below catch that same as NaN/inf.
+        distance_matrix = Chem.GetDistanceMatrix(mol)
+        if scale_eccentricity:
+            eccentricity_scaler = _get_eccentricity_scaler()
 
     # Define mapping for bond types to incides for one-hot encoding
     bond_type_mapping = {
@@ -57,6 +108,7 @@ def smiles_to_pygdata(
 
     # Extract atom features
     node_features = []
+    num_atoms = mol.GetNumAtoms()
     for atom in mol.GetAtoms():
         features = [
             atom.GetDegree(),
@@ -98,10 +150,35 @@ def smiles_to_pygdata(
         features = atom_type_onehot + features + hybridization_onehot + chiral_tag_onehot
         if encode_hydrogen_count:
             features.append(float(atom.GetTotalNumHs()))
+        if use_extended_features:
+            gasteiger_charge = atom.GetDoubleProp("_GasteigerCharge")
+            if not math.isfinite(gasteiger_charge):
+                gasteiger_charge = 0.0
+            # RDKit's distance matrix uses a large finite sentinel (1e8), not
+            # inf/NaN, for atom pairs in disconnected fragments (e.g. salts
+            # like "CC(=O)O.[Na]") -- isfinite() doesn't catch that. Any real
+            # topological distance within a connected fragment is bounded by
+            # the molecule's own atom count, so clamp there; this is a no-op
+            # for every ordinary (connected) molecule.
+            eccentricity = float(distance_matrix[atom.GetIdx()].max())
+            if not math.isfinite(eccentricity) or eccentricity > num_atoms:
+                eccentricity = float(num_atoms)
+            if scale_eccentricity:
+                # StandardScaler fit on the ZINC SSL-training distribution
+                # (see fit_eccentricity_scaler.py); applied inline as
+                # (x - mean) / std -- identical to scaler.transform() but
+                # avoids per-atom call overhead across millions of molecules.
+                # Gated separately from use_extended_features: checkpoints
+                # trained before this scaler existed (e.g.
+                # EXTENDED_FEATURES_TEST_60EP) expect raw eccentricity, and
+                # must keep getting it at eval time too.
+                eccentricity = (eccentricity - eccentricity_scaler.mean_[0]) / eccentricity_scaler.scale_[0]
+            features.append(gasteiger_charge)
+            features.append(eccentricity)
         node_features.append(features)
 
     # Keep node features as float for stable collation across all molecules.
-    node_dim = 24 + (1 if encode_hydrogen_count else 0)
+    node_dim = 24 + (1 if encode_hydrogen_count else 0) + (2 if use_extended_features else 0)
     if node_features:
         node_features = torch.tensor(node_features, dtype=torch.float)
     else:

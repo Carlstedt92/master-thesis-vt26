@@ -1,0 +1,128 @@
+{
+  // ---------------------------------------------------------------------------
+  // KHOP + extended-features + eccentricity-scaling test: identical setup to
+  // extended_features_test.json5 (KHOP augmentation, 26 features, 60 epochs)
+  // except pointing at the ecc-scaled precomputed shard set.
+  //
+  // Purpose: extended_features_test.json5 (unscaled eccentricity) showed a
+  // clear downstream regression vs. the 24-feature KHOP baseline
+  // (WEIGHT_DECAY_FIX_TEST_60EP) across LIPO/Tox21/BACE. Under masking
+  // augmentation, feature_mask_ratio=0.15 recovered most (67-98%) of that
+  // regression, supporting a shortcut-learning explanation -- but even with
+  // the fix, extended features never beat the 24-feature baseline on any
+  // metric. Per supervisor discussion: eccentricity was the only extended
+  // feature with unbounded, molecule-size-dependent raw magnitude (2-31,
+  // unlike the other 25 features which are all binary or small bounded
+  // values), a plausible independent (or contributing) cause distinct from
+  // shortcut learning. This run tests whether z-scoring eccentricity (via
+  // sklearn StandardScaler fit on the ZINC training distribution -- see
+  // fit_eccentricity_scaler.py, mean=12.263, std=3.044) fixes the KHOP
+  // regression, where feature_mask_ratio isn't even available (k_hop/
+  // functional_group_k_hop local views don't support feature-column
+  // masking in the current augmentation code).
+  // ---------------------------------------------------------------------------
+  name: "KHOP_EXTFEAT_ECC_SCALED_TEST_60EP",
+
+  head_type: "dino",
+  encoder_type: "GAT",
+  global_pooling: "add",
+
+  // ---------------------------------------------------------------------------
+  // Data loading -- the ecc-scaled 26-feature shard set, staged to scratch
+  // by run_khop_extended_features_ecc_scaled_test.sbatch.
+  // ---------------------------------------------------------------------------
+  data_path: "data/zinc/zinc_9M_data",
+  use_precomputed: true,
+  precomputed_data_path: "/scratch/local/precomputed_9M_data_extended_ecc_scaled",
+  cache_data_in_memory: false,
+  precomputed_cache_in_memory: false,
+  precomputed_max_cached_shards: 3,
+  explicit_hydrogens: true,
+  encode_hydrogen_count: false,
+
+  // Must be true: shards above were built with this flag on (26-dim node
+  // features, eccentricity z-scored), and this also tells the online
+  // evaluator (which builds LIPO graphs live from SMILES, not from the
+  // shards) to use matching 26-dim featurization -- both graph_creation.py
+  // copies now load the same fitted scaler, so live and precomputed
+  // featurization stay consistent.
+  use_extended_features: true,
+  scale_eccentricity: true,
+
+  // ---------------------------------------------------------------------------
+  // Augmentation -- identical to extended_features_test.json5 (KHOP)
+  // ---------------------------------------------------------------------------
+  local_views: 2,
+  local_augmentation_mode: "functional_group_k_hop",
+  k_hops: 2,
+  node_mask_ratio: 0.05,
+  feature_mask_ratio: 0,
+  use_batched_mask_collate: true,
+
+  // ---------------------------------------------------------------------------
+  // Runtime and logging
+  // ---------------------------------------------------------------------------
+  seed: 1,
+  device: "cuda",
+  num_workers: 6,
+  loader_debug: false,
+  profile_timing: true,
+  profile_log_every_n_batches: 200,
+
+  // ---------------------------------------------------------------------------
+  // Model dimensions -- 26 features (24 base + Gasteiger charge +
+  // z-scored topological eccentricity), everything else identical to
+  // production.
+  // ---------------------------------------------------------------------------
+  num_features: 26,
+  edge_features: 12,
+  hidden_dim: 1024,
+  num_layers: 3,
+  dropout: 0.0,
+  epsilon: 0.0,
+  projection_hidden_dim: 1024,
+  projection_bottleneck_dim: 1024,
+  projection_output_dim: 1024,
+  projection_layers: 2,
+
+  // ---------------------------------------------------------------------------
+  // Training and optimization -- identical to extended_features_test.json5
+  // ---------------------------------------------------------------------------
+  num_epochs: 60,
+
+  // Per-GPU batch size. With 8 GPUs (DDP), global effective batch = 1024,
+  // matching the production run's single-GPU batch_size=1024.
+  batch_size: 128,
+
+  // Explicit LR matching what auto_scale_lr computed for the production
+  // run's global batch of 1024: lr_scale_base(0.00000625) * 1024/256 = 0.000025.
+  auto_scale_lr: false,
+  learning_rate: 0.000025,
+  use_data_parallel: false,
+  lr_scale_base: 0.00000625,
+  lr_scale_reference_batch_size: 256,
+  weight_decay: 0.04,
+  weight_decay_start: 0.04,
+  weight_decay_end: 0.2,
+
+  // Production's exact (inverted) values -- already shown not to matter.
+  teacher_temp: 0.07,
+  teacher_temp_final: 0.01,
+  teacher_temp_warmup_epochs: 20,
+
+  student_temp: 0.1,
+  teacher_momentum: 0.99,
+  center_momentum: 0.9,
+  sync_teacher_batchnorm_buffers: true,
+  warmup_epochs: 20,
+  final_learning_rate: 0.00001,
+
+  validation_enabled: true,
+  validation_split: 0.1,
+
+  online_eval_enabled: true,
+  online_eval_every_n_epochs: 1,
+  online_eval_datasets: "lipo",
+  online_eval_fixed_k: 21,
+  online_eval_top_k_checkpoints: 5,
+}

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH -A uppmax2026-1-14
+#SBATCH -A YOUR_SLURM_ACCOUNT
 #SBATCH -t 24:00:00
 #SBATCH -p gpu
 #SBATCH -c 16

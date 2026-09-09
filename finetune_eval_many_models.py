@@ -31,6 +31,7 @@ from rdkit.Chem import rdFingerprintGenerator
 from sklearn.metrics import (
     balanced_accuracy_score,
     f1_score,
+    matthews_corrcoef,
     mean_absolute_error,
     mean_squared_error,
     r2_score,
@@ -102,10 +103,14 @@ def resolve_checkpoint_path(model_name: str, checkpoint_path: str | None, checkp
     if checkpoint_name:
         return str(Path(f"models/{model_name}/checkpoints") / checkpoint_name)
 
-    best_online = Path(f"models/{model_name}/checkpoints/best_online_eval_model.pth")
-    if best_online.exists():
-        return str(best_online)
-    return str(Path(f"models/{model_name}/checkpoints/best_model.pth"))
+    # best_model.pth (SSL-val-loss-selected) is the default everywhere else
+    # this session (evaluation/knn_bace.py's own resolve_checkpoint_path uses
+    # the same priority) -- this used to try best_online_eval_model.pth
+    # first, the opposite order, which was a real footgun.
+    best_model = Path(f"models/{model_name}/checkpoints/best_model.pth")
+    if best_model.exists():
+        return str(best_model)
+    return str(Path(f"models/{model_name}/checkpoints/best_online_eval_model.pth"))
 
 
 def load_checkpoint_model(checkpoint_path: str, device: torch.device):
@@ -125,6 +130,9 @@ def load_model_for_finetuning(checkpoint_path: str, device: torch.device, datase
     elif dataset == "tox21":
         # Replaced later with a multi-task linear head once task count is known.
         model.head = nn.Identity()
+    elif dataset in ("bbb_martins", "herg", "ames"):
+        # TDC single-task binary classification -- structurally identical to bace.
+        model.head = ClassificationHead(input_dim=config.hidden_dim, hidden_dim=max(64, config.hidden_dim // 2), output_dim=1).to(device)
     else:
         raise ValueError(f"Unsupported dataset: {dataset}")
 
@@ -248,9 +256,88 @@ def evaluate_classification_metrics(y_true, y_proba):
     pred_labels = (np.asarray(y_proba) >= 0.5).astype(int)
     return {
         "roc_auc": float(roc_auc_score(y_true_int, y_proba)),
+        # pos_label=1 = class of interest (active/toxic) -- see evaluation/mlp_rf.py's comment
+        # for the full justification; same convention applied here for consistency.
         "f1": float(f1_score(y_true_int, pred_labels)),
+        "mcc": float(matthews_corrcoef(y_true_int, pred_labels)),
         "balanced_accuracy": float(balanced_accuracy_score(y_true_int, pred_labels)),
     }
+
+
+def _collect_test_predictions(model, loader, dataset: str, device):
+    """Run the (already best-epoch-loaded) model over a test loader and
+    collect predictions -- same per-dataset branching as finetune_model's own
+    validation loop, factored out so it can be reused for a genuine
+    end-to-end test evaluation of the ACTUAL finetuned head, not a re-probed
+    embedding. For tox21 (multi-task), returns per-task lists; otherwise
+    returns flat (y_true, y_score) arrays."""
+    model.eval()
+    if dataset == "tox21":
+        scores_per_task, labels_per_task = None, None
+        with torch.no_grad():
+            for batch in loader:
+                batch = batch.to(device)
+                out = model(batch.x, batch.edge_index, batch.edge_attr, batch.batch)
+                labels = batch.y.float()
+                if out.dim() >= 2 and labels.dim() == 1 and labels.numel() == out.numel():
+                    labels = labels.view_as(out)
+                mask = ~torch.isnan(labels)
+                probs = torch.sigmoid(out)
+                n_tasks = probs.shape[1] if probs.dim() > 1 else 1
+                if scores_per_task is None:
+                    scores_per_task = [[] for _ in range(n_tasks)]
+                    labels_per_task = [[] for _ in range(n_tasks)]
+                for t in range(n_tasks):
+                    cond = mask[:, t]
+                    if cond.sum() > 0:
+                        scores_per_task[t].extend(probs[cond, t].cpu().numpy().tolist())
+                        labels_per_task[t].extend(labels[cond, t].cpu().numpy().tolist())
+        return scores_per_task, labels_per_task
+
+    y_true, y_score = [], []
+    with torch.no_grad():
+        for batch in loader:
+            batch = batch.to(device)
+            out = model(batch.x, batch.edge_index, batch.edge_attr, batch.batch).squeeze(-1)
+            labels = batch.y.view(-1).float()
+            if dataset != "lipo":
+                out = torch.sigmoid(out)
+            y_score.extend(out.cpu().numpy().tolist())
+            y_true.extend(labels.cpu().numpy().tolist())
+    return np.asarray(y_true), np.asarray(y_score)
+
+
+def evaluate_finetuned_head_on_test(model, test_loader, dataset: str, device):
+    """Genuine end-to-end test evaluation of the ACTUAL finetuned task head --
+    the model passed in must already have its best-val-epoch state loaded
+    (finetune_model does this before returning). This is deliberately kept
+    separate from -- and reported alongside, not instead of -- the
+    re-probed-embeddings numbers phase 2 computes: the two answer different
+    questions ("how good is the finetuned model itself" vs. "did finetuning
+    change the encoder's general representation quality"), and conflating
+    them was the actual bug -- phase 1 was discarding the trained head before
+    this was ever measured.
+    """
+    if dataset == "tox21":
+        scores_per_task, labels_per_task = _collect_test_predictions(model, test_loader, dataset, device)
+        per_task_metrics = []
+        for scores, labs in zip(scores_per_task, labels_per_task):
+            if len(np.unique(labs)) < 2:
+                continue
+            per_task_metrics.append(evaluate_classification_metrics(labs, scores))
+        if not per_task_metrics:
+            raise RuntimeError("No Tox21 test tasks had both classes present -- cannot evaluate finetuned head.")
+        agg = {}
+        for metric in ("roc_auc", "f1", "mcc", "balanced_accuracy"):
+            vals = [m[metric] for m in per_task_metrics]
+            agg[f"{metric}_mean_tasks"] = float(np.mean(vals))
+            agg[f"{metric}_std_tasks"] = float(np.std(vals))
+        return agg
+
+    y_true, y_score = _collect_test_predictions(model, test_loader, dataset, device)
+    if dataset == "lipo":
+        return evaluate_regression_metrics(y_true, y_score)
+    return evaluate_classification_metrics(y_true, y_score)
 
 
 def make_summary_result(result, metric_type: str):
@@ -363,7 +450,7 @@ def tune_knn_classification(X_train, y_train, X_val, y_val, X_test, y_test, k_va
     }
 
 
-def finetune_model(model, train_loader, val_loader, device, dataset: str, epochs: int, learning_rate: float, weight_decay: float):
+def finetune_model(model, train_loader, val_loader, device, dataset: str, epochs: int, learning_rate: float, weight_decay: float, test_loader=None, scheduler_type: str = "constant"):
     # Use loss minimization for regression (LIPO) and ROC AUC maximization for
     # classification tasks (BACE, Tox21). Training still uses BCEWithLogitsLoss
     # for classification but we prefer ROC AUC on the validation set to choose
@@ -382,6 +469,11 @@ def finetune_model(model, train_loader, val_loader, device, dataset: str, epochs
         select_by = "roc_auc"
 
     optimizer = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=learning_rate, weight_decay=weight_decay)
+    scheduler = None
+    if scheduler_type == "cosine":
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
+    elif scheduler_type != "constant":
+        raise ValueError(f"Unsupported scheduler_type: {scheduler_type}")
     best_state = deepcopy(model.state_dict())
     best_epoch = 0
 
@@ -413,6 +505,9 @@ def finetune_model(model, train_loader, val_loader, device, dataset: str, epochs
             loss.backward()
             optimizer.step()
             train_losses.append(float(loss.item()))
+
+        if scheduler is not None:
+            scheduler.step()
 
         model.eval()
         val_losses = []
@@ -498,7 +593,14 @@ def finetune_model(model, train_loader, val_loader, device, dataset: str, epochs
 
     model.load_state_dict(best_state)
     model.eval()
-    return {"best_epoch": int(best_epoch), "best_val_loss": float(best_val), "epochs_ran": int(epochs)}
+
+    result = {"best_epoch": int(best_epoch), "best_val_loss": float(best_val), "epochs_ran": int(epochs)}
+    if test_loader is not None:
+        # The actual point of finetuning: evaluate the real, trained task head end-to-end on
+        # test, instead of only ever reporting a re-probed-embeddings number (see
+        # evaluate_finetuned_head_on_test's docstring for why that distinction matters).
+        result["test_metrics"] = evaluate_finetuned_head_on_test(model, test_loader, dataset, device)
+    return result
 
 
 def get_dataset_splits(dataset: str, random_seed: int | None, lipo_data_dir: str, tox21_data_dir: str, bace_data_dir: str):

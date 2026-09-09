@@ -4,9 +4,22 @@ data/*
 # Ignore logs
 *.err
 *.out
+logs/
+eval_logs/
 
-# Ignore model checkpoints
-models/*/checkpoints/*
+# Ignore trained-model artifacts and caches -- models/ is a symlink to shared
+# cluster storage (/proj/pharmbio-qsar/...), not a real in-repo directory, and
+# these caches are large, regeneratable, and machine-specific.
+/models
+embedding_cache/
+evaluation_cache/
+
+# Windows-drive-shared-file marker left behind by some sync tools
+*:Zone.Identifier
+.DS_Store
+
+# Standalone model-handoff bundle -- includes a checkpoint binary, kept local-only
+/1_load_model
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

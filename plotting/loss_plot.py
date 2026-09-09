@@ -34,9 +34,14 @@ def _extract_series(records, x_key, y_key):
     return xs, ys
 
 
-def _extract_online_knn_validation_metric(online_eval_entry: dict, dataset: str, preferred_metric: str = "rmse"):
-    """Extract the online kNN validation metric for a dataset from one eval record."""
-    datasets = online_eval_entry.get("evaluation", {}).get("datasets", {})
+def _extract_online_knn_validation_metric(online_eval_entry: dict, dataset: str, preferred_metric: str = "rmse", eval_key: str = "evaluation"):
+    """Extract the online kNN validation metric for a dataset from one eval record.
+
+    Args:
+        eval_key: "evaluation" for the student's eval result, "teacher_evaluation"
+            for the teacher's (only present in newer loss_history.json files).
+    """
+    datasets = online_eval_entry.get(eval_key, {}).get("datasets", {})
     dataset_payload = datasets.get(dataset)
     if dataset_payload is None:
         return None, None
@@ -130,16 +135,25 @@ def plot_ssl_and_online_knn(loss_history_path, output_path, model_name="Model", 
 
     val_epochs, val_losses = _extract_series(dino_loss, "epoch", "val_loss")
 
-    # Extract online kNN metrics
+    # Extract online kNN metrics for both student and teacher (teacher_evaluation
+    # is absent in older loss_history.json files, so its rows will just be empty).
     eval_rows = []
+    teacher_eval_rows = []
     metric_label = "online_val_metric"
     for entry in online_eval:
-        value, detected_label = _extract_online_knn_validation_metric(entry, dataset, preferred_metric=preferred_metric)
-        if value is None:
-            continue
-        if detected_label is not None:
-            metric_label = detected_label
-        eval_rows.append({"epoch": int(entry["epoch"]), "online_metric": float(value)})
+        value, detected_label = _extract_online_knn_validation_metric(
+            entry, dataset, preferred_metric=preferred_metric, eval_key="evaluation"
+        )
+        if value is not None:
+            if detected_label is not None:
+                metric_label = detected_label
+            eval_rows.append({"epoch": int(entry["epoch"]), "online_metric": float(value)})
+
+        teacher_value, _ = _extract_online_knn_validation_metric(
+            entry, dataset, preferred_metric=preferred_metric, eval_key="teacher_evaluation"
+        )
+        if teacher_value is not None:
+            teacher_eval_rows.append({"epoch": int(entry["epoch"]), "online_metric": float(teacher_value)})
 
     _set_plot_style()
     fig, ax1 = plt.subplots(figsize=(11, 6))
@@ -158,12 +172,18 @@ def plot_ssl_and_online_knn(loss_history_path, output_path, model_name="Model", 
         lines.append(line)
         labels.append(line.get_label())
 
-    # Plot online evaluation metric on right axis if available
+    # Plot online evaluation metric (student + teacher) on right axis if available
     if eval_rows:
         ax2 = ax1.twinx()
         eval_epochs = [row["epoch"] for row in eval_rows]
         eval_values = [row["online_metric"] for row in eval_rows]
-        ax2.plot(eval_epochs, eval_values, color="#d62728", label=metric_label, linewidth=2)
+        ax2.plot(eval_epochs, eval_values, color="#d62728", label=f"{metric_label} (student)", linewidth=2)
+
+        if teacher_eval_rows:
+            teacher_epochs = [row["epoch"] for row in teacher_eval_rows]
+            teacher_values = [row["online_metric"] for row in teacher_eval_rows]
+            ax2.plot(teacher_epochs, teacher_values, color="#9467bd", label=f"{metric_label} (teacher)", linewidth=2, linestyle="--")
+
         ax2.set_ylabel(metric_label, color="#d62728")
         ax2.tick_params(axis="y", labelcolor="#d62728")
         for line in ax2.get_lines():

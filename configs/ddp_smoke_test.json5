@@ -1,0 +1,104 @@
+{
+  // ---------------------------------------------------------------------------
+  // DDP validation run: tiny model + 8-shard (400k graph) subset of ZINC,
+  // launched via torchrun. Purpose is *only* to prove the DistributedDataParallel
+  // path (gradient sync, center all-reduce, SyncBatchNorm, rank-0 checkpointing,
+  // shard partitioning) runs correctly end-to-end before scaling to the full
+  // 9M-graph production model for August's hyperparameter optimization.
+  // ---------------------------------------------------------------------------
+  name: "DDP_SMOKE_TEST",
+
+  head_type: "dino",
+  encoder_type: "GAT",
+  global_pooling: "add",
+
+  // ---------------------------------------------------------------------------
+  // Data loading
+  // ---------------------------------------------------------------------------
+  data_path: "data/zinc/zinc_9M_data",
+  use_precomputed: true,
+
+  // 8 symlinked shards (400k graphs) out of the full 189-shard/9M set --
+  // see /proj/pharmbio-qsar/users/x_emcar/precomputed_ddp_smoke. Small enough
+  // to read directly without /scratch/local staging.
+  precomputed_data_path: "/proj/pharmbio-qsar/users/x_emcar/precomputed_ddp_smoke",
+
+  cache_data_in_memory: false,
+  precomputed_cache_in_memory: false,
+  precomputed_max_cached_shards: 3,
+  explicit_hydrogens: true,
+  encode_hydrogen_count: false,
+
+  // ---------------------------------------------------------------------------
+  // Augmentation
+  // ---------------------------------------------------------------------------
+  local_views: 2,
+  local_augmentation_mode: "functional_group_k_hop",
+  k_hops: 2,
+  node_mask_ratio: 0.05,
+  feature_mask_ratio: 0,
+  use_batched_mask_collate: true,
+
+  // ---------------------------------------------------------------------------
+  // Runtime and logging
+  // ---------------------------------------------------------------------------
+  seed: 1,
+  device: "cuda",           // overwritten per-process to cuda:<local_rank> under torchrun
+  num_workers: 2,
+  loader_debug: false,
+  profile_timing: true,
+  profile_log_every_n_batches: 5,
+
+  // ---------------------------------------------------------------------------
+  // Model dimensions (deliberately tiny -- this is a plumbing test, not a
+  // quality run)
+  // ---------------------------------------------------------------------------
+  num_features: 24,
+  edge_features: 12,
+  hidden_dim: 64,
+  num_layers: 2,
+  dropout: 0.0,
+  epsilon: 0.0,
+  projection_hidden_dim: 64,
+  projection_bottleneck_dim: 64,
+  projection_output_dim: 64,
+  projection_layers: 2,
+
+  // ---------------------------------------------------------------------------
+  // Training and optimization
+  // ---------------------------------------------------------------------------
+  num_epochs: 3,
+  batch_size: 128,          // per-GPU batch size -- each rank trains on its own shard slice
+  auto_scale_lr: true,
+  use_data_parallel: false, // DDP is used instead (enabled automatically by torchrun launch)
+  lr_scale_base: 0.00005,
+  lr_scale_reference_batch_size: 256,
+  learning_rate: 0.001,
+  weight_decay: 0.04,
+  weight_decay_start: 0.04,
+  weight_decay_end: 0.2,
+
+  teacher_temp: 0.07,
+  teacher_temp_final: 0.04,
+  teacher_temp_warmup_epochs: 1,
+  student_temp: 0.1,
+  teacher_momentum: 0.99,
+  center_momentum: 0.9,
+  sync_teacher_batchnorm_buffers: true,
+
+  warmup_epochs: 1,
+  final_learning_rate: 0.00001,
+
+  // Validation split enabled deliberately -- exercises the DDP-partitioned
+  // val_loader + cross-rank reduction path too, not just training.
+  validation_enabled: true,
+  validation_split: 0.15,
+
+  // Online eval left off for the first smoke test to keep the run minimal;
+  // flip on once the plain training loop is confirmed working under DDP.
+  online_eval_enabled: false,
+  online_eval_every_n_epochs: 1,
+  online_eval_datasets: "lipo",
+  online_eval_fixed_k: 21,
+  online_eval_top_k_checkpoints: 5,
+}

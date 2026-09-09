@@ -3,9 +3,10 @@
 from torch_geometric.data import Data, Batch
 from .graph_augmentation import GraphAugmentation
 from .dataset_creation import SmilesCsvDataset, MultiFileSmilesDataset, PrecomputedGraphDataset
+from .shard_sampler import ShardAwareBatchSampler
 import torch
 from torch.utils.data import DataLoader, random_split
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import os
 import time
 import random
@@ -30,15 +31,27 @@ class DataLoaderCreator:
         local_augmentation_mode = getattr(self.config, 'local_augmentation_mode', 'k_hop')
         node_mask_ratio = getattr(self.config, 'node_mask_ratio', 0.15)
         feature_mask_ratio = getattr(self.config, 'feature_mask_ratio', 0.15)
+        local_view_modes = getattr(self.config, 'local_view_modes', None)
         augmenter = GraphAugmentation(
             local_views=local_views,
             k_hops=k_hops,
             local_augmentation_mode=local_augmentation_mode,
             node_mask_ratio=node_mask_ratio,
             feature_mask_ratio=feature_mask_ratio,
+            local_view_modes=local_view_modes,
         )
 
         if local_augmentation_mode == "masking" and self._use_batched_mask_collate():
+            if bool(getattr(self.config, "use_node_reconstruction_loss", False)):
+                raise ValueError(
+                    "use_node_reconstruction_loss=True is not supported together with "
+                    "local_augmentation_mode='masking' + use_batched_mask_collate=True: "
+                    "that fast path masks an already-batched tensor directly and bypasses "
+                    "GraphAugmentation entirely, so it never produces the node_reconstruction_mask "
+                    "attribute the loss needs. Use 'functional_group_masking' (always routed "
+                    "through GraphAugmentation regardless of this flag) or set "
+                    "use_batched_mask_collate=False."
+                )
             return self._build_batched_mask_collate_fn()
 
         def _normalize_dtypes(data: Data) -> Data:
@@ -114,15 +127,86 @@ class DataLoaderCreator:
         return train_dataset, val_dataset
 
     def _build_loader(self, dataset, shuffle: bool) -> DataLoader:
+        pin_memory = str(getattr(self.config, "device", "cpu")).startswith("cuda")
+        loader_kwargs = {
+            "dataset": dataset,
+            "batch_size": self.config.batch_size,
+            "shuffle": shuffle,
+            "collate_fn": self._get_collate_fn(),
+            "generator": self._build_generator(),
+            "num_workers": self.config.num_workers,
+            "persistent_workers": self.config.num_workers > 0,
+            "pin_memory": pin_memory,
+        }
+        if self.config.num_workers > 0:
+            loader_kwargs["prefetch_factor"] = int(getattr(self.config, "prefetch_factor", 4))
         return DataLoader(
-            dataset,
+            **loader_kwargs,
+        )
+
+    def _ddp_rank_world_size(self) -> Tuple[int, int]:
+        """DDP rank/world_size for this process, set by dino_training.py before loader
+        creation when running under torchrun. Defaults to single-process (0, 1)."""
+        rank = int(getattr(self.config, "ddp_rank", 0))
+        world_size = int(getattr(self.config, "ddp_world_size", 1))
+        return rank, world_size
+
+    def _build_precomputed_loader(
+        self, dataset, shard_ids: List[int], shuffle: bool, partition_across_ranks: bool = True
+    ) -> DataLoader:
+        """Build a DataLoader over a PrecomputedGraphDataset using shard-local batching.
+
+        partition_across_ranks=False keeps every DDP rank on the full shard_ids
+        list (rank=0, world_size=1 for sampling purposes) -- used for the
+        validation loader, since a small validation split can have fewer
+        shards than ranks. Splitting it would leave some ranks with zero
+        shards; even in eval() mode a DDP-wrapped forward() still does a
+        buffer broadcast every call (independent of no_grad/eval state), so a
+        rank that runs zero eval iterations while another runs dozens
+        desyncs the collective call count and hangs the whole process group.
+        Redundant (whole-set) validation compute is a fine trade for that.
+        """
+        pin_memory = str(getattr(self.config, "device", "cpu")).startswith("cuda")
+        rank, world_size = self._ddp_rank_world_size() if partition_across_ranks else (0, 1)
+        batch_sampler = ShardAwareBatchSampler(
+            cumulative_sizes=dataset.cumulative_sizes,
+            shard_ids=shard_ids,
             batch_size=self.config.batch_size,
             shuffle=shuffle,
-            collate_fn=self._get_collate_fn(),
-            generator=self._build_generator(),
-            num_workers=self.config.num_workers,
-            persistent_workers=self.config.num_workers > 0,
+            seed=self.config.seed,
+            rank=rank,
+            world_size=world_size,
         )
+        loader_kwargs = {
+            "dataset": dataset,
+            "batch_sampler": batch_sampler,
+            "collate_fn": self._get_collate_fn(),
+            "num_workers": self.config.num_workers,
+            "persistent_workers": self.config.num_workers > 0,
+            "pin_memory": pin_memory,
+        }
+        if self.config.num_workers > 0:
+            loader_kwargs["prefetch_factor"] = int(getattr(self.config, "prefetch_factor", 4))
+        return DataLoader(**loader_kwargs)
+
+    def _split_shards_for_validation(
+        self, num_shards: int, validation_split: float, seed: Optional[int]
+    ) -> Tuple[List[int], List[int]]:
+        """Reserve whole shards for validation instead of splitting by item.
+
+        Keeps every shard's index range fully contiguous to either the train
+        or validation sampler, which the shard-aware batch sampler relies on.
+        """
+        if num_shards < 2 or validation_split <= 0.0:
+            return list(range(num_shards)), []
+
+        val_shard_count = max(1, min(num_shards - 1, int(round(num_shards * validation_split))))
+        shard_ids = list(range(num_shards))
+        rng = random.Random(seed) if seed is not None else random.Random()
+        rng.shuffle(shard_ids)
+        val_shard_ids = sorted(shard_ids[:val_shard_count])
+        train_shard_ids = sorted(shard_ids[val_shard_count:])
+        return train_shard_ids, val_shard_ids
 
     def _cache_in_memory(self) -> bool:
         return bool(getattr(self.config, "cache_data_in_memory", False))
@@ -393,10 +477,15 @@ class DataLoaderCreator:
         )
         if self._loader_debug():
             print(f"[DataLoaderCreator] Dataset built in {time.time() - build_start:.2f}s")
-        return self._build_loader(dataset, shuffle=True)
+        shard_ids = list(range(len(dataset.shard_paths)))
+        return self._build_precomputed_loader(dataset, shard_ids, shuffle=True)
 
     def create_precomputed_train_val_dataloaders(self, precomputed_path: str, pattern: str = "shard_*.pt"):
-        """Create train and validation loaders for precomputed graph shards."""
+        """Create train and validation loaders for precomputed graph shards.
+
+        Validation is a whole-shard split (not a per-item random_split) so
+        every shard's index range stays contiguous for the shard-aware sampler.
+        """
         dataset = PrecomputedGraphDataset(
             precomputed_path,
             pattern=pattern,
@@ -404,9 +493,31 @@ class DataLoaderCreator:
             max_cached_shards=self._precomputed_max_cached_shards(),
             debug=self._loader_debug(),
         )
-        train_dataset, val_dataset = self._split_validation_dataset(dataset)
-        train_loader = self._build_loader(train_dataset, shuffle=True)
-        val_loader = self._build_loader(val_dataset, shuffle=False) if val_dataset is not None else None
+        num_shards = len(dataset.shard_paths)
+        validation_enabled = bool(getattr(self.config, "validation_enabled", False))
+        validation_split = float(getattr(self.config, "validation_split", 0.0))
+
+        if not validation_enabled or validation_split <= 0.0:
+            train_shard_ids = list(range(num_shards))
+            val_shard_ids: List[int] = []
+        else:
+            train_shard_ids, val_shard_ids = self._split_shards_for_validation(
+                num_shards, validation_split, getattr(self.config, "seed", None)
+            )
+
+        train_loader = self._build_precomputed_loader(dataset, train_shard_ids, shuffle=True)
+        # Partitioned across ranks like the train loader (partition_across_ranks
+        # defaults to True) -- eval_step bypasses the DDP wrapper entirely (see
+        # DINOGraphSSL._forward_student_eval), so there's no per-batch collective
+        # tied to validation anymore, and each rank's slice is aggregated via a
+        # single _ddp_sum reduction after the loop (dino_training.py). This is
+        # what actually lets validation benefit from multi-GPU parallelism
+        # instead of running single-rank while the rest of the GPUs sit idle.
+        val_loader = (
+            self._build_precomputed_loader(dataset, val_shard_ids, shuffle=False)
+            if val_shard_ids
+            else None
+        )
         return train_loader, val_loader
 
     def create_train_val_dataloaders_auto(self):

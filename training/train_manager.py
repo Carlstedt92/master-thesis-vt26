@@ -92,6 +92,24 @@ class TrainingManager:
         metadata = self._read_metadata()
         metadata[section_name] = section_data
         self._write_metadata(metadata)
+
+    def _save_checkpoint_variants(
+        self,
+        base_name: str,
+        student_checkpoint: Dict[str, Any],
+        teacher_checkpoint: Dict[str, Any] | None = None,
+    ) -> tuple[str, str | None]:
+        """Save the student checkpoint plus an optional teacher variant."""
+        student_path = os.path.join(self.checkpoint_dir, base_name)
+
+        torch.save(student_checkpoint, student_path)
+
+        teacher_path = None
+        if teacher_checkpoint is not None:
+            teacher_path = os.path.join(self.checkpoint_dir, f"t_{base_name}")
+            torch.save(teacher_checkpoint, teacher_path)
+
+        return student_path, teacher_path
     
     def record_loss(
         self,
@@ -187,8 +205,9 @@ class TrainingManager:
                 self.best_eval_metric = current_metric
                 self.best_eval_epoch = epoch + 1
     
-    def save_checkpoint(self, epoch: int, model, optimizer, loss: float = None, 
-                       is_best: bool = False, metric_value: float = None):
+    def save_checkpoint(self, epoch: int, model, optimizer, loss: float = None,
+                       is_best: bool = False, metric_value: float = None,
+                       teacher_model=None):
         """Save model checkpoint.
         
         Args:
@@ -198,6 +217,7 @@ class TrainingManager:
             loss: Loss value for this checkpoint (optional, for DINO training)
             is_best: Whether this is the best model so far
             metric_value: Evaluation metric value for this checkpoint (optional)
+            teacher_model: Optional teacher model to save alongside the student
         """
         checkpoint = {
             'epoch': epoch,
@@ -207,20 +227,30 @@ class TrainingManager:
             'eval_metric': metric_value,
             'config': self.config.to_dict(),
         }
+
+        teacher_checkpoint = None
+        if teacher_model is not None:
+            teacher_checkpoint = {
+                'epoch': epoch,
+                'model_state_dict': teacher_model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'loss': loss if loss is not None else 0.0,
+                'eval_metric': metric_value,
+                'config': self.config.to_dict(),
+            }
         
-        # Regular checkpoint (every 10 epochs)
-        if (epoch + 1) % 10 == 0:
-            checkpoint_path = os.path.join(
-                self.checkpoint_dir, 
-                f"checkpoint_epoch_{epoch + 1}.pth"
-            )
-            torch.save(checkpoint, checkpoint_path)
+        # Regular checkpoint (every N epochs, config.checkpoint_save_every_n_epochs --
+        # getattr fallback keeps this backward compatible with configs saved before
+        # this field existed).
+        checkpoint_interval = max(1, int(getattr(self.config, "checkpoint_save_every_n_epochs", 10)))
+        if (epoch + 1) % checkpoint_interval == 0:
+            checkpoint_name = f"checkpoint_epoch_{epoch + 1}.pth"
+            self._save_checkpoint_variants(checkpoint_name, checkpoint, teacher_checkpoint)
             print(f"  ✓ Checkpoint saved: epoch {epoch + 1}")
         
         # Best checkpoint
         if is_best:
-            best_path = os.path.join(self.checkpoint_dir, "best_model.pth")
-            torch.save(checkpoint, best_path)
+            self._save_checkpoint_variants("best_model.pth", checkpoint, teacher_checkpoint)
             if metric_value is not None:
                 print(f"  ✓ Best model saved (eval metric: {metric_value:.6f})")
             elif loss is not None:
@@ -228,7 +258,7 @@ class TrainingManager:
             else:
                 print(f"  ✓ Best model saved")
 
-    def save_final_checkpoint(self, epoch: int, model, optimizer, loss: float = None):
+    def save_final_checkpoint(self, epoch: int, model, optimizer, loss: float = None, teacher_model=None):
         """Always save a final checkpoint for the completed run.
 
         Writes two files into the checkpoints directory:
@@ -243,11 +273,22 @@ class TrainingManager:
             'config': self.config.to_dict(),
         }
 
-        final_path = os.path.join(self.checkpoint_dir, "final_model.pth")
-        epoched_path = os.path.join(self.checkpoint_dir, f"final_checkpoint_epoch_{epoch + 1}.pth")
+        teacher_checkpoint = None
+        if teacher_model is not None:
+            teacher_checkpoint = {
+                'epoch': epoch,
+                'model_state_dict': teacher_model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'loss': loss if loss is not None else 0.0,
+                'config': self.config.to_dict(),
+            }
 
-        torch.save(checkpoint, final_path)
-        torch.save(checkpoint, epoched_path)
+        final_path, _ = self._save_checkpoint_variants("final_model.pth", checkpoint, teacher_checkpoint)
+        epoched_path, _ = self._save_checkpoint_variants(
+            f"final_checkpoint_epoch_{epoch + 1}.pth",
+            checkpoint,
+            teacher_checkpoint,
+        )
         print(f"  ✓ Final checkpoint saved: {final_path}")
         print(f"  ✓ Final epoch archive saved: {epoched_path}")
 
@@ -282,7 +323,15 @@ class TrainingManager:
         with open(index_path, "w") as f:
             json.dump(payload, f, indent=2)
 
-    def record_online_eval(self, epoch: int, ssl_loss: float, eval_result: Dict[str, Any], saved_path: str | None):
+    def record_online_eval(
+        self,
+        epoch: int,
+        ssl_loss: float,
+        eval_result: Dict[str, Any],
+        saved_path: str | None,
+        teacher_eval_result: Dict[str, Any] | None = None,
+        teacher_saved_path: str | None = None,
+    ):
         """Record online downstream evaluation results for one epoch."""
         record = {
             "epoch": int(epoch + 1),
@@ -290,6 +339,10 @@ class TrainingManager:
             "saved_checkpoint_path": saved_path,
             "evaluation": self._to_json_safe(eval_result),
         }
+        if teacher_eval_result is not None:
+            record["teacher_evaluation"] = self._to_json_safe(teacher_eval_result)
+        if teacher_saved_path is not None:
+            record["teacher_saved_checkpoint_path"] = teacher_saved_path
         self.online_eval_history.append(record)
         self.eval_loss_history["online_eval"] = self.online_eval_history
 
@@ -301,6 +354,7 @@ class TrainingManager:
         ssl_loss: float,
         eval_result: Dict[str, Any],
         top_k: int = 5,
+        teacher_model=None,
     ) -> str | None:
         """Keep only top-k checkpoints by online aggregate eval score."""
         if top_k <= 0:
@@ -334,9 +388,24 @@ class TrainingManager:
             "config": self.config.to_dict(),
         }
 
+        teacher_checkpoint = None
+        if teacher_model is not None:
+            teacher_checkpoint = {
+                "epoch": epoch,
+                "model_state_dict": teacher_model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "loss": float(ssl_loss),
+                "eval_metric": score,
+                "online_eval": self._to_json_safe(eval_result),
+                "config": self.config.to_dict(),
+            }
+
         checkpoint_name = f"checkpoint_online_eval_epoch_{epoch + 1}.pth"
-        checkpoint_path = os.path.join(self.checkpoint_dir, checkpoint_name)
-        torch.save(checkpoint, checkpoint_path)
+        checkpoint_path, _ = self._save_checkpoint_variants(
+            checkpoint_name,
+            checkpoint,
+            teacher_checkpoint,
+        )
 
         entry = {
             "epoch": int(epoch + 1),
@@ -361,6 +430,13 @@ class TrainingManager:
             dropped_path = dropped.get("checkpoint_path")
             if dropped_path and os.path.exists(dropped_path):
                 os.remove(dropped_path)
+            if dropped_path:
+                dropped_dir = os.path.dirname(dropped_path)
+                dropped_name = os.path.basename(dropped_path)
+                for prefix in ("t_",):
+                    dropped_variant = os.path.join(dropped_dir, f"{prefix}{dropped_name}")
+                    if os.path.exists(dropped_variant):
+                        os.remove(dropped_variant)
 
         best_entry = self.top_eval_checkpoints[0]
         best_source = best_entry.get("checkpoint_path")

@@ -1,1 +1,2 @@
-# Package requirements needed for the project
+# Dependencies are managed with uv -- see pyproject.toml and uv.lock.
+# Install with: uv sync

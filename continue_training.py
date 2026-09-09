@@ -9,9 +9,11 @@ import json
 from pathlib import Path
 
 import json5
+import pandas as pd
 import torch
 
 from model.config import ModelConfig
+from plotting.loss_plot import load_loss_data, plot_ssl_and_online_knn, plot_train_val_loss_curves
 from training.dino_training import dino_train
 from utils.seed import set_seed
 
@@ -113,6 +115,46 @@ def main():
 
     set_seed(config.seed)
     dino_train(config, resume_checkpoint_path=str(checkpoint_path))
+
+    # Plot results. Named with the final epoch reached (not a fixed filename)
+    # so repeated/successive resumes each get their own plot instead of
+    # overwriting the original run's loss_curves_ssl_knn.png or each other's.
+    loss_history_path = f"models/{args.model}/loss_history.json"
+    loss_history = load_loss_data(loss_history_path)
+
+    final_epoch = config.num_epochs
+    if isinstance(loss_history, dict) and loss_history.get("DINO_Loss"):
+        final_epoch = loss_history["DINO_Loss"][-1].get("epoch", final_epoch)
+    plot_basename = f"loss_curves_ssl_knn_to_epoch_{final_epoch}"
+
+    online_eval_enabled = bool(getattr(config, "online_eval_enabled", False))
+    online_eval_datasets = str(getattr(config, "online_eval_datasets", "lipo")).split(",")[0].strip()
+
+    if online_eval_enabled and isinstance(loss_history, dict) and "Evaluation_Loss" in loss_history:
+        try:
+            plot_path = f"models/{args.model}/{plot_basename}.png"
+            plot_ssl_and_online_knn(
+                loss_history_path,
+                plot_path,
+                model_name=args.model,
+                dataset=online_eval_datasets,
+            )
+            print(f"✓ Dual-axis plot saved: {plot_path}")
+        except (ValueError, KeyError) as e:
+            print(f"⚠ Could not generate dual-axis plot: {e}")
+            if isinstance(loss_history, dict) and "DINO_Loss" in loss_history:
+                loss_data = pd.DataFrame(loss_history["DINO_Loss"])
+                plot_path = f"models/{args.model}/loss_curves_to_epoch_{final_epoch}.png"
+                plot_train_val_loss_curves(loss_data, plot_path, model_name=args.model)
+                print(f"✓ Standard plot saved: {plot_path}")
+    else:
+        if isinstance(loss_history, dict) and "DINO_Loss" in loss_history:
+            loss_data = pd.DataFrame(loss_history["DINO_Loss"])
+        else:
+            loss_data = loss_history if isinstance(loss_history, pd.DataFrame) else pd.DataFrame(loss_history)
+        plot_path = f"models/{args.model}/loss_curves_to_epoch_{final_epoch}.png"
+        plot_train_val_loss_curves(loss_data, plot_path, model_name=args.model)
+        print(f"✓ Standard plot saved: {plot_path}")
 
 
 if __name__ == "__main__":
